@@ -707,7 +707,7 @@ private:
 };
 
 MOD_EXPORT void _INIT_() {
-    config.setPath(core::args["root"].s() + "/rigctl_server_config.json");
+    config.setPath(core::args["config"].s() + "/rigctl_server_config.json");
     config.load(json::object());
     config.enableAutoSave();
 }

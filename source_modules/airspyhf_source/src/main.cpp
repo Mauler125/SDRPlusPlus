@@ -408,7 +408,7 @@ MOD_EXPORT void _INIT_() {
     json def = json({});
     def["devices"] = json({});
     def["device"] = "";
-    config.setPath(core::args["root"].s() + "/airspyhf_config.json");
+    config.setPath(core::args["config"].s() + "/airspyhf_config.json");
     config.load(def);
     config.enableAutoSave();
 }

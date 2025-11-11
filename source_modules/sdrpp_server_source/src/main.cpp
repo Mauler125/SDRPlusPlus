@@ -293,7 +293,7 @@ MOD_EXPORT void _INIT_() {
     def["hostname"] = "localhost";
     def["port"] = 5259;
     def["servers"] = json::object();
-    config.setPath(core::args["root"].s() + "/sdrpp_server_source_config.json");
+    config.setPath(core::args["config"].s() + "/sdrpp_server_source_config.json");
     config.load(def);
     config.enableAutoSave();
 }
