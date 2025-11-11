@@ -107,9 +107,8 @@ private:
 
 MOD_EXPORT void _INIT_() {
     // Create default recording directory
-    std::string root = (std::string)core::args["root"];
     json def = json({});
-    config.setPath(root + "/vor_receiver_config.json");
+    config.setPath(core::args["config"].s() + "/vor_receiver_config.json");
     config.load(def);
     config.enableAutoSave();
 }

@@ -541,7 +541,7 @@ MOD_EXPORT void _INIT_() {
     json def = json({});
     def["devices"] = json({});
     def["device"] = "";
-    config.setPath(core::args["root"].s() + "/fobossdr_config.json");
+    config.setPath(core::args["config"].s() + "/fobossdr_config.json");
     config.load(def);
     config.enableAutoSave();
 }

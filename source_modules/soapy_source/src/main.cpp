@@ -544,7 +544,7 @@ private:
 };
 
 MOD_EXPORT void _INIT_() {
-    config.setPath(core::args["root"].s() + "/soapy_source_config.json");
+    config.setPath(core::args["config"].s() + "/soapy_source_config.json");
     json defConf;
     defConf["device"] = "";
     defConf["devices"] = json({});

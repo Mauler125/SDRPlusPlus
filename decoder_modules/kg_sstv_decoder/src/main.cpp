@@ -174,7 +174,7 @@ private:
 MOD_EXPORT void _INIT_() {
     // Create default recording directory
     json def = json({});
-    config.setPath(core::args["root"].s() + "/kg_sstv_decoder_config.json");
+    config.setPath(core::args["config"].s() + "/kg_sstv_decoder_config.json");
     config.load(def);
     config.enableAutoSave();
 }

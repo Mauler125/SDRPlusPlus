@@ -36,8 +36,8 @@ namespace backend {
     void doPartialInit() {
         std::string root = (std::string)core::args["root"];
         backend::init();
-        style::loadFonts(root + "/res"); // TODO: Don't hardcode, use config
-        icons::load(root + "/res");
+        style::loadFonts(root + "/resource"); // TODO: Don't hardcode, use config
+        icons::load(root + "/resource");
         thememenu::applyTheme();
         ImGui::GetStyle().ScaleAllSizes(style::uiScale);
         gui::mainWindow.setFirstMenuRender();

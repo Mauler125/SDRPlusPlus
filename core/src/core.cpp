@@ -81,7 +81,7 @@ int sdrpp_main(int argc, char* argv[]) {
 
 #ifdef _WIN32
     // Free console if the user hasn't asked for a console and not in server mode
-    if (!core::args["con"].b() && !serverMode) { FreeConsole(); }
+    if (!core::args["terminal"].b() && !serverMode) { FreeConsole(); }
 
     // Set error mode to avoid abnoxious popups
     SetErrorMode(SEM_NOOPENFILEERRORBOX | SEM_NOGPFAULTERRORBOX | SEM_FAILCRITICALERRORS);
@@ -269,13 +269,13 @@ int sdrpp_main(int argc, char* argv[]) {
 
 #if defined(_WIN32)
     defConfig["modulesDirectory"] = "./modules";
-    defConfig["resourcesDirectory"] = "./res";
+    defConfig["resourcesDirectory"] = "./resources";
 #elif defined(IS_MACOS_BUNDLE)
     defConfig["modulesDirectory"] = "../Plugins";
     defConfig["resourcesDirectory"] = "../Resources";
 #elif defined(__ANDROID__)
     defConfig["modulesDirectory"] = root + "/modules";
-    defConfig["resourcesDirectory"] = root + "/res";
+    defConfig["resourcesDirectory"] = root + "/resources";
 #else
     defConfig["modulesDirectory"] = INSTALL_PREFIX "/lib/sdrpp/plugins";
     defConfig["resourcesDirectory"] = INSTALL_PREFIX "/share/sdrpp";
@@ -283,7 +283,7 @@ int sdrpp_main(int argc, char* argv[]) {
 
     // Load config
     flog::info("Loading config");
-    core::configManager.setPath(root + "/config.json");
+    core::configManager.setPath(core::args["config"].s() + "/config.json");
     core::configManager.load(defConfig);
     core::configManager.enableAutoSave();
     core::configManager.acquire();
