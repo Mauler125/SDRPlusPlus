@@ -1,4 +1,5 @@
 #include "flog.h"
+#include <cassert>
 #include <mutex>
 #include <chrono>
 #include <string.h>
@@ -186,7 +187,7 @@ namespace flog {
         char buf[N];
         const int ret = snprintf(buf, N, pri, value);
         assert(ret > 0); // Ensure snprintf succeeded.
-        return { buf, std::clamp(ret, 0, N) };
+        return { buf, (size_t)std::clamp<int>(ret, 0, N) };
     }
 
     std::string __toString__(bool value) {
