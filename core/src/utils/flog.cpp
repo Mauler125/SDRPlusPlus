@@ -3,6 +3,7 @@
 #include <chrono>
 #include <string.h>
 #include <inttypes.h>
+#include <algorithm>
 
 #ifdef _WIN32
 #include <Windows.h>
@@ -15,6 +16,7 @@
 #endif
 #endif
 
+#include "base_types.h"
 
 #define FORMAT_BUF_SIZE 16
 #define ESCAPE_CHAR     '\\'
@@ -179,72 +181,60 @@ namespace flog {
         }
     }
 
+    template <typename T, int N>
+    static std::string Flog_toString(const T value, const char* const pri) {
+        char buf[N];
+        const int ret = snprintf(buf, N, pri, value);
+        assert(ret > 0); // Ensure snprintf succeeded.
+        return { buf, std::clamp(ret, 0, N) };
+    }
+
     std::string __toString__(bool value) {
         return value ? "true" : "false";
     }
 
     std::string __toString__(char value) {
-        return std::string("")+value;
+        return std::string(1, value);
     }
 
     std::string __toString__(int8_t value) {
-        char buf[8];
-        sprintf(buf, "%" PRId8, value);
-        return buf;
+        return Flog_toString<int8_t, I8_STR_BUF_SIZE>(value, "%" PRId8);
     }
 
     std::string __toString__(int16_t value) {
-        char buf[16];
-        sprintf(buf, "%" PRId16, value);
-        return buf;
+        return Flog_toString<int16_t, I16_STR_BUF_SIZE>(value, "%" PRId16);
     }
 
     std::string __toString__(int32_t value) {
-        char buf[32];
-        sprintf(buf, "%" PRId32, value);
-        return buf;
+        return Flog_toString<int32_t, I32_STR_BUF_SIZE>(value, "%" PRId32);
     }
 
     std::string __toString__(int64_t value) {
-        char buf[64];
-        sprintf(buf, "%" PRId64, value);
-        return buf;
+        return Flog_toString<int64_t, I64_STR_BUF_SIZE>(value, "%" PRId64);
     }
 
     std::string __toString__(uint8_t value) {
-        char buf[8];
-        sprintf(buf, "%" PRIu8, value);
-        return buf;
+        return Flog_toString<uint8_t, I8_STR_BUF_SIZE>(value, "%" PRIu8);
     }
 
     std::string __toString__(uint16_t value) {
-        char buf[16];
-        sprintf(buf, "%" PRIu16, value);
-        return buf;
+        return Flog_toString<uint16_t, I16_STR_BUF_SIZE>(value, "%" PRIu16);
     }
 
     std::string __toString__(uint32_t value) {
-        char buf[32];
-        sprintf(buf, "%" PRIu32, value);
-        return buf;
+        return Flog_toString<uint32_t, I32_STR_BUF_SIZE>(value, "%" PRIu32);
     }
 
     std::string __toString__(uint64_t value) {
-        char buf[64];
-        sprintf(buf, "%" PRIu64, value);
-        return buf;
+        return Flog_toString<uint64_t, I64_STR_BUF_SIZE>(value, "%" PRIu64);
     }
 
     std::string __toString__(float value) {
-        char buf[256];
-        sprintf(buf, "%f", value);
-        return buf;
+        return Flog_toString<float, FLT_STR_BUF_SIZE>(value, "%g");
     }
 
     std::string __toString__(double value) {
-        char buf[256];
-        sprintf(buf, "%lf", value);
-        return buf;
+        return Flog_toString<double, DBL_STR_BUF_SIZE>(value, "%lg");
     }
 
     std::string __toString__(const char* value) {
@@ -252,8 +242,7 @@ namespace flog {
     }
 
     std::string __toString__(const void* value) {
-        char buf[32];
-        sprintf(buf, "0x%p", value);
-        return buf;
+        // +2 for 0x prefix.
+        return Flog_toString<const void*, PTR_STR_BUF_SIZE + 2>(value, "0x%p");
     }
 }

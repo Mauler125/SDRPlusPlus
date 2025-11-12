@@ -1,6 +1,7 @@
 #include <gui/widgets/volume_meter.h>
 #include <algorithm>
 #include <gui/style.h>
+#include <base_types.h>
 
 #ifndef IMGUI_DEFINE_MATH_OPERATORS
 #define IMGUI_DEFINE_MATH_OPERATORS
@@ -26,7 +27,7 @@ namespace ImGui {
         val = std::clamp<float>(val, 0, 100);
         float ratio = size.x / 90;
         float it = size.x / 9;
-        char buf[32];
+        char buf[I32_STR_BUF_SIZE];
 
         window->DrawList->AddRectFilled(min + ImVec2(0, 1), min + ImVec2(roundf((float)val * ratio), 10 * style::uiScale), IM_COL32(0, 136, 255, 255));
         window->DrawList->AddLine(min, min + ImVec2(0, (10.0f * style::uiScale) - 1), text, style::uiScale);
@@ -34,9 +35,9 @@ namespace ImGui {
 
         for (int i = 0; i < 10; i++) {
             window->DrawList->AddLine(min + ImVec2(roundf((float)i * it), (10.0f * style::uiScale) - 1), min + ImVec2(roundf((float)i * it), (15.0f * style::uiScale) - 1), text, style::uiScale);
-            sprintf(buf, "%d", i * 10);
-            ImVec2 sz = ImGui::CalcTextSize(buf);
-            window->DrawList->AddText(min + ImVec2(roundf(((float)i * it) - (sz.x / 2.0)) + 1, 16.0f * style::uiScale), text, buf);
+            const int len = std::clamp(sprintf(buf, "%d", i * 10), 0, (int)sizeof(buf));
+            ImVec2 sz = ImGui::CalcTextSize(buf, &buf[len]);
+            window->DrawList->AddText(min + ImVec2(roundf(((float)i * it) - (sz.x / 2.0)) + 1, 16.0f * style::uiScale), text, buf, &buf[len]);
         }
     }
 }

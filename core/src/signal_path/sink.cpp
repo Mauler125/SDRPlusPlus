@@ -353,7 +353,7 @@ void SinkManager::showMenu() {
     }
 
     for (auto const& [name, stream] : streams) {
-        ImGui::SetCursorPosX((menuWidth / 2.0f) - (ImGui::CalcTextSize(name.c_str()).x / 2.0f));
+        ImGui::SetCursorPosX((menuWidth / 2.0f) - (ImGui::CalcTextSize(name.c_str(), &name[name.length()]).x / 2.0f));
         ImGui::Text("%s", name.c_str());
 
         ImGui::SetNextItemWidth(menuWidth);

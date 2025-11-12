@@ -46,20 +46,23 @@ inline double findBestRange(double bandwidth, int maxSteps) {
     return 50000000.0;
 }
 
-inline void printAndScale(double freq, char* buf) {
+inline int printAndScale(double freq, char* buf, const int bufLen) {
     double freqAbs = fabs(freq);
+    int ret = 0;
     if (freqAbs < 1000) {
-        sprintf(buf, "%.6g", freq);
+        ret = sprintf(buf, "%.6g", freq);
     }
     else if (freqAbs < 1000000) {
-        sprintf(buf, "%.6lgK", freq / 1000.0);
+        ret = sprintf(buf, "%.6lgK", freq / 1000.0);
     }
     else if (freqAbs < 1000000000) {
-        sprintf(buf, "%.6lgM", freq / 1000000.0);
+        ret = sprintf(buf, "%.6lgM", freq / 1000000.0);
     }
     else if (freqAbs < 1000000000000) {
-        sprintf(buf, "%.6lgG", freq / 1000000000.0);
+        ret = sprintf(buf, "%.6lgG", freq / 1000000000.0);
     }
+
+    return std::clamp(ret, 0, bufLen);
 }
 
 inline void doZoom(int offset, int width, int inSize, int outSize, float* in, float* out) {
@@ -123,7 +126,8 @@ namespace ImGui {
         float startLine = floorf(fftMax / vRange) * vRange;
         float vertRange = fftMax - fftMin;
         float scaleFactor = fftHeight / vertRange;
-        char buf[100];
+        char buf[128];
+        const int bufLen = (int)sizeof(buf);
 
         ImU32 trace = ImGui::GetColorU32(ImGuiCol_PlotLines);
         ImU32 traceHold = ImGui::ColorConvertFloat4ToU32(gui::themeManager.fftHoldColor);
@@ -137,9 +141,9 @@ namespace ImGui {
             window->DrawList->AddLine(ImVec2(fftAreaMin.x, roundf(yPos)),
                                       ImVec2(fftAreaMax.x, roundf(yPos)),
                                       IM_COL32(50, 50, 50, 255), style::uiScale);
-            sprintf(buf, "%d", (int)line);
-            ImVec2 txtSz = ImGui::CalcTextSize(buf);
-            window->DrawList->AddText(ImVec2(fftAreaMin.x - txtSz.x - textVOffset, roundf(yPos - (txtSz.y / 2.0))), text, buf);
+            const int textLen = std::clamp(sprintf(buf, "%d", (int)line), 0, bufLen);
+            ImVec2 txtSz = ImGui::CalcTextSize(buf, &buf[textLen]);
+            window->DrawList->AddText(ImVec2(fftAreaMin.x - txtSz.x - textVOffset, roundf(yPos - (txtSz.y / 2.0))), text, buf, &buf[textLen]);
         }
 
         // Horizontal scale
@@ -154,9 +158,9 @@ namespace ImGui {
             window->DrawList->AddLine(ImVec2(roundf(xPos), fftAreaMax.y),
                                       ImVec2(roundf(xPos), fftAreaMax.y + scaleVOfsset),
                                       text, style::uiScale);
-            printAndScale(freq, buf);
-            ImVec2 txtSz = ImGui::CalcTextSize(buf);
-            window->DrawList->AddText(ImVec2(roundf(xPos - (txtSz.x / 2.0)), fftAreaMax.y + txtSz.y), text, buf);
+            const int textLen = printAndScale(freq, buf, bufLen);
+            ImVec2 txtSz = ImGui::CalcTextSize(buf, &buf[textLen]);
+            window->DrawList->AddText(ImVec2(roundf(xPos - (txtSz.x / 2.0)), fftAreaMax.y + txtSz.y), text, buf, &buf[textLen]);
         }
 
         // Data
@@ -479,15 +483,16 @@ namespace ImGui {
             for (auto const& [name, _vfo] : vfos) {
                 if (ImGui::IsMouseHoveringRect(_vfo->rectMin, _vfo->rectMax) || ImGui::IsMouseHoveringRect(_vfo->wfRectMin, _vfo->wfRectMax)) {
                     char buf[128];
+                    const int bufLen = (int)sizeof(buf);
                     ImGui::BeginTooltip();
 
-                    ImGui::TextUnformatted(name.c_str());
+                    ImGui::TextUnformatted(name.c_str(), &name[name.length()]);
 
                     if (ImGui::GetIO().KeyCtrl) {
                         ImGui::Separator();
-                        printAndScale(_vfo->generalOffset + centerFreq, buf);
+                        printAndScale(_vfo->generalOffset + centerFreq, buf, bufLen);
                         ImGui::Text("Frequency: %sHz", buf);
-                        printAndScale(_vfo->bandwidth, buf);
+                        printAndScale(_vfo->bandwidth, buf, bufLen);
                         ImGui::Text("Bandwidth: %sHz", buf);
                         ImGui::Text("Bandwidth Locked: %s", _vfo->bandwidthLocked ? "Yes" : "No");
 
@@ -667,8 +672,9 @@ namespace ImGui {
             bPos = fftAreaMin.x + ((end - lowerFreq) * horizScale);
             cPos = fftAreaMin.x + ((center - lowerFreq) * horizScale);
             width = bPos - aPos;
-            txtSz = ImGui::CalcTextSize(bandplan->bands[i].name.c_str());
-            if (bandplan::colorTable.find(bandplan->bands[i].type.c_str()) != bandplan::colorTable.end()) {
+            const std::string& bandName = bandplan->bands[i].name;
+            txtSz = ImGui::CalcTextSize(bandName.c_str(), &bandName[bandName.length()]);
+            if (bandplan::colorTable.find(bandplan->bands[i].type) != bandplan::colorTable.end()) {
                 color = bandplan::colorTable[bandplan->bands[i].type].colorValue;
                 colorTrans = bandplan::colorTable[bandplan->bands[i].type].transColorValue;
             }
@@ -696,7 +702,7 @@ namespace ImGui {
             }
             if (txtSz.x <= width) {
                 window->DrawList->AddText(ImVec2(cPos - (txtSz.x / 2.0), bpBottom - (height / 2.0f) - (txtSz.y / 2.0f)),
-                                          IM_COL32(255, 255, 255, 255), bandplan->bands[i].name.c_str());
+                                          IM_COL32(255, 255, 255, 255), bandName.c_str(), &bandName[bandName.length()]);
             }
         }
     }
