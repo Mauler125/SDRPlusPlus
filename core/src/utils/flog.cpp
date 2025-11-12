@@ -144,8 +144,15 @@ namespace flog {
         // Get time
         auto now = std::chrono::system_clock::now();
         auto nowt = std::chrono::system_clock::to_time_t(now);
-        auto nowc = std::localtime(&nowt); // TODO: This is not threadsafe
 
+        // We used to use std::localtime, but this isn't thread safe.
+        // This should cover all platforms we support (hopefully!).
+        std::tm nowc;
+#ifdef _WIN32
+        localtime_s(&nowc, &nowt);
+#else
+        localtime_r(&nowt, &nowc);
+#endif
         // Write to output
         {
             std::lock_guard<std::mutex> lck(outMtx);
@@ -157,7 +164,7 @@ namespace flog {
 
             // Print beginning of log line
             SetConsoleTextAttribute(conHndl, COLOR_WHITE);
-            fprintf(outStream, "[%02d/%02d/%02d %02d:%02d:%02d.%03d] [", nowc->tm_mday, nowc->tm_mon + 1, nowc->tm_year + 1900, nowc->tm_hour, nowc->tm_min, nowc->tm_sec, 0);
+            fprintf(outStream, "[%02d/%02d/%02d %02d:%02d:%02d.%03d] [", nowc.tm_mday, nowc.tm_mon + 1, nowc.tm_year + 1900, nowc.tm_hour, nowc.tm_min, nowc.tm_sec, 0);
 
             // Switch color to the log color, print log type and 
             SetConsoleTextAttribute(conHndl, TYPE_COLORS[type]);
