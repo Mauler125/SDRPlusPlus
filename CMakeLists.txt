@@ -394,11 +394,11 @@ configure_file(${CMAKE_SOURCE_DIR}/sdrpp_module.cmake ${CMAKE_CURRENT_BINARY_DIR
 
 # Install directives
 install(TARGETS sdrpp DESTINATION bin)
-install(DIRECTORY ${CMAKE_SOURCE_DIR}/root/res/bandplans DESTINATION share/sdrpp)
-install(DIRECTORY ${CMAKE_SOURCE_DIR}/root/res/colormaps DESTINATION share/sdrpp)
-install(DIRECTORY ${CMAKE_SOURCE_DIR}/root/res/fonts DESTINATION share/sdrpp)
-install(DIRECTORY ${CMAKE_SOURCE_DIR}/root/res/icons DESTINATION share/sdrpp)
-install(DIRECTORY ${CMAKE_SOURCE_DIR}/root/res/themes DESTINATION share/sdrpp)
+install(DIRECTORY ${CMAKE_SOURCE_DIR}/root/resources/bandplans DESTINATION share/sdrpp)
+install(DIRECTORY ${CMAKE_SOURCE_DIR}/root/resources/colormaps DESTINATION share/sdrpp)
+install(DIRECTORY ${CMAKE_SOURCE_DIR}/root/resources/fonts DESTINATION share/sdrpp)
+install(DIRECTORY ${CMAKE_SOURCE_DIR}/root/resources/icons DESTINATION share/sdrpp)
+install(DIRECTORY ${CMAKE_SOURCE_DIR}/root/resources/themes DESTINATION share/sdrpp)
 configure_file(${CMAKE_SOURCE_DIR}/sdrpp.desktop ${CMAKE_CURRENT_BINARY_DIR}/sdrpp.desktop @ONLY)
 
 if (${CMAKE_SYSTEM_NAME} MATCHES "Linux")
