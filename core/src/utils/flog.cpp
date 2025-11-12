@@ -159,7 +159,7 @@ namespace flog {
 
             // Print beginning of log line
             SetConsoleTextAttribute(conHndl, COLOR_WHITE);
-            fprintf(outStream, "[%02d/%02d/%02d %02d:%02d:%02d.%03d] [", nowc.tm_mday, nowc.tm_mon + 1, nowc.tm_year + 1900, nowc.tm_hour, nowc.tm_min, nowc.tm_sec, 0);
+            fprintf(outStream, "[%02d/%02d/%02d %02d:%02d:%02d.%03d] [", nowc->tm_mday, nowc->tm_mon + 1, nowc->tm_year + 1900, nowc->tm_hour, nowc->tm_min, nowc->tm_sec, 0);
 
             // Switch color to the log color, print log type and 
             SetConsoleTextAttribute(conHndl, TYPE_COLORS[type]);
