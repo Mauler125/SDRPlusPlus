@@ -50,7 +50,7 @@ namespace module_manager_menu {
                 ImGui::TableNextRow();
 
                 ImGui::TableSetColumnIndex(0);
-                ImGui::TextUnformatted(name.c_str());
+                ImGui::TextUnformatted(name.c_str(), &name[name.length()]);
 
                 ImGui::TableSetColumnIndex(1);
                 ImGui::TextUnformatted(inst.module.info->name);
@@ -76,7 +76,7 @@ namespace module_manager_menu {
         }
 
         ImGui::GenericDialog("module_mgr_error_", errorOpen, GENERIC_DIALOG_BUTTONS_OK, []() {
-            ImGui::TextUnformatted(errorMessage.c_str());
+            ImGui::TextUnformatted(errorMessage.c_str(), &errorMessage[errorMessage.length()]);
         });
 
         // Add module row with slightly different settings
