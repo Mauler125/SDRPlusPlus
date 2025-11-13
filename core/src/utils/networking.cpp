@@ -8,6 +8,15 @@ namespace net {
 #ifdef _WIN32
     extern bool winsock_init = false;
 #endif
+    void closeSocket(Socket sock) {
+#ifdef _WIN32
+        shutdown(sock, SD_BOTH);
+        closesocket(sock);
+#else
+        shutdown(sock, SHUT_RDWR);
+        close(sock);
+#endif
+    }
 
     ConnClass::ConnClass(Socket sock, struct sockaddr_in6 raddr, bool udp) {
         _sock = sock;
@@ -36,12 +45,7 @@ namespace net {
         writeQueueCnd.notify_all();
 
         if (connectionOpen) {
-#ifdef _WIN32
-            closesocket(_sock);
-#else
-            ::shutdown(_sock, SHUT_RDWR);
-            ::close(_sock);
-#endif
+            net::closeSocket(_sock);
         }
 
         // Wait for the theads to terminate
@@ -281,12 +285,7 @@ namespace net {
         acceptQueueCnd.notify_all();
 
         if (listening) {
-#ifdef _WIN32
-            closesocket(sock);
-#else
-            ::shutdown(sock, SHUT_RDWR);
-            ::close(sock);
-#endif
+            net::closeSocket(sock);
         }
 
         if (acceptWorkerThread.joinable()) { acceptWorkerThread.join(); }
@@ -365,14 +364,14 @@ namespace net {
 
         int opt = 0; // Disable IPv6 only mode (support IPv4 as well)
         if (setsockopt(sock, IPPROTO_IPV6, IPV6_V6ONLY, (char*)&opt, sizeof(opt)) < 0) {
-            closesocket(sock);
+            net::closeSocket(sock);
             throw std::runtime_error("Could not enable dual stack on socket");
             return NULL;
         }
 
         addrinfo* result = nullptr;
         if (getAddrInfo(host, std::to_string(port), &result) != 0) {
-            closesocket(sock);
+            net::closeSocket(sock);
             throw std::runtime_error("Could not resolve host name");
             return false;
         }
@@ -389,7 +388,7 @@ namespace net {
 
         // Connect to host
         if (::connect(sock, (struct sockaddr*)&addr, sizeof(addr)) < 0) {
-            closesocket(sock);
+            net::closeSocket(sock);
             throw std::runtime_error("Could not connect to host");
             return NULL;
         }
@@ -427,7 +426,7 @@ namespace net {
         // so we use it only for non-Windows systems
         int enable = 1;
         if (setsockopt(listenSock, SOL_SOCKET, SO_REUSEADDR, &enable, sizeof(int)) < 0) {
-            closesocket(listenSock);
+            net::closeSocket(listenSock);
             throw std::runtime_error("Could not enable port reuse on socket");
             return NULL;
         }
@@ -435,14 +434,14 @@ namespace net {
 
         int opt = 0; // Disable IPv6 only mode (support IPv4 as well)
         if (setsockopt(listenSock, IPPROTO_IPV6, IPV6_V6ONLY, (char*)&opt, sizeof(opt)) < 0) {
-            closesocket(listenSock);
+            net::closeSocket(listenSock);
             throw std::runtime_error("Could not enable dual stack on socket");
             return NULL;
         }
 
         addrinfo* result = nullptr; // Get address from hostname/ip
         if (getAddrInfo(host, std::to_string(port), &result) != 0) {
-            closesocket(listenSock);
+            net::closeSocket(listenSock);
             throw std::runtime_error("Could not resolve host name");
             return false;
         }
@@ -459,14 +458,14 @@ namespace net {
 
         // Bind socket
         if (bind(listenSock, (struct sockaddr*)&addr, sizeof(addr)) < 0) {
-            closesocket(listenSock);
+            net::closeSocket(listenSock);
             throw std::runtime_error("Could not bind socket");
             return NULL;
         }
 
         // Listen
         if (::listen(listenSock, SOMAXCONN) != 0) {
-            closesocket(listenSock);
+            net::closeSocket(listenSock);
             throw std::runtime_error("Could not listen");
             return NULL;
         }
@@ -499,7 +498,7 @@ namespace net {
 
         int opt = 0; // Disable IPv6 only mode (support IPv4 as well)
         if (setsockopt(sock, IPPROTO_IPV6, IPV6_V6ONLY, (char*)&opt, sizeof(opt)) < 0) {
-            closesocket(sock);
+            net::closeSocket(sock);
             throw std::runtime_error("Could not enable dual stack on socket");
             return NULL;
         }
@@ -507,7 +506,7 @@ namespace net {
         // Get address from local hostname/ip
         addrinfo* resultLocal = nullptr;
         if (getAddrInfo(host, std::to_string(port), &resultLocal) != 0) {
-            closesocket(sock);
+            net::closeSocket(sock);
             throw std::runtime_error("Could not resolve host name");
             return false;
         }
@@ -525,7 +524,7 @@ namespace net {
         // Get address from remote hostname/ip
         addrinfo* resultRemote = nullptr;
         if (getAddrInfo(remoteHost, std::to_string(remotePort), &resultRemote) != 0) {
-            closesocket(sock);
+            net::closeSocket(sock);
             throw std::runtime_error("Could not resolve host name");
             return false;
         }
@@ -544,7 +543,7 @@ namespace net {
         if (bindSocket) {
             int err = bind(sock, (struct sockaddr*)&addr, sizeof(addr));
             if (err < 0) {
-                closesocket(sock);
+                net::closeSocket(sock);
                 throw std::runtime_error("Could not bind socket");
                 return NULL;
             }
