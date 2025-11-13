@@ -9,7 +9,7 @@ namespace net {
     extern bool winsock_init = false;
 #endif
 
-    ConnClass::ConnClass(Socket sock, struct sockaddr_in raddr, bool udp) {
+    ConnClass::ConnClass(Socket sock, struct sockaddr_in6 raddr, bool udp) {
         _sock = sock;
         _udp = udp;
         remoteAddr = raddr;
@@ -327,6 +327,16 @@ namespace net {
         }
     }
 
+    static int getAddrInfo(const std::string& hostName, const std::string& serviceName, addrinfo** out) {
+
+        addrinfo hints{};
+
+        hints.ai_family = AF_INET6;
+        hints.ai_flags = AI_ALL | AI_V4MAPPED;
+
+        const int result = getaddrinfo(hostName.c_str(), serviceName.c_str(), &hints, out);
+        return result;
+    }
 
     Conn connect(std::string host, uint16_t port) {
         Socket sock;
@@ -347,28 +357,39 @@ namespace net {
 #endif
 
         // Create a socket
-        sock = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+        sock = socket(AF_INET6, SOCK_STREAM, IPPROTO_TCP);
         if (sock < 0) {
             throw std::runtime_error("Could not create socket");
             return NULL;
         }
 
-        // Get address from hostname/ip
-        hostent* remoteHost = gethostbyname(host.c_str());
-        if (remoteHost == NULL || remoteHost->h_addr_list[0] == NULL) {
-            throw std::runtime_error("Could get address from host");
+        int opt = 0; // Disable IPv6 only mode (support IPv4 as well)
+        if (setsockopt(sock, IPPROTO_IPV6, IPV6_V6ONLY, (char*)&opt, sizeof(opt)) < 0) {
+            closesocket(sock);
+            throw std::runtime_error("Could not enable dual stack on socket");
             return NULL;
         }
-        uint32_t* naddr = (uint32_t*)remoteHost->h_addr_list[0];
+
+        addrinfo* result = nullptr;
+        if (getAddrInfo(host, std::to_string(port), &result) != 0) {
+            closesocket(sock);
+            throw std::runtime_error("Could not resolve host name");
+            return false;
+        }
+
+        struct sockaddr_in6* const psock = (sockaddr_in6*)(result->ai_addr);
 
         // Create host address
-        struct sockaddr_in addr;
-        addr.sin_addr.s_addr = *naddr;
-        addr.sin_family = AF_INET;
-        addr.sin_port = htons(port);
+        struct sockaddr_in6 addr;
+        addr.sin6_addr = psock->sin6_addr;
+        addr.sin6_family = AF_INET6;
+        addr.sin6_port = htons(port);
+
+        freeaddrinfo(result);
 
         // Connect to host
         if (::connect(sock, (struct sockaddr*)&addr, sizeof(addr)) < 0) {
+            closesocket(sock);
             throw std::runtime_error("Could not connect to host");
             return NULL;
         }
@@ -377,8 +398,6 @@ namespace net {
     }
 
     Listener listen(std::string host, uint16_t port) {
-        Socket listenSock;
-
 #ifdef _WIN32
         // Initialize WinSock2
         if (!winsock_init) {
@@ -395,7 +414,7 @@ namespace net {
 #endif
 
         // Create a socket
-        listenSock = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+        Socket listenSock = socket(AF_INET6, SOCK_STREAM, IPPROTO_TCP);
         if (listenSock < 0) {
             throw std::runtime_error("Could not create socket");
             return NULL;
@@ -408,33 +427,46 @@ namespace net {
         // so we use it only for non-Windows systems
         int enable = 1;
         if (setsockopt(listenSock, SOL_SOCKET, SO_REUSEADDR, &enable, sizeof(int)) < 0) {
-            throw std::runtime_error("Could not configure socket");
+            closesocket(listenSock);
+            throw std::runtime_error("Could not enable port reuse on socket");
             return NULL;
         }
 #endif
 
-        // Get address from hostname/ip
-        hostent* remoteHost = gethostbyname(host.c_str());
-        if (remoteHost == NULL || remoteHost->h_addr_list[0] == NULL) {
-            throw std::runtime_error("Could get address from host");
+        int opt = 0; // Disable IPv6 only mode (support IPv4 as well)
+        if (setsockopt(listenSock, IPPROTO_IPV6, IPV6_V6ONLY, (char*)&opt, sizeof(opt)) < 0) {
+            closesocket(listenSock);
+            throw std::runtime_error("Could not enable dual stack on socket");
             return NULL;
         }
-        uint32_t* naddr = (uint32_t*)remoteHost->h_addr_list[0];
+
+        addrinfo* result = nullptr; // Get address from hostname/ip
+        if (getAddrInfo(host, std::to_string(port), &result) != 0) {
+            closesocket(listenSock);
+            throw std::runtime_error("Could not resolve host name");
+            return false;
+        }
+
+        struct sockaddr_in6* const psock = (sockaddr_in6*)(result->ai_addr);
 
         // Create host address
-        struct sockaddr_in addr;
-        addr.sin_addr.s_addr = *naddr;
-        addr.sin_family = AF_INET;
-        addr.sin_port = htons(port);
+        struct sockaddr_in6 addr;
+        addr.sin6_addr = psock->sin6_addr;
+        addr.sin6_family = AF_INET6;
+        addr.sin6_port = htons(port);
+
+        freeaddrinfo(result);
 
         // Bind socket
         if (bind(listenSock, (struct sockaddr*)&addr, sizeof(addr)) < 0) {
+            closesocket(listenSock);
             throw std::runtime_error("Could not bind socket");
             return NULL;
         }
 
         // Listen
         if (::listen(listenSock, SOMAXCONN) != 0) {
+            closesocket(listenSock);
             throw std::runtime_error("Could not listen");
             return NULL;
         }
@@ -443,8 +475,6 @@ namespace net {
     }
 
     Conn openUDP(std::string host, uint16_t port, std::string remoteHost, uint16_t remotePort, bool bindSocket) {
-        Socket sock;
-
 #ifdef _WIN32
         // Initialize WinSock2
         if (!winsock_init) {
@@ -461,43 +491,60 @@ namespace net {
 #endif
 
         // Create a socket
-        sock = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
+        Socket sock = socket(AF_INET6, SOCK_DGRAM, IPPROTO_UDP);
         if (sock < 0) {
             throw std::runtime_error("Could not create socket");
             return NULL;
         }
 
-        // Get address from local hostname/ip
-        hostent* _host = gethostbyname(host.c_str());
-        if (_host == NULL || _host->h_addr_list[0] == NULL) {
-            throw std::runtime_error("Could get address from host");
+        int opt = 0; // Disable IPv6 only mode (support IPv4 as well)
+        if (setsockopt(sock, IPPROTO_IPV6, IPV6_V6ONLY, (char*)&opt, sizeof(opt)) < 0) {
+            closesocket(sock);
+            throw std::runtime_error("Could not enable dual stack on socket");
             return NULL;
         }
 
-        // Get address from remote hostname/ip
-        hostent* _remoteHost = gethostbyname(remoteHost.c_str());
-        if (_remoteHost == NULL || _remoteHost->h_addr_list[0] == NULL) {
-            throw std::runtime_error("Could get address from host");
-            return NULL;
+        // Get address from local hostname/ip
+        addrinfo* resultLocal = nullptr;
+        if (getAddrInfo(host, std::to_string(port), &resultLocal) != 0) {
+            closesocket(sock);
+            throw std::runtime_error("Could not resolve host name");
+            return false;
         }
-        uint32_t* rnaddr = (uint32_t*)_remoteHost->h_addr_list[0];
+
+        struct sockaddr_in6* const psockLocal = (sockaddr_in6*)(resultLocal->ai_addr);
 
         // Create host address
-        struct sockaddr_in addr;
-        addr.sin_addr.s_addr = INADDR_ANY; //*naddr;
-        addr.sin_family = AF_INET;
-        addr.sin_port = htons(port);
+        struct sockaddr_in6 addr;
+        addr.sin6_addr = psockLocal->sin6_addr;
+        addr.sin6_family = AF_INET6;
+        addr.sin6_port = htons(port);
+
+        freeaddrinfo(resultLocal);
+
+        // Get address from remote hostname/ip
+        addrinfo* resultRemote = nullptr;
+        if (getAddrInfo(remoteHost, std::to_string(remotePort), &resultRemote) != 0) {
+            closesocket(sock);
+            throw std::runtime_error("Could not resolve host name");
+            return false;
+        }
+
+        struct sockaddr_in6* const psockRemote = (sockaddr_in6*)(resultRemote->ai_addr);
 
         // Create remote host address
-        struct sockaddr_in raddr;
-        raddr.sin_addr.s_addr = *rnaddr;
-        raddr.sin_family = AF_INET;
-        raddr.sin_port = htons(remotePort);
+        struct sockaddr_in6 raddr;
+        raddr.sin6_addr = psockRemote->sin6_addr;
+        raddr.sin6_family = AF_INET6;
+        raddr.sin6_port = htons(remotePort);
+
+        freeaddrinfo(resultRemote);
 
         // Bind socket
         if (bindSocket) {
             int err = bind(sock, (struct sockaddr*)&addr, sizeof(addr));
             if (err < 0) {
+                closesocket(sock);
                 throw std::runtime_error("Could not bind socket");
                 return NULL;
             }

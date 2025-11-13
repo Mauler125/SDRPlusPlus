@@ -2,11 +2,16 @@
 #include <string.h>
 #include <codecvt>
 #include <stdexcept>
+#include <utils/flog.h>
+#include <utils/str_tools.h>
 
 #ifdef _WIN32
-#define WOULD_BLOCK (WSAGetLastError() == WSAEWOULDBLOCK)
+#define NET_ERROR() WSAGetLastError()
+#define WOULD_BLOCK (NET_ERROR() == WSAEWOULDBLOCK)
 #else
-#define WOULD_BLOCK (errno == EWOULDBLOCK)
+#include <arpa/inet.h>
+#define NET_ERROR() errno
+#define WOULD_BLOCK (NET_ERROR() == EWOULDBLOCK)
 #endif
 
 namespace net {
@@ -28,13 +33,6 @@ namespace net {
         signal(SIGPIPE, SIG_IGN);
 #endif
         _init = true;
-    }
-
-    bool queryHost(uint32_t* addr, std::string host) {
-        hostent* ent = gethostbyname(host.c_str());
-        if (!ent || !ent->h_addr_list[0]) { return false; }
-        *addr = *(uint32_t*)ent->h_addr_list[0];
-        return true;
     }
 
     void closeSocket(SockHandle_t sock) {
@@ -59,54 +57,266 @@ namespace net {
     // === Address functions ===
 
     Address::Address() {
-        memset(&addr, 0, sizeof(addr));
+        clear();
+    }
+
+    Address::Address(const std::string& host) {
+        // Initialize WSA if needed
+        init();
+        if (!setFromStr(host, true)) {
+            throw std::runtime_error("Address initialization failed");
+        }
     }
 
     Address::Address(const std::string& host, int port) {
         // Initialize WSA if needed
         init();
-        
-        // Lookup host
-        hostent* ent = gethostbyname(host.c_str());
-        if (!ent || !ent->h_addr_list[0]) {
-            throw std::runtime_error("Unknown host");
+        if (setFromStr("[" + host + "]:" + std::to_string(port), true)) {
+            throw std::runtime_error("Address initialization failed");
         }
-        
-        // Build address
-        memset(&addr, 0, sizeof(addr));
-        addr.sin_family = AF_INET;
-        addr.sin_addr.s_addr = *(uint32_t*)ent->h_addr_list[0];
-        addr.sin_port = htons(port);
     }
 
-    Address::Address(IP_t ip, int port) {
-        memset(&addr, 0, sizeof(addr));
-        addr.sin_family = AF_INET;
-        addr.sin_addr.s_addr = htonl(ip);
-        addr.sin_port = htons(port);
+    Address::Address(const IP_t& ip, int port) {
+        clear();
+        addr.sin6_family = AF_INET6;
+        addr.sin6_addr = ip.addr;
+        addr.sin6_port = htons(port);
     }
 
-    std::string Address::getIPStr() const {
-        char buf[128];
-        IP_t ip = getIP();
-        sprintf(buf, "%d.%d.%d.%d", (ip >> 24) & 0xFF, (ip >> 16) & 0xFF, (ip >> 8) & 0xFF, ip & 0xFF);
-        return buf;
+    void Address::clear() {
+        memset(&addr, 0, sizeof(addr));
+    }
+
+    bool isIPv4Syntax(const char* const address) {
+        if (!*address) {
+            return true;
+        }
+
+        for (const uint8_t* p = (const uint8_t*)address; const uint8_t c = *p; ++p) {
+            if (c >= '0' && c <= '9') {
+                continue;
+            }
+            if (c == '.') {
+                continue;
+            }
+            return false;
+        }
+
+        return true;
+    }
+
+    bool isIPv6Syntax(const char* const address) {
+        if (!*address) {
+            return true;
+        }
+
+        // Only allow non-hexadecimal characters if we encountered
+        // a zone index delimiter. It can only contain 1. See ref:
+        // https://datatracker.ietf.org/doc/html/rfc4007
+        bool inZoneId = false;
+        uint8_t prev = '\0';
+
+        for (const uint8_t* p = (const uint8_t*)address; const uint8_t c = *p; ++p) {
+            prev = c;
+
+            if (c == ':' || c == '.') continue;
+            if (!inZoneId && c == '%') {
+                inZoneId = true;
+                continue;
+            }
+            if (c >= '0' && c <= '9') {
+                continue;
+            }
+            if (c >= 'A' && c <= 'F') {
+                continue;
+            }
+            if (c >= 'a' && c <= 'f') {
+                continue;
+            }
+
+            if (inZoneId) {
+                if (c == '/' || c == '_' || c == '-') {
+                    continue;
+                }
+                if (c >= 'A' && c <= 'Z') {
+                    continue;
+                }
+                if (c >= 'a' && c <= 'z') {
+                    continue;
+                }
+            }
+
+            return false;
+        }
+
+        // Trailing delim isn't valid, must have a zone id!
+        return prev != '%';
+    }
+
+    bool Address::setFromStr(const std::string& inStr, const bool useDNS) {
+        clear();
+
+        std::string copy = inStr;
+        const size_t copyLen = copy.length();
+
+        char* pCopy = &copy[0];
+        bool hasBrackets = false;
+
+        if (copy[0] == '[') // Skip bracket.
+        {
+            pCopy = &copy[1];
+            hasBrackets = true;
+        }
+
+        char* snameSearchStart = pCopy;
+
+        // Default it to false if we have brackets, and look
+        // for the closing bracket. If we don't find the ']'
+        // then the address string is incorrect, and we have
+        // to assume there is no port number attached! If we
+        // don't have brackets at all, always perform search!
+        bool doServiceNameSearch = !hasBrackets;
+
+        if (hasBrackets) {
+            char* const bracketEnd = strchr(pCopy, ']');
+
+            if (bracketEnd) {
+                *bracketEnd = '\0'; // Remove the last bracket.
+                snameSearchStart = &bracketEnd[1];
+
+                doServiceNameSearch = true;
+            }
+        }
+
+        const char* serviceName = nullptr;
+
+        if (doServiceNameSearch) {
+            char* const pchColon = strrchr(snameSearchStart, ':');
+
+            // nb(kawe): only allow parsing of sname if the colon search points
+            // to the same char in the buffer from both directions. If the user
+            // provides "::FFFF:127.0.0.1:37015", do not search here because
+            // it is not guaranteed that the reverse search of ':' will point
+            // outside the address token (because forward search won't match
+            // reverse search). If the user passed 127.0.0.1:37015, the search
+            // will succeed. Incomplete addresses (i.e.[::FFFF:127.0.0.1:37015)
+            // will also be dropped by the `doServiceNameSearch` condition above.
+            // `snameSearchStart` will point to the port string "37015" in the
+            // string [::FFFF:127.0.0.1]:37015 as the ']' and ':' gets trimmed.
+            if (pchColon && strchr(snameSearchStart, ':') == pchColon) {
+                pchColon[0] = '\0'; // Set the port.
+                serviceName = &pchColon[1];
+
+                if (utils::isAllDigit(serviceName)) // Service name is a port number.
+                {
+                    char* endPtr = nullptr;
+                    const int32_t portNum = strtol(serviceName, &endPtr, 10);
+
+                    if (*endPtr != '\0') {
+                        flog::error("Short parse of port number in address '{0}'; consumed {1} bytes of {2} total!\n",
+                                    inStr, (endPtr - serviceName), (&copy[copyLen] - serviceName));
+
+                        return false;
+                    }
+
+                    if (portNum < 0 || portNum > 65535) {
+                        flog::error("Invalid port number in address '{0}'; {1} lies outside range [{2},{3}]!\n", inStr, portNum, 0, 65535);
+                        return false;
+                    }
+
+                    setPort(portNum);
+                }
+            }
+        }
+
+        // nb(kawe): at this stage, `pCopy` will be "127.0.0.1" (IPv4), or
+        // "::FFFF:127.0.0.1" (IPv6). Scan for ':' to determine if we have IPv6.
+        const bool ipv6Format = strchr(pCopy, ':') != nullptr;
+        bool addrConvFailed = false;
+
+        if (ipv6Format && isIPv6Syntax(pCopy)) {
+            if (inet_pton(AF_INET6, pCopy, &addr.sin6_addr) == 1) {
+                return true;
+            }
+
+            addrConvFailed = true;
+        }
+        else if (isIPv4Syntax(pCopy)) {
+            char newAddressV4[128];
+            snprintf(newAddressV4, sizeof(newAddressV4), "::FFFF:%s", pCopy);
+
+            if (inet_pton(AF_INET6, newAddressV4, &addr.sin6_addr) == 1) {
+                return true;
+            }
+
+            addrConvFailed = true;
+        }
+
+        // Perform DNS lookup on parsed result.
+        if (useDNS) {
+            addrinfo hints{};
+
+            hints.ai_family = AF_INET6;
+            hints.ai_flags = AI_ALL | AI_V4MAPPED;
+
+            addrinfo* ppResult = nullptr;
+            const int result = getaddrinfo(pCopy, serviceName, &hints, &ppResult);
+
+            if (result != 0) {
+                flog::error("Failed to resolve host name '{0}'; [{1}]\n", pCopy, gai_strerror(result));
+                return false;
+            }
+
+            struct sockaddr_in6* const sock = (sockaddr_in6*)ppResult->ai_addr;
+            setIP(sock->sin6_addr);
+
+            freeaddrinfo(ppResult);
+            return true;
+        }
+        else if (addrConvFailed) {
+            flog::error("Failed to convert address '{0}'; [{1}]\n", pCopy, NET_ERROR());
+        }
+
+        return false;
+    }
+
+    std::string Address::toStr(const bool baseOnly) const {
+        char buf[INET6_ADDRSTRLEN];
+        const char* const ret = inet_ntop(AF_INET6, &addr.sin6_addr, buf, sizeof(buf));
+
+        if (!ret) {
+            throw std::runtime_error("Address deserialization failed");
+            return std::string();
+        }
+
+        if (!baseOnly) {
+            return "[" + std::string(buf) + "]:" + std::to_string(getPort());
+        }
+
+        return ret;
     }
 
     IP_t Address::getIP() const {
-        return htonl(addr.sin_addr.s_addr);
+        return addr.sin6_addr;
     }
 
-    void Address::setIP(IP_t ip) {
-        addr.sin_addr.s_addr = htonl(ip);
+    void Address::setIP(const IP_t& ip) {
+        addr.sin6_addr = ip.addr;
+    }
+
+    void Address::setIP(const uint32_t ip) {
+        addr.sin6_addr.s6_addr[10] = 0xFF;
+        addr.sin6_addr.s6_addr[11] = 0xFF;
+        const uint32_t ipNbo = htonl(ip);
+        memcpy(&addr.sin6_addr.s6_addr[12], &ipNbo, sizeof(uint32_t));
     }
 
     int Address::getPort() const {
-        return htons(addr.sin_port);
+        return htons(addr.sin6_port);
     }
 
     void Address::setPort(int port) {
-        addr.sin_port = htons(port);
+        addr.sin6_port = htons(port);
     }
 
     // === Socket functions ===
@@ -139,7 +349,7 @@ namespace net {
 
     int Socket::send(const uint8_t* data, size_t len, const Address* dest) {
         // Send data
-        int err = sendto(sock, (const char*)data, len, 0, (sockaddr*)(dest ? &dest->addr : (raddr ? &raddr->addr : NULL)), sizeof(sockaddr_in));
+        int err = sendto(sock, (const char*)data, len, 0, (sockaddr*)(dest ? &dest->addr : (raddr ? &raddr->addr : NULL)), sizeof(sockaddr_in6));
 
         // On error, close socket
         if (err <= 0 && !WOULD_BLOCK) {
@@ -178,8 +388,8 @@ namespace net {
             }
 
             // Receive
-            int addrLen = sizeof(sockaddr_in);
-            int err = ::recvfrom(sock, (char*)&data[read], maxLen - read, 0,(sockaddr*)(dest ? &dest->addr : NULL), (socklen_t*)(dest ? &addrLen : NULL));
+            int addrLen = sizeof(sockaddr_in6);
+            int err = ::recvfrom(sock, (char*)&data[read], maxLen - read, 0, (sockaddr*)(dest ? &dest->addr : NULL), (socklen_t*)(dest ? &addrLen : NULL));
             if (err <= 0 && !WOULD_BLOCK) {
                 close();
                 return err;
@@ -244,7 +454,7 @@ namespace net {
         }
 
         // Accept
-        int addrLen = sizeof(sockaddr_in);
+        int addrLen = sizeof(sockaddr_in6);
         SockHandle_t s = ::accept(sock, (sockaddr*)(dest ? &dest->addr : NULL), (socklen_t*)(dest ? &addrLen : NULL));
         if ((int)s < 0) {
             if (!WOULD_BLOCK) { stop(); }
@@ -259,34 +469,81 @@ namespace net {
 
     // === Creation functions ===
 
+    static in6_addr s_allNodesOnLink = { { 0xff, 0x02, 0x00, 0x00,
+                                           0x00, 0x00, 0x00, 0x00,
+                                           0x00, 0x00, 0x00, 0x00,
+                                           0x00, 0x00, 0x00, 0x01 } };
+
     std::map<std::string, InterfaceInfo> listInterfaces() {
         // Init library if needed
         init();
-
         std::map<std::string, InterfaceInfo> ifaces;
+
 #ifdef _WIN32
         // Pre-allocate buffer
         ULONG size = sizeof(IP_ADAPTER_ADDRESSES);
         PIP_ADAPTER_ADDRESSES addresses = (PIP_ADAPTER_ADDRESSES)malloc(size);
 
-        // Reallocate to real size
-        if (GetAdaptersAddresses(AF_INET, 0, NULL, addresses, &size) == ERROR_BUFFER_OVERFLOW) {
-            addresses = (PIP_ADAPTER_ADDRESSES)realloc(addresses, size);
-            if (GetAdaptersAddresses(AF_INET, 0, NULL, addresses, &size)) {
-                throw std::exception("Could not list network interfaces");
+        if (GetAdaptersAddresses(AF_UNSPEC, 0, NULL, addresses, &size) == ERROR_BUFFER_OVERFLOW) {
+            // Reallocate to real size
+            PIP_ADAPTER_ADDRESSES newBuf = (PIP_ADAPTER_ADDRESSES)realloc(addresses, size);
+
+            if (!newBuf) {
+                free(addresses);
+                addresses = NULL;
             }
+            else {
+                addresses = newBuf;
+            }
+        }
+        if (addresses && GetAdaptersAddresses(AF_UNSPEC, 0, NULL, addresses, &size)) {
+            free(addresses);
+            throw std::runtime_error("Could not list network interfaces");
         }
 
         // Save data
         std::wstring_convert<std::codecvt_utf8<wchar_t>> utfConv;
         for (auto iface = addresses; iface; iface = iface->Next) {
-            InterfaceInfo info;
-            auto ip = iface->FirstUnicastAddress;
-            if (!ip || ip->Address.lpSockaddr->sa_family != AF_INET) { continue; }
-            info.address = ntohl(*(uint32_t*)&ip->Address.lpSockaddr->sa_data[2]);
-            info.netmask = ~((1 << (32 - ip->OnLinkPrefixLength)) - 1);
-            info.broadcast = info.address | (~info.netmask);
-            ifaces[utfConv.to_bytes(iface->FriendlyName)] = info;
+            for (auto unicast = iface->FirstUnicastAddress; unicast; unicast = unicast->Next) {
+                if (!unicast->Address.lpSockaddr) {
+                    continue;
+                }
+
+                InterfaceInfo& info = ifaces[utfConv.to_bytes(iface->FriendlyName)];
+                info.family = unicast->Address.lpSockaddr->sa_family;
+
+                if (info.family == AF_INET) {
+                    const sockaddr_in* const sin = (sockaddr_in*)unicast->Address.lpSockaddr;
+                    const uint32_t ip = ntohl(sin->sin_addr.s_addr);
+                    const uint32_t mask = (unicast->OnLinkPrefixLength == 0)
+                                              ? 0
+                                              : (~0u << (32 - unicast->OnLinkPrefixLength));
+
+                    info.address = IP_t(ip);
+                    info.netmask = IP_t(htonl(mask));
+                    info.broadcast = IP_t(ip | ~mask);
+                }
+                else if (info.family == AF_INET6) {
+                    const sockaddr_in6* const sin6 = (sockaddr_in6*)unicast->Address.lpSockaddr;
+                    info.address = IP_t(sin6->sin6_addr);
+
+                    int bits = unicast->OnLinkPrefixLength;
+                    for (int i = 0; i < 16; i++) {
+                        if (bits >= 8) {
+                            info.netmask.addr.s6_addr[i] = 0xFF;
+                        }
+                        else if (bits > 0) {
+                            info.netmask.addr.s6_addr[i] = (0xFF << (8 - bits)) & 0xFF;
+                        }
+                        else {
+                            info.netmask.addr.s6_addr[i] = 0x00;
+                        }
+                        bits -= 8;
+                    }
+
+                    info.broadcast = s_allNodesOnLink;
+                }
+            }
         }
         
         // Free tables
@@ -298,13 +555,32 @@ namespace net {
 
         // Save data
         for (auto iface = addresses; iface; iface = iface->ifa_next) {
-            if (!iface->ifa_addr || !iface->ifa_netmask) { continue; }
-            if (iface->ifa_addr->sa_family != AF_INET) { continue; }
-            InterfaceInfo info;
-            info.address = ntohl(*(uint32_t*)&iface->ifa_addr->sa_data[2]);
-            info.netmask = ntohl(*(uint32_t*)&iface->ifa_netmask->sa_data[2]);
-            info.broadcast = info.address | (~info.netmask);
-            ifaces[iface->ifa_name] = info;
+            if (!iface->ifa_addr || !iface->ifa_netmask) {
+                continue;
+            }
+
+            InterfaceInfo& info = ifaces[iface->ifa_name];
+            info.family = iface->ifa_addr->sa_family;
+
+            if (info.family == AF_INET) {
+                const sockaddr_in* const addr = (sockaddr_in*)iface->ifa_addr;
+                const sockaddr_in* const mask = (sockaddr_in*)iface->ifa_netmask;
+
+                const uint32_t ip = ntohl(addr->sin_addr.s_addr);
+                const uint32_t nm = ntohl(mask->sin_addr.s_addr);
+
+                info.address = IP_t(ip);
+                info.netmask = IP_t(htonl(nm));
+                info.broadcast = IP_t(ip | ~nm);
+            }
+            else if (info.family == AF_INET6) {
+                const sockaddr_in6* const addr6 = (sockaddr_in6*)iface->ifa_addr;
+                const sockaddr_in6* const mask6 = (sockaddr_in6*)iface->ifa_netmask;
+
+                info.address = IP_t(addr6->sin6_addr);
+                info.netmask = IP_t(mask6->sin6_addr);
+                info.broadcast = s_allNodesOnLink;
+            }
         }
 
         // Free iface list
@@ -319,7 +595,7 @@ namespace net {
         init();
 
         // Create socket
-        SockHandle_t s = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+        SockHandle_t s = socket(AF_INET6, SOCK_STREAM, IPPROTO_TCP);
         // TODO: Support non-blockign mode
 
 #ifndef _WIN32
@@ -330,13 +606,20 @@ namespace net {
         int enable = 1;
         if (setsockopt(s, SOL_SOCKET, SO_REUSEADDR, &enable, sizeof(int)) < 0) {
             closeSocket(s);
-            throw std::runtime_error("Could not configure socket");
+            throw std::runtime_error("Could not enable port reuse on socket");
             return NULL;
         }
 #endif
 
+        int opt = 0; // Disable IPv6 only mode (support IPv4 as well)
+        if (setsockopt(s, IPPROTO_IPV6, IPV6_V6ONLY, (char*)&opt, sizeof(opt)) < 0) {
+            closeSocket(s);
+            throw std::runtime_error("Could not enable dual stack on socket");
+            return NULL;
+        }
+
         // Bind socket to the port
-        if (bind(s, (sockaddr*)&addr.addr, sizeof(sockaddr_in))) {
+        if (bind(s, (sockaddr*)&addr.addr, sizeof(sockaddr_in6))) {
             closeSocket(s);
             throw std::runtime_error("Could not bind socket");
             return NULL;
@@ -364,10 +647,10 @@ namespace net {
         init();
 
         // Create socket
-        SockHandle_t s = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+        SockHandle_t s = socket(AF_INET6, SOCK_STREAM, IPPROTO_TCP);
 
         // Connect to server
-        if (::connect(s, (sockaddr*)&addr.addr, sizeof(sockaddr_in))) {
+        if (::connect(s, (sockaddr*)&addr.addr, sizeof(sockaddr_in6))) {
             closeSocket(s);
             throw std::runtime_error("Could not connect");
             return NULL;
@@ -389,22 +672,25 @@ namespace net {
         init();
 
         // Create socket
-        SockHandle_t s = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
+        SockHandle_t s = socket(AF_INET6, SOCK_DGRAM, IPPROTO_UDP);
+
+        int opt = 0; // Disable IPv6 only mode (support IPv4 as well)
+        if (setsockopt(s, IPPROTO_IPV6, IPV6_V6ONLY, (char*)&opt, sizeof(opt)) < 0) {
+            closeSocket(s);
+            throw std::runtime_error("Could not enable dual stack on socket");
+            return NULL;
+        }
 
         // If the remote address is multicast, allow multicast connections
-        #ifdef _WIN32
-                const char enable = allowBroadcast;
-        #else
-                int enable = allowBroadcast;
-        #endif
-        if (setsockopt(s, SOL_SOCKET, SO_BROADCAST, &enable, sizeof(int)) < 0) {
+        int enable = allowBroadcast;
+        if (setsockopt(s, SOL_SOCKET, SO_BROADCAST, (char*)&enable, sizeof(int)) < 0) {
             closeSocket(s);
             throw std::runtime_error("Could not enable broadcast on socket");
             return NULL;
         }
 
         // Bind socket to local port
-        if (bind(s, (sockaddr*)&laddr.addr, sizeof(sockaddr_in))) {
+        if (bind(s, (sockaddr*)&laddr.addr, sizeof(sockaddr_in6))) {
             closeSocket(s);
             throw std::runtime_error("Could not bind socket");
             return NULL;

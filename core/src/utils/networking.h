@@ -43,7 +43,7 @@ namespace net {
 
     class ConnClass {
     public:
-        ConnClass(Socket sock, struct sockaddr_in raddr = {}, bool udp = false);
+        ConnClass(Socket sock, struct sockaddr_in6 raddr = {}, bool udp = false);
         ~ConnClass();
 
         void close();
@@ -78,7 +78,7 @@ namespace net {
 
         Socket _sock;
         bool _udp;
-        struct sockaddr_in remoteAddr;
+        struct sockaddr_in6 remoteAddr;
     };
 
     typedef std::unique_ptr<ConnClass> Conn;
