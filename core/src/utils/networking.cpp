@@ -373,7 +373,7 @@ namespace net {
         if (getAddrInfo(host, std::to_string(port), &result) != 0) {
             net::closeSocket(sock);
             throw std::runtime_error("Could not resolve host name");
-            return false;
+            return NULL;
         }
 
         struct sockaddr_in6* const psock = (sockaddr_in6*)(result->ai_addr);
@@ -443,7 +443,7 @@ namespace net {
         if (getAddrInfo(host, std::to_string(port), &result) != 0) {
             net::closeSocket(listenSock);
             throw std::runtime_error("Could not resolve host name");
-            return false;
+            return NULL;
         }
 
         struct sockaddr_in6* const psock = (sockaddr_in6*)(result->ai_addr);
@@ -508,7 +508,7 @@ namespace net {
         if (getAddrInfo(host, std::to_string(port), &resultLocal) != 0) {
             net::closeSocket(sock);
             throw std::runtime_error("Could not resolve host name");
-            return false;
+            return NULL;
         }
 
         struct sockaddr_in6* const psockLocal = (sockaddr_in6*)(resultLocal->ai_addr);
@@ -526,7 +526,7 @@ namespace net {
         if (getAddrInfo(remoteHost, std::to_string(remotePort), &resultRemote) != 0) {
             net::closeSocket(sock);
             throw std::runtime_error("Could not resolve host name");
-            return false;
+            return NULL;
         }
 
         struct sockaddr_in6* const psockRemote = (sockaddr_in6*)(resultRemote->ai_addr);
