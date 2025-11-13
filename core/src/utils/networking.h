@@ -1,33 +1,7 @@
 #pragma once
-#include <stdint.h>
-#include <string>
-#include <vector>
-#include <mutex>
-#include <inttypes.h>
-#include <memory>
-#include <thread>
-#include <condition_variable>
-
-#ifdef _WIN32
-#include <WinSock2.h>
-#include <WS2tcpip.h>
-#else
-#include <unistd.h>
-#include <strings.h>
-#include <sys/types.h>
-#include <sys/socket.h>
-#include <netinet/in.h>
-#include <netdb.h>
-#include <signal.h>
-#endif
+#include "net_shared.h"
 
 namespace net {
-#ifdef _WIN32
-    typedef SOCKET Socket;
-#else
-    typedef int Socket;
-#endif
-
     struct ConnReadEntry {
         int count;
         uint8_t* buf;
@@ -43,7 +17,7 @@ namespace net {
 
     class ConnClass {
     public:
-        ConnClass(Socket sock, struct sockaddr_in6 raddr = {}, bool udp = false);
+        ConnClass(SockHandle_t sock, struct sockaddr_in6 raddr = {}, bool udp = false);
         ~ConnClass();
 
         void close();
@@ -76,7 +50,7 @@ namespace net {
         std::thread readWorkerThread;
         std::thread writeWorkerThread;
 
-        Socket _sock;
+        SockHandle_t _sock;
         bool _udp;
         struct sockaddr_in6 remoteAddr;
     };
@@ -90,7 +64,7 @@ namespace net {
 
     class ListenerClass {
     public:
-        ListenerClass(Socket listenSock);
+        ListenerClass(SockHandle_t listenSock);
         ~ListenerClass();
 
         Conn accept();
@@ -111,7 +85,7 @@ namespace net {
         std::vector<ListenerAcceptEntry> acceptQueue;
         std::thread acceptWorkerThread;
 
-        Socket sock;
+        SockHandle_t sock;
     };
 
     typedef std::unique_ptr<ListenerClass> Listener;

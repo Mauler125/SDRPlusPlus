@@ -1,51 +1,7 @@
 #pragma once
-#include <stdint.h>
-#include <string>
-#include <cstring>
-#include <mutex>
-#include <memory>
-#include <map>
-
-#ifdef _WIN32
-#include <WinSock2.h>
-#include <WS2tcpip.h>
-#include <iphlpapi.h>
-#else
-#include <unistd.h>
-#include <strings.h>
-#include <sys/types.h>
-#include <sys/socket.h>
-#include <netinet/in.h>
-#include <netdb.h>
-#include <signal.h>
-#include <poll.h>
-#include <fcntl.h>
-#include <ifaddrs.h>
-#endif
+#include "net_shared.h"
 
 namespace net {
-#ifdef _WIN32
-    typedef SOCKET SockHandle_t;
-    typedef int socklen_t;
-#else
-    typedef int SockHandle_t;
-#endif
-    typedef struct IP_s {
-        IP_s() {
-            addr = {};
-        }
-        IP_s(const in6_addr& ip) {
-            addr = ip;
-        }
-        IP_s(const uint32_t ip) {
-            addr.s6_addr[10] = 0xFF;
-            addr.s6_addr[11] = 0xFF;
-            memcpy(&addr.s6_addr[12], &ip, sizeof(uint32_t));
-        }
-
-        in6_addr addr;
-    } IP_t;
-
     class Socket;
     class Listener;
 

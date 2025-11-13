@@ -5,15 +5,6 @@
 #include <utils/flog.h>
 #include <utils/str_tools.h>
 
-#ifdef _WIN32
-#define NET_ERROR() WSAGetLastError()
-#define WOULD_BLOCK (NET_ERROR() == WSAEWOULDBLOCK)
-#else
-#include <arpa/inet.h>
-#define NET_ERROR() errno
-#define WOULD_BLOCK (NET_ERROR() == EWOULDBLOCK)
-#endif
-
 namespace net {
     bool _init = false;
     
@@ -33,25 +24,6 @@ namespace net {
         signal(SIGPIPE, SIG_IGN);
 #endif
         _init = true;
-    }
-
-    void closeSocket(SockHandle_t sock) {
-#ifdef _WIN32
-        shutdown(sock, SD_BOTH);
-        closesocket(sock);
-#else
-        shutdown(sock, SHUT_RDWR);
-        close(sock);
-#endif
-    }
-
-    void setNonblocking(SockHandle_t sock) {
-#ifdef _WIN32
-        u_long enabled = 1;
-        ioctlsocket(sock, FIONBIO, &enabled);
-#else
-        fcntl(sock, F_SETFL, O_NONBLOCK);
-#endif
     }
 
     // === Address functions ===
@@ -85,72 +57,6 @@ namespace net {
 
     void Address::clear() {
         memset(&addr, 0, sizeof(addr));
-    }
-
-    bool isIPv4Syntax(const char* const address) {
-        if (!*address) {
-            return true;
-        }
-
-        for (const uint8_t* p = (const uint8_t*)address; const uint8_t c = *p; ++p) {
-            if (c >= '0' && c <= '9') {
-                continue;
-            }
-            if (c == '.') {
-                continue;
-            }
-            return false;
-        }
-
-        return true;
-    }
-
-    bool isIPv6Syntax(const char* const address) {
-        if (!*address) {
-            return true;
-        }
-
-        // Only allow non-hexadecimal characters if we encountered
-        // a zone index delimiter. It can only contain 1. See ref:
-        // https://datatracker.ietf.org/doc/html/rfc4007
-        bool inZoneId = false;
-        uint8_t prev = '\0';
-
-        for (const uint8_t* p = (const uint8_t*)address; const uint8_t c = *p; ++p) {
-            prev = c;
-
-            if (c == ':' || c == '.') continue;
-            if (!inZoneId && c == '%') {
-                inZoneId = true;
-                continue;
-            }
-            if (c >= '0' && c <= '9') {
-                continue;
-            }
-            if (c >= 'A' && c <= 'F') {
-                continue;
-            }
-            if (c >= 'a' && c <= 'f') {
-                continue;
-            }
-
-            if (inZoneId) {
-                if (c == '/' || c == '_' || c == '-') {
-                    continue;
-                }
-                if (c >= 'A' && c <= 'Z') {
-                    continue;
-                }
-                if (c >= 'a' && c <= 'z') {
-                    continue;
-                }
-            }
-
-            return false;
-        }
-
-        // Trailing delim isn't valid, must have a zone id!
-        return prev != '%';
     }
 
     bool Address::setFromStr(const std::string& inStr, const bool useDNS) {

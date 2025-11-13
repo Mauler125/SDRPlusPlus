@@ -4,21 +4,11 @@
 #include <stdexcept>
 
 namespace net {
-
 #ifdef _WIN32
     extern bool winsock_init = false;
 #endif
-    void closeSocket(Socket sock) {
-#ifdef _WIN32
-        shutdown(sock, SD_BOTH);
-        closesocket(sock);
-#else
-        shutdown(sock, SHUT_RDWR);
-        close(sock);
-#endif
-    }
 
-    ConnClass::ConnClass(Socket sock, struct sockaddr_in6 raddr, bool udp) {
+    ConnClass::ConnClass(SockHandle_t sock, struct sockaddr_in6 raddr, bool udp) {
         _sock = sock;
         _udp = udp;
         remoteAddr = raddr;
@@ -230,7 +220,7 @@ namespace net {
     }
 
 
-    ListenerClass::ListenerClass(Socket listenSock) {
+    ListenerClass::ListenerClass(SockHandle_t listenSock) {
         sock = listenSock;
         listening = true;
         acceptWorkerThread = std::thread(&ListenerClass::worker, this);
@@ -243,7 +233,7 @@ namespace net {
     Conn ListenerClass::accept() {
         if (!listening) { return NULL; }
         std::lock_guard lck(acceptMtx);
-        Socket _sock;
+        SockHandle_t _sock;
 
         // Accept socket
         _sock = ::accept(sock, NULL, NULL);
@@ -338,7 +328,7 @@ namespace net {
     }
 
     Conn connect(std::string host, uint16_t port) {
-        Socket sock;
+        SockHandle_t sock;
 
 #ifdef _WIN32
         // Initialize WinSock2
@@ -413,7 +403,7 @@ namespace net {
 #endif
 
         // Create a socket
-        Socket listenSock = socket(AF_INET6, SOCK_STREAM, IPPROTO_TCP);
+        SockHandle_t listenSock = socket(AF_INET6, SOCK_STREAM, IPPROTO_TCP);
         if (listenSock < 0) {
             throw std::runtime_error("Could not create socket");
             return NULL;
@@ -490,7 +480,7 @@ namespace net {
 #endif
 
         // Create a socket
-        Socket sock = socket(AF_INET6, SOCK_DGRAM, IPPROTO_UDP);
+        SockHandle_t sock = socket(AF_INET6, SOCK_DGRAM, IPPROTO_UDP);
         if (sock < 0) {
             throw std::runtime_error("Could not create socket");
             return NULL;
