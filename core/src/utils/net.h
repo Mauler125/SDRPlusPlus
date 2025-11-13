@@ -53,7 +53,7 @@ namespace net {
         IP_t address;
         IP_t netmask;
         IP_t broadcast;
-        uint16_t family;
+        uint16_t family = AF_UNSPEC;
     };
 
     class Address {
