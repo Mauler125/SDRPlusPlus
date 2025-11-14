@@ -302,10 +302,6 @@ private:
             ImGui::VolumeMeter(_this->audioLvl.l, _this->audioLvl.l, -60, 10);
             ImGui::FillWidth();
             ImGui::VolumeMeter(_this->audioLvl.r, _this->audioLvl.r, -60, 10);
-            ImGui::FillWidth();
-            ImGui::VolumeMeter_Old(_this->audioLvl.l, _this->audioLvl.l, -60, 10);
-            ImGui::FillWidth();
-            ImGui::VolumeMeter_Old(_this->audioLvl.r, _this->audioLvl.r, -60, 10);
 
             ImGui::FillWidth();
             if (ImGui::SliderFloat(CONCAT("##_recorder_vol_", _this->name), &_this->audioVolume, 0, 1, "")) {
