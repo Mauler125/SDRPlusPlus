@@ -50,16 +50,16 @@ inline double findBestRange(double bandwidth, int maxSteps) {
 inline void printAndScale(double freq, char* buf) {
     double freqAbs = fabs(freq);
     if (freqAbs < 1000) {
-        sprintf(buf, "%.6g", freq);
+        sprintf(buf, "%.6gHz", freq);
     }
     else if (freqAbs < 1000000) {
-        sprintf(buf, "%.6lgK", freq / 1000.0);
+        sprintf(buf, "%.6lgKHz", freq / 1000.0);
     }
     else if (freqAbs < 1000000000) {
-        sprintf(buf, "%.6lgM", freq / 1000000.0);
+        sprintf(buf, "%.6lgMHz", freq / 1000000.0);
     }
     else if (freqAbs < 1000000000000) {
-        sprintf(buf, "%.6lgG", freq / 1000000000.0);
+        sprintf(buf, "%.6lgGHz", freq / 1000000000.0);
     }
 }
 
