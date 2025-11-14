@@ -7,6 +7,49 @@
 #include <imgui/imgui_internal.h>
 
 namespace ImGui {
+    void VolumeMeter_Old(float avg, float peak, float val_min, float val_max, const ImVec2& size_arg) {
+        ImGuiWindow* window = GetCurrentWindow();
+        ImGuiStyle& style = GImGui->Style;
+
+        avg = std::clamp<float>(avg, val_min, val_max);
+        peak = std::clamp<float>(peak, val_min, val_max);
+
+        ImVec2 min = window->DC.CursorPos;
+        ImVec2 size = CalcItemSize(size_arg, CalcItemWidth(), (GImGui->FontSize / 2) + style.FramePadding.y);
+        ImRect bb(min, min + size);
+
+        float lineHeight = size.y;
+
+        ItemSize(size, style.FramePadding.y);
+        if (!ItemAdd(bb, 0)) {
+            return;
+        }
+
+        float zeroDb = roundf(((-val_min) / (val_max - val_min)) * size.x);
+
+        window->DrawList->AddRectFilled(min, min + ImVec2(zeroDb, lineHeight), IM_COL32(9, 136, 9, 255));
+        window->DrawList->AddRectFilled(min + ImVec2(zeroDb, 0), min + ImVec2(size.x, lineHeight), IM_COL32(136, 9, 9, 255));
+
+        float end = roundf(((avg - val_min) / (val_max - val_min)) * size.x);
+        float endP = roundf(((peak - val_min) / (val_max - val_min)) * size.x);
+
+        if (avg <= 0) {
+            window->DrawList->AddRectFilled(min, min + ImVec2(end, lineHeight), IM_COL32(0, 255, 0, 255));
+        }
+        else {
+            window->DrawList->AddRectFilled(min, min + ImVec2(zeroDb, lineHeight), IM_COL32(0, 255, 0, 255));
+            window->DrawList->AddRectFilled(min + ImVec2(zeroDb, 0), min + ImVec2(end, lineHeight), IM_COL32(255, 0, 0, 255));
+        }
+
+        if (peak <= 0) {
+            window->DrawList->AddLine(min + ImVec2(endP, -1), min + ImVec2(endP, lineHeight - 1), IM_COL32(127, 255, 127, 255));
+        }
+        else {
+            window->DrawList->AddLine(min + ImVec2(endP, -1), min + ImVec2(endP, lineHeight - 1), IM_COL32(255, 127, 127, 255));
+        }
+    }
+
+
     static inline ImU32 LerpColU32(const ImU32 a, const ImU32 b, const float t) {
         const ImU32 a_r = (a >> IM_COL32_R_SHIFT) & 0xFF;
         const ImU32 a_g = (a >> IM_COL32_G_SHIFT) & 0xFF;
@@ -26,7 +69,7 @@ namespace ImGui {
         return IM_COL32(r, g, bcol, alpha);
     }
 
-    void VolumeMeter(float avg, float peak, const float val_min, const float val_max, const bool drawTicks, const ImVec2& size_arg) {
+    void VolumeMeter(float avg, float peak, const float val_min, const float val_max, const ImVec2& size_arg) {
         const ImGuiWindow* const window = GetCurrentWindow();
         const ImGuiContext* const context = GetCurrentContext();
         const ImGuiStyle& style = GetStyle();
@@ -40,8 +83,9 @@ namespace ImGui {
         ItemSize(size, style.FramePadding.y);
         const ImRect bb(min, min + size);
 
-        if (!ItemAdd(bb, 0))
+        if (!ItemAdd(bb, 0)) {
             return;
+        }
 
         const ImU32 bgDarkGreen = IM_COL32(9, 80, 9, 255);
         const ImU32 bgGreen = IM_COL32(9, 136, 9, 255);
@@ -95,49 +139,5 @@ namespace ImGui {
 
         const float peakX = bb.Min.x + peakF;
         window->DrawList->AddLine(ImVec2(peakX, bb.Min.y), ImVec2(peakX, bb.Max.y), peakCol, 1.0f);
-
-        if (drawTicks) {
-            const float tickPadding = 3.0f;
-            const float startY = bb.Max.y + tickPadding;
-
-            const ImU32 tickCol = GetColorU32(ImGuiCol_Text);
-            bool isFirstTick = true;
-
-            const int minorTickInterval = 1;
-            const float majorTickHeight = 8.0f;
-            const int labelInterval = 5;
-
-            const float range = val_max - val_min;
-            assert(range > 0);
-
-            for (float val = val_min; val <= val_max + 0.001f; val += minorTickInterval) {
-                const float normPos = (val - val_min) / range;
-                const float x = bb.Min.x + normPos * size.x;
-
-                const bool isMajorTick = (ImFmod(ImAbs(val - val_min), (float)labelInterval) < 0.001f) || ImAbs(val - val_min) < 0.001f;
-                const float tickHeight = isMajorTick ? majorTickHeight : majorTickHeight * 0.6f;
-
-                window->DrawList->AddLine(ImVec2(x, startY), ImVec2(x, startY + tickHeight), tickCol, 1.0f);
-
-                if (isMajorTick) {
-                    const char* textToDraw;
-                    char label[64];
-                    if (!isFirstTick) {
-                        snprintf(label, sizeof(label), "%.0f", val);
-                        textToDraw = label;
-                    }
-                    else {
-                        textToDraw = "dB";
-                        isFirstTick = false;
-                    }
-
-                    const float tickFontSize = 10.0f;
-
-                    const ImVec2 labelSize = context->Font->CalcTextSizeA(tickFontSize, FLT_MAX, 0.0f, textToDraw);
-                    const ImVec2 textPos = ImVec2(x - labelSize.x * 0.5f, startY + tickHeight + 2.0f);
-                    window->DrawList->AddText(context->Font, tickFontSize, textPos, tickCol, textToDraw);
-                }
-            }
-        }
     }
 }
