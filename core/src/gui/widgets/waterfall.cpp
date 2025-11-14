@@ -275,7 +275,7 @@ namespace ImGui {
         mouseInFFT = IS_IN_AREA(dragOrigin, fftAreaMin, fftAreaMax);
         mouseInWaterfall = IS_IN_AREA(dragOrigin, wfMin, wfMax);
 
-        int mouseWheel = ImGui::GetIO().MouseWheel;
+        int mouseWheel = ImGui::GetIO().MouseWheel + ImGui::GetIO().MouseWheelH;
 
         bool mouseMoved = false;
         if (mousePos.x != lastMousePos.x || mousePos.y != lastMousePos.y) { mouseMoved = true; }
