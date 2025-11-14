@@ -267,7 +267,6 @@ namespace ImGui {
         mouseInFreq = IS_IN_AREA(dragOrigin, freqAreaMin, freqAreaMax);
         mouseInFFT = IS_IN_AREA(dragOrigin, fftAreaMin, fftAreaMax);
         mouseInWaterfall = IS_IN_AREA(dragOrigin, wfMin, wfMax);
-        crosshairFlags = ImGuiCrosshairFlags_None;
 
         int mouseWheel = ImGui::GetIO().MouseWheel + ImGui::GetIO().MouseWheelH;
 
@@ -296,6 +295,7 @@ namespace ImGui {
             freqScaleSelect = false;
             vfoBorderSelect = false;
             lastDrag = 0;
+            crosshairFlags = ImGuiCrosshairFlags_None;
         }
 
         bool targetFound = false;
