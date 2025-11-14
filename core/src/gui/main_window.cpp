@@ -503,27 +503,21 @@ void MainWindow::draw() {
 
         if (ImGui::CollapsingHeader("Debug")) {
             ImGui::Text("Frame time: %.3f ms/frame", ImGui::GetIO().DeltaTime * 1000.0f);
-            ImGui::Text("Framerate: %.1f FPS", ImGui::GetIO().Framerate);
-            ImGui::Text("Center Frequency: %.0f Hz", gui::waterfall.getCenterFrequency());
+            ImGui::Text("Frame rate: %.1f FPS", ImGui::GetIO().Framerate);
+            ImGui::Text("Center frequency: %.0f Hz", gui::waterfall.getCenterFrequency());
             ImGui::Text("Source name: %s", sourceName.c_str());
-            ImGui::Checkbox("Show demo window", &demoWindow);
-            ImGui::Text("ImGui version: %s", ImGui::GetVersion());
+            ImGui::Text("Dear ImGui version: %s", ImGui::GetVersion());
+            ImGui::Checkbox("Show metrics window", &metricsWindow);
 
             // ImGui::Checkbox("Bypass buffering", &sigpath::iqFrontEnd.inputBuffer.bypass);
-
             // ImGui::Text("Buffering: %d", (sigpath::iqFrontEnd.inputBuffer.writeCur - sigpath::iqFrontEnd.inputBuffer.readCur + 32) % 32);
 
-            if (ImGui::Button("Test Bug")) {
-                flog::error("Will this make the software crash?");
-            }
+            ImGui::Checkbox("Waterfall single click", &gui::waterfall.VFOMoveSingleClick);
 
-            if (ImGui::Button("Testing something")) {
+            if (ImGui::Button("Draw main menu first")) {
                 gui::menu.order[0].open = true;
                 firstMenuRender = true;
             }
-
-            ImGui::Checkbox("WF Single Click", &gui::waterfall.VFOMoveSingleClick);
-            ImGui::Checkbox("Lock Menu Order", &gui::menu.locked);
 
             ImGui::Spacing();
         }
@@ -668,8 +662,8 @@ void MainWindow::draw() {
         credits::show();
     }
 
-    if (demoWindow) {
-        ImGui::ShowDemoWindow();
+    if (metricsWindow) {
+        ImGui::ShowMetricsWindow();
     }
 }
 
