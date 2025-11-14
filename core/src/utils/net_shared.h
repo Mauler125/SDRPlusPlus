@@ -60,7 +60,7 @@ namespace net {
         in6_addr addr;
     } IP_t;
 
-    void closeSocket(SockHandle_t sock) {
+    inline void closeSocket(SockHandle_t sock) {
 #ifdef _WIN32
         shutdown(sock, SD_BOTH);
         closesocket(sock);
@@ -70,7 +70,7 @@ namespace net {
 #endif
     }
 
-    void setNonblocking(SockHandle_t sock) {
+    inline void setNonblocking(SockHandle_t sock) {
 #ifdef _WIN32
         u_long enabled = 1;
         ioctlsocket(sock, FIONBIO, &enabled);
@@ -79,7 +79,7 @@ namespace net {
 #endif
     }
 
-    bool isIPv4Syntax(const char* const address) {
+    inline bool isIPv4Syntax(const char* const address) {
         if (!*address) {
             return true;
         }
@@ -97,7 +97,7 @@ namespace net {
         return true;
     }
 
-    bool isIPv6Syntax(const char* const address) {
+    inline bool isIPv6Syntax(const char* const address) {
         if (!*address) {
             return true;
         }
