@@ -205,7 +205,14 @@ namespace ImGui {
                                   ImVec2(fftAreaMin.x, fftAreaMax.y - 1),
                                   text, style::uiScale);
 
-        DrawCrosshairUnderCursor(ImRect(fftAreaMin, fftAreaMax), IM_COL32(200, 200, 0, 255));
+        ImGuiCrosshairFlags flags = ImGuiCrosshairFlags_None;
+
+        // Avoid confusion with the vfo line
+        if (vfoSelect || vfoBorderSelect) {
+            flags |= ImGuiCrosshairFlags_CullVertical;
+        }
+
+        DrawCrosshairUnderCursor(ImRect(fftAreaMin, fftAreaMax), IM_COL32(200, 200, 0, 255), flags);
     }
 
     void WaterFall::drawWaterfall() {
