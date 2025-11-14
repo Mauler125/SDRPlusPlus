@@ -3,18 +3,9 @@
 #include <imgui/imgui_internal.h>
 
 namespace ImGui {
-    void DrawCrosshairUnderCursor(const ImU32 color, const float thickness) {
-        const ImGuiWindow* const window = ImGui::GetCurrentWindow();
-
-        if (!window) {
-            return;
-        }
-
+    void DrawCrosshairUnderCursor(const ImRect& clip, const ImU32 color, const float thickness) {
         ImDrawList* const draw = ImGui::GetWindowDrawList();
-        const ImGuiIO& io = ImGui::GetIO();
-
-        const ImVec2 mouse = io.MousePos;
-        const ImRect clip = window->InnerRect;
+        const ImVec2 mouse = ImGui::GetIO().MousePos;
 
         if (!clip.Contains(mouse)) {
             return;
