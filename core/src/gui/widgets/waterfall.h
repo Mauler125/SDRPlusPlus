@@ -317,7 +317,6 @@ namespace ImGui {
         // UI Select elements
         bool fftResizeSelect = false;
         bool freqScaleSelect = false;
-        bool vfoSelect = false;
         bool vfoBorderSelect = false;
         WaterfallVFO* relatedVfo = NULL;
         ImVec2 mouseDownPos;

@@ -294,7 +294,6 @@ namespace ImGui {
 
             fftResizeSelect = false;
             freqScaleSelect = false;
-            vfoSelect = false;
             vfoBorderSelect = false;
             lastDrag = 0;
         }
