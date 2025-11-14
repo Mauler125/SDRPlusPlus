@@ -289,8 +289,10 @@ namespace ImGui {
             }
         }
 
+        const bool mouseLeftDown = ImGui::IsMouseDown(ImGuiMouseButton_Left);
+
         // Deselect everything if the mouse is released
-        if (!ImGui::IsMouseDown(ImGuiMouseButton_Left)) {
+        if (!mouseLeftDown) {
             if (fftResizeSelect) {
                 FFTAreaHeight = newFFTAreaHeight;
                 onResize();
@@ -475,7 +477,7 @@ namespace ImGui {
         }
 
         // Finally, if nothing else was selected, just move the VFO
-        if ((VFOMoveSingleClick ? ImGui::IsMouseClicked(ImGuiMouseButton_Left) : ImGui::IsMouseDown(ImGuiMouseButton_Left)) && (mouseInFFT | mouseInWaterfall) && (mouseMoved || hoveredVFOName == "")) {
+        if ((VFOMoveSingleClick ? ImGui::IsMouseClicked(ImGuiMouseButton_Left) : mouseLeftDown) && (mouseInFFT | mouseInWaterfall) && (mouseMoved || hoveredVFOName == "")) {
             if (selVfo != NULL) {
                 int refCenter = mousePos.x - fftAreaMin.x;
                 if (refCenter >= 0 && refCenter < dataWidth) {
@@ -486,7 +488,7 @@ namespace ImGui {
                 }
             }
         }
-        else if (!ImGui::IsMouseDown(ImGuiMouseButton_Left)) {
+        else if (!mouseLeftDown) {
             // Check if a VFO is hovered. If yes, show tooltip
             for (auto const& [name, _vfo] : vfos) {
                 if (ImGui::IsMouseHoveringRect(_vfo->rectMin, _vfo->rectMax) || ImGui::IsMouseHoveringRect(_vfo->wfRectMin, _vfo->wfRectMax)) {
