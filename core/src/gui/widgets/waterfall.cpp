@@ -1,4 +1,5 @@
 #include <gui/widgets/waterfall.h>
+#include <gui/widgets/crosshair.h>
 #include <imgui.h>
 #include <imgui_internal.h>
 #include <imutils.h>
@@ -203,6 +204,8 @@ namespace ImGui {
         window->DrawList->AddLine(ImVec2(fftAreaMin.x, fftAreaMin.y),
                                   ImVec2(fftAreaMin.x, fftAreaMax.y - 1),
                                   text, style::uiScale);
+
+        ImGui::DrawCrosshairUnderCursor(IM_COL32(200, 200, 0, 255));
     }
 
     void WaterFall::drawWaterfall() {
