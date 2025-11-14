@@ -291,8 +291,6 @@ namespace ImGui {
         int fftLines = 0;
 
         uint32_t* waterfallFb;
-
-        bool draggingFW = false;
         int FFTAreaHeight;
         int newFFTAreaHeight;
 
