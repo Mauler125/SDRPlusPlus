@@ -205,14 +205,7 @@ namespace ImGui {
                                   ImVec2(fftAreaMin.x, fftAreaMax.y - 1),
                                   text, style::uiScale);
 
-        ImGuiCrosshairFlags flags = ImGuiCrosshairFlags_None;
-
-        // Avoid confusion with the vfo line
-        if (vfoSelect || vfoBorderSelect) {
-            flags |= ImGuiCrosshairFlags_CullVertical;
-        }
-
-        DrawCrosshairUnderCursor(ImRect(fftAreaMin, fftAreaMax), IM_COL32(200, 200, 0, 255), flags);
+        DrawCrosshairUnderCursor(ImRect(fftAreaMin, fftAreaMax), IM_COL32(200, 200, 0, 255), crosshairFlags);
     }
 
     void WaterFall::drawWaterfall() {
@@ -274,6 +267,7 @@ namespace ImGui {
         mouseInFreq = IS_IN_AREA(dragOrigin, freqAreaMin, freqAreaMax);
         mouseInFFT = IS_IN_AREA(dragOrigin, fftAreaMin, fftAreaMax);
         mouseInWaterfall = IS_IN_AREA(dragOrigin, wfMin, wfMax);
+        crosshairFlags = ImGuiCrosshairFlags_None;
 
         int mouseWheel = ImGui::GetIO().MouseWheel + ImGui::GetIO().MouseWheelH;
 
@@ -380,6 +374,9 @@ namespace ImGui {
             hzDist = std::clamp<double>(hzDist, relatedVfo->minBandwidth, relatedVfo->maxBandwidth);
             relatedVfo->setBandwidth(hzDist);
             relatedVfo->onUserChangedBandwidth.emit(hzDist);
+
+            // Avoid confusion with the vfo line when moving
+            crosshairFlags |= ImGuiCrosshairFlags_CullVertical;
             return;
         }
 
@@ -485,6 +482,9 @@ namespace ImGui {
                     off += centerFreq;
                     off = (round(off / selVfo->snapInterval) * selVfo->snapInterval) - centerFreq;
                     selVfo->setOffset(off);
+
+                    // Avoid confusion with the vfo line when moving
+                    crosshairFlags |= ImGuiCrosshairFlags_CullVertical;
                 }
             }
         }

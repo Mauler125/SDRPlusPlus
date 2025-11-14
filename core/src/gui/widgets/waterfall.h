@@ -2,6 +2,7 @@
 #include <vector>
 #include <mutex>
 #include <gui/widgets/bandplan.h>
+#include <gui/widgets/crosshair.h>
 #include <imgui/imgui.h>
 #include <imgui/imgui_internal.h>
 #include <utils/event.h>
@@ -300,6 +301,7 @@ namespace ImGui {
         bool _fullUpdate = true;
 
         int bandPlanPos = BANDPLAN_POS_BOTTOM;
+        ImGuiCrosshairFlags crosshairFlags = ImGuiCrosshairFlags_None;
 
         bool fftHold = false;
         float fftHoldSpeed = 0.3f;
