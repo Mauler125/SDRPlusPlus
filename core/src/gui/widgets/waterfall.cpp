@@ -205,7 +205,7 @@ namespace ImGui {
                                   ImVec2(fftAreaMin.x, fftAreaMax.y - 1),
                                   text, style::uiScale);
 
-        DrawCrosshairUnderCursor(ImRect(fftAreaMin, fftAreaMax), IM_COL32(200, 200, 0, 255), crosshairFlags);
+        DrawCrosshairUnderCursor(ImRect(fftAreaMin, fftAreaMax), IM_COL32(200, 200, 0, 255), 1.0f, crosshairFlags);
     }
 
     void WaterFall::drawWaterfall() {
