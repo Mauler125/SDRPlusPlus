@@ -800,7 +800,7 @@ namespace ImGui {
             latestFFTHold[i] = -1000.0f;
         }
 
-        fftAreaMin = ImVec2(widgetPos.x + (50.0f * style::uiScale), widgetPos.y + (9.0f * style::uiScale));
+        fftAreaMin = ImVec2(widgetPos.x + (80.0f * style::uiScale), widgetPos.y + (9.0f * style::uiScale));
         fftAreaMax = ImVec2(fftAreaMin.x + dataWidth, fftAreaMin.y + fftHeight + 1);
 
         freqAreaMin = ImVec2(fftAreaMin.x, fftAreaMax.y + 1);
