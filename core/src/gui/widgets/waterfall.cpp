@@ -61,6 +61,15 @@ inline void printAndScale(double freq, char* buf) {
     else if (freqAbs < 1000000000000) {
         sprintf(buf, "%.6lgGHz", freq / 1000000000.0);
     }
+    else if (freqAbs < 1000000000000000) {
+        sprintf(buf, "%.6lgTHz", freq / 1000000000000.0);
+    }
+    else if (freqAbs < 1000000000000000000) {
+        sprintf(buf, "%.6lgPHz", freq / 1000000000000000.0);
+    }
+    else {
+        sprintf(buf, "%.6lgEHz", freq / 1000000000000000000.0);
+    }
 }
 
 inline void doZoom(int offset, int width, int inSize, int outSize, float* in, float* out) {
