@@ -508,9 +508,9 @@ namespace ImGui {
                     if (ImGui::GetIO().KeyCtrl) {
                         ImGui::Separator();
                         printAndScale(_vfo->generalOffset + centerFreq, buf);
-                        ImGui::Text("Frequency: %sHz", buf);
+                        ImGui::Text("Frequency: %s", buf);
                         printAndScale(_vfo->bandwidth, buf);
-                        ImGui::Text("Bandwidth: %sHz", buf);
+                        ImGui::Text("Bandwidth: %s", buf);
                         ImGui::Text("Bandwidth Locked: %s", _vfo->bandwidthLocked ? "Yes" : "No");
 
                         float strength, snr;
