@@ -91,7 +91,7 @@ namespace ImGui {
         float* getFFTBuffer();
         void pushFFT();
 
-        void updatePallette(float colors[][3], int colorCount);
+        void updatePallette(const float colors[][3], int colorCount);
         void updatePalletteFromArray(float* colors, int colorCount);
 
         void setCenterFrequency(double freq);

@@ -9,7 +9,7 @@
 #include <gui/gui.h>
 #include <gui/style.h>
 
-float DEFAULT_COLOR_MAP[][3] = {
+static const float s_defaultColorMap[][3] = {
     { 0x00, 0x00, 0x20 },
     { 0x00, 0x00, 0x30 },
     { 0x00, 0x00, 0x50 },
@@ -112,7 +112,7 @@ namespace ImGui {
         viewBandwidth = 1.0;
         wholeBandwidth = 1.0;
 
-        updatePallette(DEFAULT_COLOR_MAP, 13);
+        updatePallette(s_defaultColorMap, 13);
     }
 
     void WaterFall::init() {
@@ -955,7 +955,7 @@ namespace ImGui {
         buf_mtx.unlock();
     }
 
-    void WaterFall::updatePallette(float colors[][3], int colorCount) {
+    void WaterFall::updatePallette(const float colors[][3], int colorCount) {
         std::lock_guard<std::recursive_mutex> lck(buf_mtx);
         for (int i = 0; i < WATERFALL_RESOLUTION; i++) {
             int lowerId = floorf(((float)i / (float)WATERFALL_RESOLUTION) * colorCount);
