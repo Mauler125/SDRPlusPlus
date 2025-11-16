@@ -38,7 +38,7 @@ static const double s_frequencyRanges[] = {
     10000000.0, 20000000.0, 25000000.0, 50000000.0
 };
 
-inline double findBestRange(double bandwidth, int maxSteps) {
+inline double findBestFrequencyRange(double bandwidth, int maxSteps) {
     for (int i = 0; i < 32; i++) {
         if (bandwidth / s_frequencyRanges[i] < (double)maxSteps) {
             return s_frequencyRanges[i];
@@ -46,6 +46,21 @@ inline double findBestRange(double bandwidth, int maxSteps) {
     }
 
     return s_frequencyRanges[31];
+}
+
+static const double s_timeRanges[] = {
+    1.0, 2.0, 5.0, 10.0, 20.0, 25.0, 50.0,
+    100.0, 200.0, 250.0, 500.0, 1000.0, 2000.0,
+    5000.0, 10000.0, 30000.0, 60000.0
+};
+
+inline double findBestTimeRange(double timeSpan, int maxSteps) {
+    for (int i = 0; i < 17; i++) {
+        if (timeSpan / s_timeRanges[i] < (double)maxSteps) {
+            return s_timeRanges[i];
+        }
+    }
+    return s_timeRanges[16];
 }
 
 inline void printAndScale(double freq, char* buf) {
@@ -122,7 +137,7 @@ namespace ImGui {
     void WaterFall::drawFFT() {
         std::lock_guard<std::recursive_mutex> lck(latestFFTMtx);
         // Calculate scaling factor
-        float startLine = floorf(fftMax / vRange) * vRange;
+        float startLine = floorf(fftMax / verticalFftRange) * verticalFftRange;
         float vertRange = fftMax - fftMin;
         float scaleFactor = fftHeight / vertRange;
         char buf[100];
@@ -134,7 +149,7 @@ namespace ImGui {
         float textVOffset = 10.0f * style::uiScale;
 
         // Vertical scale
-        for (float line = startLine; line > fftMin; line -= vRange) {
+        for (float line = startLine; line > fftMin; line -= verticalFftRange) {
             float yPos = fftAreaMax.y - ((line - fftMin) * scaleFactor);
             window->DrawList->AddLine(ImVec2(fftAreaMin.x, roundf(yPos)),
                                       ImVec2(fftAreaMax.x, roundf(yPos)),
@@ -210,6 +225,23 @@ namespace ImGui {
     }
 
     void WaterFall::drawWaterfall() {
+        float totalTimeMs = (float)waterfallHeight * (1000.0f / (float)fftRate);
+        float pixelsPerMs = (float)waterfallHeight / totalTimeMs;
+        ImU32 text = ImGui::GetColorU32(ImGuiCol_Text);
+        float textVOffset = 10.0f * style::uiScale;
+        char buf[128];
+        const int bufLen = (int)sizeof(buf);
+
+        for (float timeMs = 0; timeMs <= totalTimeMs; timeMs += verticalWfRange) {
+            float yPos = wfMin.y + (timeMs * pixelsPerMs);
+            window->DrawList->AddLine(ImVec2(wfMin.x, roundf(yPos)),
+                                      ImVec2(wfMax.x, roundf(yPos)),
+                                      IM_COL32(50, 50, 50, 255), style::uiScale);
+            const int textLen = std::clamp(sprintf(buf, "%dmsec", (int)roundf(timeMs)), 0, bufLen);
+            ImVec2 txtSz = ImGui::CalcTextSize(buf, &buf[textLen]);
+            window->DrawList->AddText(ImVec2(wfMin.x - txtSz.x - textVOffset, roundf(yPos - (txtSz.y / 2.0))), text, buf, &buf[textLen]);
+        }
+
         if (waterfallUpdate) {
             waterfallUpdate = false;
             updateWaterfallTexture();
@@ -810,11 +842,15 @@ namespace ImGui {
         wfMin = ImVec2(fftAreaMin.x, freqAreaMax.y + 1);
         wfMax = ImVec2(fftAreaMin.x + dataWidth, wfMin.y + waterfallHeight);
 
-        maxHSteps = dataWidth / (ImGui::CalcTextSize("000.000").x + 10);
-        maxVSteps = fftHeight / (ImGui::CalcTextSize("000.000").y);
+        const ImVec2 targetTextSize = ImGui::CalcTextSize("000.000");
 
-        range = findBestRange(viewBandwidth, maxHSteps);
-        vRange = findBestRange(fftMax - fftMin, maxVSteps);
+        maxHorizontalSteps = dataWidth / (targetTextSize.x + 10);
+        maxVerticalFftSteps = fftHeight / targetTextSize.y;
+        maxVerticalWfSteps = waterfallHeight / targetTextSize.y;
+
+        range = findBestFrequencyRange(viewBandwidth, maxHorizontalSteps);
+        verticalFftRange = findBestFrequencyRange(fftMax - fftMin, maxVerticalFftSteps);
+        verticalWfRange = findBestTimeRange(waterfallHeight * (1000.0 / fftRate), maxVerticalWfSteps);
 
         updateWaterfallFb();
         updateAllVFOs();
@@ -1049,7 +1085,7 @@ namespace ImGui {
         viewBandwidth = bandWidth;
         lowerFreq = (centerFreq + viewOffset) - (viewBandwidth / 2.0);
         upperFreq = (centerFreq + viewOffset) + (viewBandwidth / 2.0);
-        range = findBestRange(bandWidth, maxHSteps);
+        range = findBestFrequencyRange(bandWidth, maxHorizontalSteps);
         if (_fullUpdate) { updateWaterfallFb(); };
         updateAllVFOs();
     }
@@ -1082,7 +1118,7 @@ namespace ImGui {
 
     void WaterFall::setFFTMin(float min) {
         fftMin = min;
-        vRange = findBestRange(fftMax - fftMin, maxVSteps);
+        verticalFftRange = findBestFrequencyRange(fftMax - fftMin, maxVerticalFftSteps);
     }
 
     float WaterFall::getFFTMin() {
@@ -1091,7 +1127,7 @@ namespace ImGui {
 
     void WaterFall::setFFTMax(float max) {
         fftMax = max;
-        vRange = findBestRange(fftMax - fftMin, maxVSteps);
+        verticalFftRange = findBestFrequencyRange(fftMax - fftMin, maxVerticalFftSteps);
     }
 
     float WaterFall::getFFTMax() {
@@ -1109,6 +1145,7 @@ namespace ImGui {
             return;
         }
         waterfallMin = min;
+        verticalWfRange = findBestFrequencyRange(waterfallMax - waterfallMin, maxVerticalWfSteps);
         if (_fullUpdate) { updateWaterfallFb(); };
     }
 
@@ -1122,6 +1159,7 @@ namespace ImGui {
             return;
         }
         waterfallMax = max;
+        verticalWfRange = findBestFrequencyRange(waterfallMax - waterfallMin, maxVerticalWfSteps);
         if (_fullUpdate) { updateWaterfallFb(); };
     }
 
@@ -1162,6 +1200,11 @@ namespace ImGui {
 
     void WaterFall::setBandPlanPos(int pos) {
         bandPlanPos = pos;
+    }
+
+    void WaterFall::setFFTRate(int rate) {
+        fftRate = rate;
+        onResize();
     }
 
     void WaterFall::setFFTHold(bool hold) {

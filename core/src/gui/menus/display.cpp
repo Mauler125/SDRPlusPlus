@@ -207,6 +207,7 @@ namespace displaymenu {
             fftRate = std::max<int>(1, fftRate);
             sigpath::iqFrontEnd.setFFTRate(fftRate);
             updateFFTSpeeds();
+            gui::waterfall.setFFTRate(fftRate);
             core::configManager.acquire();
             core::configManager.conf["fftRate"] = fftRate;
             core::configManager.release(true);
