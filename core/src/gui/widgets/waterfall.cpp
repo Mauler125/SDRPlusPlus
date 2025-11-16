@@ -27,7 +27,7 @@ float DEFAULT_COLOR_MAP[][3] = {
 
 // TODO: Fix this hacky BS
 
-double freq_ranges[] = {
+static const double s_frequencyRanges[] = {
     1.0, 2.0, 2.5, 5.0,
     10.0, 20.0, 25.0, 50.0,
     100.0, 200.0, 250.0, 500.0,
@@ -40,11 +40,12 @@ double freq_ranges[] = {
 
 inline double findBestRange(double bandwidth, int maxSteps) {
     for (int i = 0; i < 32; i++) {
-        if (bandwidth / freq_ranges[i] < (double)maxSteps) {
-            return freq_ranges[i];
+        if (bandwidth / s_frequencyRanges[i] < (double)maxSteps) {
+            return s_frequencyRanges[i];
         }
     }
-    return 50000000.0;
+
+    return s_frequencyRanges[31];
 }
 
 inline void printAndScale(double freq, char* buf) {
