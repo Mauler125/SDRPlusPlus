@@ -232,7 +232,7 @@ namespace ImGui {
         char buf[128];
         const int bufLen = (int)sizeof(buf);
 
-        for (float timeMs = 1; timeMs <= totalTimeMs; timeMs += verticalWfRange) {
+        for (float timeMs = verticalWfRange; timeMs <= totalTimeMs; timeMs += verticalWfRange) {
             float yPos = wfMin.y + (timeMs * pixelsPerMs);
             const int textLen = std::clamp(sprintf(buf, "%.2fsec", timeMs / 1000.0f), 0, bufLen);
             ImVec2 txtSz = ImGui::CalcTextSize(buf, &buf[textLen]);
