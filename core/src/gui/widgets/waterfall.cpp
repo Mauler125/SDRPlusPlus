@@ -232,12 +232,9 @@ namespace ImGui {
         char buf[128];
         const int bufLen = (int)sizeof(buf);
 
-        for (float timeMs = 0; timeMs <= totalTimeMs; timeMs += verticalWfRange) {
+        for (float timeMs = 1; timeMs <= totalTimeMs; timeMs += verticalWfRange) {
             float yPos = wfMin.y + (timeMs * pixelsPerMs);
-            window->DrawList->AddLine(ImVec2(wfMin.x, roundf(yPos)),
-                                      ImVec2(wfMax.x, roundf(yPos)),
-                                      IM_COL32(50, 50, 50, 255), style::uiScale);
-            const int textLen = std::clamp(sprintf(buf, "%dmsec", (int)roundf(timeMs)), 0, bufLen);
+            const int textLen = std::clamp(sprintf(buf, "%.2fsec", timeMs / 1000.0f), 0, bufLen);
             ImVec2 txtSz = ImGui::CalcTextSize(buf, &buf[textLen]);
             window->DrawList->AddText(ImVec2(wfMin.x - txtSz.x - textVOffset, roundf(yPos - (txtSz.y / 2.0))), text, buf, &buf[textLen]);
         }
@@ -846,7 +843,7 @@ namespace ImGui {
 
         maxHorizontalSteps = dataWidth / (targetTextSize.x + 10);
         maxVerticalFftSteps = fftHeight / targetTextSize.y;
-        maxVerticalWfSteps = waterfallHeight / targetTextSize.y;
+        maxVerticalWfSteps = (waterfallHeight / targetTextSize.y) - 1; // -1 because last step will clip.
 
         range = findBestFrequencyRange(viewBandwidth, maxHorizontalSteps);
         verticalFftRange = findBestFrequencyRange(fftMax - fftMin, maxVerticalFftSteps);
