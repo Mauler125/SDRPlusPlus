@@ -746,7 +746,7 @@ namespace ImGui {
         else {
             fftHeight = widgetSize.y - (50.0f * style::uiScale);
         }
-        dataWidth = widgetSize.x - (60.0f * style::uiScale);
+        dataWidth = widgetSize.x - (90.0f * style::uiScale);
 
         if (waterfallVisible) {
             // Raw FFT resize
