@@ -140,6 +140,8 @@ namespace ImGui {
 
         void setBandPlanPos(int pos);
 
+        void setFFTRate(int rate);
+
         void setFFTHold(bool hold);
         void setFFTHoldSpeed(float speed);
 
@@ -252,10 +254,12 @@ namespace ImGui {
         std::mutex texMtx;
         std::mutex smoothingBufMtx;
 
-        float vRange;
+        float verticalFftRange;
+        float verticalWfRange;
 
-        int maxVSteps;
-        int maxHSteps;
+        int maxHorizontalSteps;
+        int maxVerticalFftSteps;
+        int maxVerticalWfSteps;
 
         int dataWidth;           // Width of the FFT and waterfall
         int fftHeight;           // Height of the fft graph
@@ -302,6 +306,8 @@ namespace ImGui {
 
         int bandPlanPos = BANDPLAN_POS_BOTTOM;
         ImGuiCrosshairFlags crosshairFlags = ImGuiCrosshairFlags_None;
+
+        float fftRate = 20.f; // Default = displaymenu::fftRate; mighr want to make a define for this.
 
         bool fftHold = false;
         float fftHoldSpeed = 0.3f;
