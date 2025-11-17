@@ -16,6 +16,8 @@ add_definitions(-DSDRPP_IS_CORE)
 add_definitions(-DFLOG_ANDROID_TAG="SDR++")
 if (MSVC)
     set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS ON)
+    set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} /Zi")
+    set(PDB_OUTPUT_DIRECTORY "RUNTIME_OUTPUT_DIRECTORY_${CONFIG_TYPE}")
 endif ()
 
 # Configure backend sources
