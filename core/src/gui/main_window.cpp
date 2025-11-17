@@ -663,7 +663,7 @@ void MainWindow::draw() {
     }
 
     if (metricsWindow) {
-        ImGui::ShowMetricsWindow();
+        ImGui::ShowMetricsWindow(&metricsWindow);
     }
 }
 
