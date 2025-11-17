@@ -17,6 +17,7 @@ namespace dsp::sink {
         }
 
         int run() {
+            if (tempStopped) { return -1; }
             int count = base_type::_in->read();
             if (count < 0) { return -1; }
 
