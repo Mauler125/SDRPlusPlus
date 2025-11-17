@@ -259,7 +259,7 @@ void IQFrontEnd::handler(dsp::complex_t* data, int count, void* ctx) {
 
     // Convert the complex output of the FFT to dB amplitude
     if (fftBuf) {
-        flog::info("[IQFrontEnd] fftBuf @ {0}; outBuf @ {1}.", (const void*)fftBuf, (const void*)_this->fftOutBuf);
+        flog::info("[IQFrontEnd] fftBuf @ {0}; outBuf @ {1}; sz = {2}.", (const void*)fftBuf, (const void*)_this->fftOutBuf, _this->_fftSize);
         volk_32fc_s32f_power_spectrum_32f(fftBuf, (lv_32fc_t*)_this->fftOutBuf, _this->_fftSize, _this->_fftSize);
     }
 
