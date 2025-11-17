@@ -857,11 +857,13 @@ namespace ImGui {
         buf_mtx.lock();
         window = GetCurrentWindow();
 
+        const static int horizPadding = 4;
+
         widgetPos = ImGui::GetWindowContentRegionMin();
         widgetEndPos = ImGui::GetWindowContentRegionMax();
         widgetPos.x += window->Pos.x;
         widgetPos.y += window->Pos.y;
-        widgetEndPos.x += window->Pos.x;
+        widgetEndPos.x += window->Pos.x - horizPadding; // Padding
         widgetEndPos.y += window->Pos.y;
         widgetSize = ImVec2(widgetEndPos.x - widgetPos.x, widgetEndPos.y - widgetPos.y);
 
@@ -881,7 +883,7 @@ namespace ImGui {
         //window->DrawList->AddRectFilled(widgetPos, widgetEndPos, IM_COL32( 0, 0, 0, 255 ));
         ImU32 bg = ImGui::ColorConvertFloat4ToU32(gui::themeManager.waterfallBg);
         window->DrawList->AddRectFilled(widgetPos, widgetEndPos, bg);
-        window->DrawList->AddRect(widgetPos, widgetEndPos, IM_COL32(50, 50, 50, 255), 0.0, 0, style::uiScale);
+        window->DrawList->AddRect(widgetPos, ImVec2(widgetEndPos.x + horizPadding, widgetEndPos.y), IM_COL32(50, 50, 50, 255), 0.0, 0, style::uiScale);
         window->DrawList->AddLine(ImVec2(widgetPos.x, freqAreaMax.y), ImVec2(widgetPos.x + widgetSize.x, freqAreaMax.y), IM_COL32(50, 50, 50, 255), style::uiScale);
 
         if (!gui::mainWindow.lockWaterfallControls) {
