@@ -34,6 +34,7 @@ namespace dsp {
         }
 
         virtual void setBufferSize(int samples) {
+            std::lock_guard<std::mutex> lck(bufMtx);
             buffer::free(writeBuf);
             buffer::free(readBuf);
             writeBuf = buffer::alloc<T>(samples);
@@ -72,7 +73,12 @@ namespace dsp {
             std::unique_lock<std::mutex> lck(rdyMtx);
             rdyCV.wait(lck, [this] { return (dataReady || readerStop); });
 
-            return (readerStop ? -1 : dataSize);
+            if (readerStop) {
+                return -1;
+            }
+
+            bufMtx.lock();
+            return dataSize;
         }
 
         virtual inline void flush() {
@@ -81,6 +87,8 @@ namespace dsp {
                 std::lock_guard<std::mutex> lck(rdyMtx);
                 dataReady = false;
             }
+
+            bufMtx.unlock();
 
             // Notify writer that buffers can be swapped
             {
@@ -116,10 +124,15 @@ namespace dsp {
         }
 
         void free() {
-            if (writeBuf) { buffer::free(writeBuf); }
-            if (readBuf) { buffer::free(readBuf); }
-            writeBuf = NULL;
-            readBuf = NULL;
+            std::lock_guard<std::mutex> lck(bufMtx);
+            if (writeBuf) {
+                buffer::free(writeBuf);
+                writeBuf = NULL;
+            }
+            if (readBuf) {
+                buffer::free(readBuf);
+                readBuf = NULL;
+            }
         }
 
         T* writeBuf;
@@ -131,6 +144,8 @@ namespace dsp {
 
         std::mutex rdyMtx;
         std::condition_variable rdyCV;
+
+        std::mutex bufMtx;
 
         bool canSwap = true;
         bool dataReady = false;
