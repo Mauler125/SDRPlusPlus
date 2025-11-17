@@ -270,10 +270,10 @@ void IQFrontEnd::updateFFTPath(bool updateWaterfall) {
     // Temp stop branch
     flog::info("[IQFrontEnd] Initiating temp stop on active Reshape stream.");
     reshape.tempStop();
-    flog::info("[IQFrontEnd] Finished temp stop on active Reshape stream.");
+    flog::info("[IQFrontEnd] Finished temp stop on active Reshape stream.\n");
     flog::info("[IQFrontEnd] Initiating temp stop on active Handler stream.");
     fftSink.tempStop();
-    flog::info("[IQFrontEnd] Finished temp stop on active Handler stream.");
+    flog::info("[IQFrontEnd] Finished temp stop on active Handler stream.\n");
 
     // Update reshaper settings
     int skip;
@@ -310,8 +310,10 @@ void IQFrontEnd::updateFFTPath(bool updateWaterfall) {
     // Restart branch
     flog::info("[IQFrontEnd] Initiating temp start on inactive Reshape stream.");
     reshape.tempStart();
-    flog::info("[IQFrontEnd] Finished temp start on inactive Reshape stream.");
+    flog::info("[IQFrontEnd] Finished temp start on inactive Reshape stream.\n");
     flog::info("[IQFrontEnd] Initiating temp start on inactive Handler stream.");
     fftSink.tempStart();
-    flog::info("[IQFrontEnd] Finished temp start on inactive Handler stream.");
+    flog::info("[IQFrontEnd] Finished temp start on inactive Handler stream.\n");
+
+    flog::info("\n");
 }
