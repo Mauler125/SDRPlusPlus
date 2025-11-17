@@ -221,7 +221,6 @@ namespace dsp::buffer {
         }
 
     private:
-        bool _init = false;
         T* _buffer;
         int size;
         int readc;
@@ -229,10 +228,11 @@ namespace dsp::buffer {
         int readable;
         int writable;
         int maxLatency;
+        bool _init = false;
         bool _stopReader;
         bool _stopWriter;
-        std::mutex _readable_mtx;
-        std::mutex _writable_mtx;
+        std::mutex _readable_mtx; // todo(kawe): get rid of this and use atomic exchange
+        std::mutex _writable_mtx; // todo(kawe): get rid of this and use atomic exchange
         std::condition_variable canReadVar;
         std::condition_variable canWriteVar;
     };
