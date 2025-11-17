@@ -268,8 +268,10 @@ void IQFrontEnd::handler(dsp::complex_t* data, int count, void* ctx) {
 
 void IQFrontEnd::updateFFTPath(bool updateWaterfall) {
     // Temp stop branch
+    flog::info("[IQFrontEnd] Initiating temp stop on active streams.");
     reshape.tempStop();
     fftSink.tempStop();
+    flog::info("[IQFrontEnd] Finished temp stop on active streams.");
 
     // Update reshaper settings
     int skip;
@@ -304,6 +306,8 @@ void IQFrontEnd::updateFFTPath(bool updateWaterfall) {
     if (updateWaterfall) { gui::waterfall.setRawFFTSize(_fftSize); }
 
     // Restart branch
+    flog::info("[IQFrontEnd] Initiating temp start on inactive streams.");
     reshape.tempStart();
     fftSink.tempStart();
+    flog::info("[IQFrontEnd] Finished temp start on inactive streams.");
 }
