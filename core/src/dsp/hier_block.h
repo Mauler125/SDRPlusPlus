@@ -60,6 +60,7 @@ namespace dsp {
         }
 
         virtual void doStop() {
+            flog::info("{0}: stopping blocks...", __FUNCTION__);
             for (auto& block : blocks) {
                 block->stop();
             }
