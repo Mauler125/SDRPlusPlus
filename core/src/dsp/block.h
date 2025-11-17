@@ -76,6 +76,14 @@ namespace dsp {
         }
 
         virtual void doStop() {
+            flog::info("{0}: try worker thread sync...", __FUNCTION__);
+
+            // TODO: Make sure this isn't needed, I don't know why it stops
+            if (workerThread.joinable()) {
+                flog::info("{0}: syncing worker thread...", __FUNCTION__);
+                workerThread.join();
+            }
+
             flog::info("{0}: stopping inputs...", __FUNCTION__);
             for (auto& in : inputs) {
                 in->stopReader();
@@ -83,14 +91,6 @@ namespace dsp {
             flog::info("{0}: stopping outputs...", __FUNCTION__);
             for (auto& out : outputs) {
                 out->stopWriter();
-            }
-
-            flog::info("{0}: try worker thread sync...", __FUNCTION__);
-
-            // TODO: Make sure this isn't needed, I don't know why it stops
-            if (workerThread.joinable()) {
-                flog::info("{0}: syncing worker thread...", __FUNCTION__);
-                workerThread.join();
             }
 
             flog::info("{0}: clearing inputs stop flag...", __FUNCTION__);
