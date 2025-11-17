@@ -173,7 +173,7 @@ namespace ImGui {
                                       text, style::uiScale);
             printAndScale(freq, buf);
             const ImVec2 txtSz = ImGui::CalcTextSize(buf);
-            const ImVec4 clipArea(fftAreaMin.x, fftAreaMin.y, fftAreaMax.x, fftAreaMax.y);
+            const ImVec4 clipArea(fftAreaMin.x, 0, fftAreaMax.x, 0);
             window->DrawList->AddText(NULL, 0.0f, ImVec2(roundf(xPos - (txtSz.x / 2.0)), fftAreaMax.y + txtSz.y), text, buf, NULL, 0.0f, &clipArea);
         }
 
