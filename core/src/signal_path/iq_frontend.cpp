@@ -17,6 +17,7 @@ IQFrontEnd::~IQFrontEnd() {
 void IQFrontEnd::init(dsp::stream<dsp::complex_t>* in, double sampleRate, bool buffering, int decimRatio, bool dcBlocking, int fftSize, double fftRate, FFTWindow fftWindow, float* (*acquireFFTBuffer)(void* ctx), void (*releaseFFTBuffer)(void* ctx), void* fftCtx) {
     _sampleRate = sampleRate;
     _decimRatio = decimRatio;
+    _fftSizeRequested = fftSize;
     _fftSize = fftSize;
     _fftRate = fftRate;
     _fftWindow = fftWindow;
@@ -183,7 +184,7 @@ void IQFrontEnd::removeVFO(std::string name) {
 }
 
 void IQFrontEnd::setFFTSize(int size) {
-    _fftSize = size;
+    _fftSizeRequested = size;
     updateFFTPath(true);
 }
 
@@ -275,6 +276,11 @@ void IQFrontEnd::updateFFTPath(bool updateWaterfall) {
     flog::info("[IQFrontEnd] Initiating temp stop on active Handler stream.");
     fftSink.tempStop();
     flog::info("[IQFrontEnd] Finished temp stop on active Handler stream.\n");
+
+    // This must be done here because it is still possible for handler() to be
+    // called during thread syncing, in which we still need to retain the prev
+    // buffer size as we haven't reallocated buffers yet.
+    _fftSize = _fftSizeRequested;
 
     // Update reshaper settings
     int skip;
