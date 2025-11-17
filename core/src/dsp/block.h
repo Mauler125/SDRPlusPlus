@@ -119,16 +119,16 @@ namespace dsp {
             outputs.erase(std::remove(outputs.begin(), outputs.end(), outStream), outputs.end());
         }
 
-        bool _block_init = false;
-
         std::recursive_mutex ctrlMtx;
 
         std::vector<untyped_stream*> inputs;
         std::vector<untyped_stream*> outputs;
 
+        std::thread workerThread;
+        int tempStopDepth = 0;
+
+        bool _block_init = false;
         bool running = false;
         bool tempStopped = false;
-        int tempStopDepth = 0;
-        std::thread workerThread;
     };
 }
