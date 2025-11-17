@@ -59,7 +59,6 @@ namespace dsp::buffer {
         }
 
         int run() {
-            if (tempStopped) { return -1; }
             int count = _in->read();
             if (count < 0) { return -1; }
             ringBuf.write(_in->readBuf, count);
