@@ -172,9 +172,8 @@ namespace ImGui {
                                       ImVec2(roundf(xPos), fftAreaMax.y + scaleVOfsset),
                                       text, style::uiScale);
             printAndScale(freq, buf);
-            const ImVec2 txtSz = ImGui::CalcTextSize(buf);
-            const ImVec4 clipArea(fftAreaMin.x, 0, fftAreaMax.x, 0);
-            window->DrawList->AddText(NULL, 0.0f, ImVec2(roundf(xPos - (txtSz.x / 2.0)), fftAreaMax.y + txtSz.y), text, buf, NULL, 0.0f, &clipArea);
+            ImVec2 txtSz = ImGui::CalcTextSize(buf);
+            window->DrawList->AddText(ImVec2(roundf(xPos - (txtSz.x / 2.0)), fftAreaMax.y + txtSz.y), text, buf);
         }
 
         // Data
@@ -862,7 +861,7 @@ namespace ImGui {
         widgetEndPos = ImGui::GetWindowContentRegionMax();
         widgetPos.x += window->Pos.x;
         widgetPos.y += window->Pos.y;
-        widgetEndPos.x += window->Pos.x - 4; // Padding
+        widgetEndPos.x += window->Pos.x;
         widgetEndPos.y += window->Pos.y;
         widgetSize = ImVec2(widgetEndPos.x - widgetPos.x, widgetEndPos.y - widgetPos.y);
 
