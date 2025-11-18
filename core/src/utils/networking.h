@@ -61,6 +61,8 @@ namespace net {
 
         bool stopWorkers = false;
         bool connectionOpen = false;
+        bool _udp;
+        Socket _sock;
 
         std::mutex readMtx;
         std::mutex writeMtx;
@@ -75,9 +77,6 @@ namespace net {
         std::vector<ConnWriteEntry> writeQueue;
         std::thread readWorkerThread;
         std::thread writeWorkerThread;
-
-        Socket _sock;
-        bool _udp;
         struct sockaddr_in remoteAddr;
     };
 
@@ -105,13 +104,13 @@ namespace net {
         bool listening = false;
         bool stopWorker = false;
 
+        Socket sock;
+
         std::mutex acceptMtx;
         std::mutex acceptQueueMtx;
         std::condition_variable acceptQueueCnd;
         std::vector<ListenerAcceptEntry> acceptQueue;
         std::thread acceptWorkerThread;
-
-        Socket sock;
     };
 
     typedef std::unique_ptr<ListenerClass> Listener;

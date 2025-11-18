@@ -64,9 +64,9 @@ namespace dsp {
         }
 
         std::vector<generic_block*> blocks;
+        int tempStopDepth = 0;
         bool tempStopped = false;
         bool running = false;
-        int tempStopDepth = 0;
 
     protected:
         void registerBlock(generic_block* block) {
