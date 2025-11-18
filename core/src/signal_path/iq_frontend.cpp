@@ -33,7 +33,7 @@ void IQFrontEnd::init(dsp::stream<dsp::complex_t>* in, double sampleRate, bool b
     dcBlock.init(NULL, genDCBlockRate(effectiveSr));
     conjugate.init(NULL);
 
-    preproc.init(&inBuf.out);
+    preproc.init(inBuf.getOutStream());
     preproc.addBlock(&decim, _decimRatio > 1);
     preproc.addBlock(&dcBlock, dcBlocking);
     preproc.addBlock(&conjugate, false); // TODO: Replace by parameter
@@ -99,7 +99,7 @@ void IQFrontEnd::setSampleRate(double sampleRate) {
 }
 
 void IQFrontEnd::setBuffering(bool enabled) {
-    inBuf.bypass = !enabled;
+    inBuf.setBypass(!enabled);
 }
 
 void IQFrontEnd::setDecimation(int ratio) {

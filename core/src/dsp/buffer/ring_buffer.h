@@ -221,8 +221,11 @@ namespace dsp::buffer {
         }
 
     private:
-        bool _init = false;
         T* _buffer;
+        std::mutex _readable_mtx;
+        std::mutex _writable_mtx;
+        std::condition_variable canReadVar;
+        std::condition_variable canWriteVar;
         int size;
         int readc;
         int writec;
@@ -231,9 +234,6 @@ namespace dsp::buffer {
         int maxLatency;
         bool _stopReader;
         bool _stopWriter;
-        std::mutex _readable_mtx;
-        std::mutex _writable_mtx;
-        std::condition_variable canReadVar;
-        std::condition_variable canWriteVar;
+        bool _init = false;
     };
 }

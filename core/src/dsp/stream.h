@@ -128,10 +128,11 @@ namespace dsp {
     private:
         std::mutex swapMtx;
         std::condition_variable swapCV;
-        bool canSwap = true;
 
         std::mutex rdyMtx;
         std::condition_variable rdyCV;
+
+        bool canSwap = true;
         bool dataReady = false;
 
         bool readerStop = false;
