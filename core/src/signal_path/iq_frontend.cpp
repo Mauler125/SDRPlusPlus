@@ -27,7 +27,7 @@ void IQFrontEnd::init(dsp::stream<dsp::complex_t>* in, double sampleRate, bool b
     effectiveSr = _sampleRate / _decimRatio;
 
     inBuf.init(in);
-    inBuf.bypass = !buffering;
+    inBuf.setBypass(!buffering);
 
     decim.init(NULL, _decimRatio);
     dcBlock.init(NULL, genDCBlockRate(effectiveSr));
