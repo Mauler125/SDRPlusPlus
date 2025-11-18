@@ -1,239 +1,153 @@
 #pragma once
 #include "buffer.h"
+#include "dsp/math/bitop.h"
 
-#define RING_BUF_SZ 1000000
+#if defined(__cpp_lib_hardware_interference_size) && !defined(__APPLE__)
+static constexpr size_t hardwareInterferenceSize =
+    std::hardware_destructive_interference_size;
+#else
+static constexpr size_t hardwareInterferenceSize = 64;
+#endif
 
-// IMPORTANT: THIS IS TRASH AND MUST BE REWRITTEN IN THE FUTURE
+#define RING_BUFFER_MIN_SIZE 0x2        // Technically we can do 1, but then this class shouldn't be used.
+#define RING_BUFFER_MAX_SIZE 0x40000000 // Anything higher will make (write - read) ambiguous after cursor wraparound!
+#define RING_BUFFER_DEF_SIZE 0x100000
 
 namespace dsp::buffer {
+
     template <class T>
     class RingBuffer {
     public:
-        RingBuffer() {}
+        explicit RingBuffer(const int bufSize = RING_BUFFER_DEF_SIZE) {
+            init(bufSize);
+        }
+        ~RingBuffer() = default;
 
-        RingBuffer(int maxLatency) { init(maxLatency); }
+        RingBuffer(const RingBuffer&) = delete;
+        RingBuffer& operator=(const RingBuffer&) = delete;
+        RingBuffer(RingBuffer&&) = delete;
+        RingBuffer& operator=(RingBuffer&&) = delete;
 
-        ~RingBuffer() {
-            if (!_init) { return; }
-            buffer::free(_buffer);
-            _init = false;
+        void init(const int bufSize = RING_BUFFER_DEF_SIZE) {
+            assert(bufSize >= RING_BUFFER_MIN_SIZE);
+            assert(bufSize <= RING_BUFFER_MAX_SIZE);
+
+            // This is so we can use bitwise AND to calc our indices,
+            // because modulo is about the slowest opcode to exist.
+            capacity = math::nextPow2(static_cast<uint32_t>(bufSize));
+            mask = capacity - 1;
+
+            memory = std::make_unique<T[]>(capacity);
         }
 
-        void init(int maxLatency) {
-            size = RING_BUF_SZ;
-            _stopReader = false;
-            _stopWriter = false;
-            this->maxLatency = maxLatency;
-            writec = 0;
-            readc = 0;
-            readable = 0;
-            writable = size;
-            _buffer = buffer::alloc<T>(size);
-            buffer::clear(_buffer, size);
-            _init = true;
-        }
-
-        int read(T* data, int len) {
-            assert(_init);
-            int dataRead = 0;
-            int toRead = 0;
-            while (dataRead < len) {
-                toRead = std::min<int>(waitUntilReadable(), len - dataRead);
-                if (toRead < 0) { return -1; };
-
-                if ((toRead + readc) > size) {
-                    memcpy(&data[dataRead], &_buffer[readc], (size - readc) * sizeof(T));
-                    memcpy(&data[dataRead + (size - readc)], &_buffer[0], (toRead - (size - readc)) * sizeof(T));
-                }
-                else {
-                    memcpy(&data[dataRead], &_buffer[readc], toRead * sizeof(T));
-                }
-
-                dataRead += toRead;
-
-                _readable_mtx.lock();
-                readable -= toRead;
-                _readable_mtx.unlock();
-                _writable_mtx.lock();
-                writable += toRead;
-                _writable_mtx.unlock();
-                readc = (readc + toRead) % size;
-                canWriteVar.notify_one();
+        int write(const T* const data, const int count) {
+            if (count <= 0) {
+                return 0;
             }
-            return len;
-        }
 
-        int readAndSkip(T* data, int len, int skip) {
-            assert(_init);
-            int dataRead = 0;
-            int toRead = 0;
-            while (dataRead < len) {
-                toRead = std::min<int>(waitUntilReadable(), len - dataRead);
-                if (toRead < 0) { return -1; };
+            const uint32_t currWrite = writeCursor.load(std::memory_order_relaxed);
+            const uint32_t currRead = readCursor.load(std::memory_order_acquire);
 
-                if ((toRead + readc) > size) {
-                    memcpy(&data[dataRead], &_buffer[readc], (size - readc) * sizeof(T));
-                    memcpy(&data[dataRead + (size - readc)], &_buffer[0], (toRead - (size - readc)) * sizeof(T));
-                }
-                else {
-                    memcpy(&data[dataRead], &_buffer[readc], toRead * sizeof(T));
-                }
+            const uint32_t writable = capacity - (currWrite - currRead);
+            const uint32_t toWrite = std::min<uint32_t>(static_cast<uint32_t>(count), writable);
 
-                dataRead += toRead;
-
-                _readable_mtx.lock();
-                readable -= toRead;
-                _readable_mtx.unlock();
-                _writable_mtx.lock();
-                writable += toRead;
-                _writable_mtx.unlock();
-                readc = (readc + toRead) % size;
-                canWriteVar.notify_one();
+            if (toWrite == 0) {
+                return 0;
             }
-            dataRead = 0;
-            while (dataRead < skip) {
-                toRead = std::min<int>(waitUntilReadable(), skip - dataRead);
-                if (toRead < 0) { return -1; };
 
-                dataRead += toRead;
+            copyToBuffer(data, currWrite & mask, toWrite);
+            writeCursor.store(currWrite + toWrite, std::memory_order_release);
 
-                _readable_mtx.lock();
-                readable -= toRead;
-                _readable_mtx.unlock();
-                _writable_mtx.lock();
-                writable += toRead;
-                _writable_mtx.unlock();
-                readc = (readc + toRead) % size;
-                canWriteVar.notify_one();
+            return static_cast<int>(toWrite);
+        }
+
+        int read(T* const data, const int count) {
+            if (count <= 0) {
+                return 0;
             }
-            return len;
-        }
 
-        int waitUntilReadable() {
-            assert(_init);
-            if (_stopReader) { return -1; }
-            int _r = getReadable();
-            if (_r != 0) { return _r; }
-            std::unique_lock<std::mutex> lck(_readable_mtx);
-            canReadVar.wait(lck, [=]() { return ((this->getReadable(false) > 0) || this->getReadStop()); });
-            if (_stopReader) { return -1; }
-            return getReadable(false);
-        }
+            const uint32_t currRead = readCursor.load(std::memory_order_relaxed);
+            const uint32_t currWrite = writeCursor.load(std::memory_order_acquire);
 
-        int getReadable(bool lock = true) {
-            assert(_init);
-            if (lock) { _readable_mtx.lock(); };
-            int _r = readable;
-            if (lock) { _readable_mtx.unlock(); };
-            return _r;
-        }
+            const uint32_t readable = currWrite - currRead;
+            const uint32_t toRead = std::min<uint32_t>(static_cast<uint32_t>(count), readable);
 
-        int write(T* data, int len) {
-            assert(_init);
-            int dataWritten = 0;
-            int toWrite = 0;
-            while (dataWritten < len) {
-                toWrite = std::min<int>(waitUntilwritable(), len - dataWritten);
-                if (toWrite < 0) { return -1; };
-
-                if ((toWrite + writec) > size) {
-                    memcpy(&_buffer[writec], &data[dataWritten], (size - writec) * sizeof(T));
-                    memcpy(&_buffer[0], &data[dataWritten + (size - writec)], (toWrite - (size - writec)) * sizeof(T));
-                }
-                else {
-                    memcpy(&_buffer[writec], &data[dataWritten], toWrite * sizeof(T));
-                }
-
-                dataWritten += toWrite;
-
-                _readable_mtx.lock();
-                readable += toWrite;
-                _readable_mtx.unlock();
-                _writable_mtx.lock();
-                writable -= toWrite;
-                _writable_mtx.unlock();
-                writec = (writec + toWrite) % size;
-
-                canReadVar.notify_one();
+            if (toRead == 0) {
+                return 0;
             }
-            return len;
+            
+            copyFromBuffer(data, currRead & mask, toRead);
+            readCursor.store(currRead + toRead, std::memory_order_release);
+
+            return static_cast<int>(toRead);
         }
 
-        int waitUntilwritable() {
-            assert(_init);
-            if (_stopWriter) { return -1; }
-            int _w = getWritable();
-            if (_w != 0) { return _w; }
-            std::unique_lock<std::mutex> lck(_writable_mtx);
-            canWriteVar.wait(lck, [=]() { return ((this->getWritable(false) > 0) || this->getWriteStop()); });
-            if (_stopWriter) { return -1; }
-            return getWritable(false);
+        int readAndSkip(T* const data, const int len, const int skip) {
+            const int totalToConsume = len + skip;
+            if (totalToConsume <= 0) {
+                return 0;
+            }
+
+            const uint32_t currRead = readCursor.load(std::memory_order_relaxed);
+            const uint32_t currWrite = writeCursor.load(std::memory_order_acquire);
+
+            const uint32_t readable = currWrite - currRead;
+            const uint32_t actualToConsume = std::min<uint32_t>(totalToConsume, readable);
+
+            if (actualToConsume == 0) {
+                return 0;
+            }
+
+            const uint32_t readRequest = (len > 0) ? static_cast<uint32_t>(len) : 0;
+            const uint32_t actualToRead = std::min<uint32_t>(readRequest, actualToConsume);
+
+            if (actualToRead > 0) {
+                copyFromBuffer(data, currRead & mask, actualToRead);
+            }
+
+            readCursor.store(currRead + actualToConsume, std::memory_order_release);
+            return static_cast<int>(actualToRead);
         }
 
-        int getWritable(bool lock = true) {
-            assert(_init);
-            if (lock) { _writable_mtx.lock(); };
-            int _w = writable;
-            if (lock) {
-                _writable_mtx.unlock();
-                _readable_mtx.lock();
-            };
-            int _r = readable;
-            if (lock) { _readable_mtx.unlock(); };
-            return std::max<int>(std::min<int>(_w, maxLatency - _r), 0);
+        int getReadableSize() const {
+            const uint32_t readable = writeCursor.load(std::memory_order_acquire) - readCursor.load(std::memory_order_relaxed);
+            return static_cast<int>(std::min<uint32_t>(readable, static_cast<uint32_t>((std::numeric_limits<int>::max)())));
         }
 
-        void stopReader() {
-            assert(_init);
-            _stopReader = true;
-            canReadVar.notify_one();
+        int getWritableSize() const {
+            return static_cast<int>(capacity) - getReadableSize();
         }
 
-        void stopWriter() {
-            assert(_init);
-            _stopWriter = true;
-            canWriteVar.notify_one();
-        }
-
-        bool getReadStop() {
-            assert(_init);
-            return _stopReader;
-        }
-
-        bool getWriteStop() {
-            assert(_init);
-            return _stopWriter;
-        }
-
-        void clearReadStop() {
-            assert(_init);
-            _stopReader = false;
-        }
-
-        void clearWriteStop() {
-            assert(_init);
-            _stopWriter = false;
-        }
-
-        void setMaxLatency(int maxLatency) {
-            assert(_init);
-            this->maxLatency = maxLatency;
+        int getCapacity() const {
+            return static_cast<int>(capacity);
         }
 
     private:
-        T* _buffer;
-        std::mutex _readable_mtx;
-        std::mutex _writable_mtx;
-        std::condition_variable canReadVar;
-        std::condition_variable canWriteVar;
-        int size;
-        int readc;
-        int writec;
-        int readable;
-        int writable;
-        int maxLatency;
-        bool _stopReader;
-        bool _stopWriter;
-        bool _init = false;
+        void copyToBuffer(const T* const data, const uint32_t idx, const uint32_t count) {
+            if (idx + count <= capacity) {
+                memcpy(&memory[idx], data, count * sizeof(T));
+            } else {
+                const uint32_t firstChunkSz = capacity - idx;
+                memcpy(&memory[idx], data, firstChunkSz * sizeof(T));
+                memcpy(&memory[0], data + firstChunkSz, (count - firstChunkSz) * sizeof(T));
+            }
+        }
+        
+        void copyFromBuffer(T* const data, const uint32_t idx, const uint32_t count) {
+            if (idx + count <= capacity) {
+                memcpy(data, &memory[idx], count * sizeof(T));
+            } else {
+                const uint32_t firstChunkSz = capacity - idx;
+                memcpy(data, &memory[idx], firstChunkSz * sizeof(T));
+                memcpy(data + firstChunkSz, &memory[0], (count - firstChunkSz) * sizeof(T));
+            }
+        }
+        
+        alignas(hardwareInterferenceSize) std::atomic<uint32_t> writeCursor{ 0 };
+        alignas(hardwareInterferenceSize) std::atomic<uint32_t> readCursor{ 0 };
+
+        uint32_t capacity = 0;
+        uint32_t mask = 0;
+        std::unique_ptr<T[]> memory;
     };
 }

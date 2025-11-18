@@ -25,7 +25,7 @@ namespace dsp::buffer {
             _in = in;
             _keep = keep;
             _skip = skip;
-            ringBuf.init(keep * 2);
+            ringBuf.init(/*keep * 2*/);
             base_type::registerInput(_in);
             base_type::registerOutput(&out);
             base_type::_block_init = true;
@@ -46,7 +46,7 @@ namespace dsp::buffer {
             std::lock_guard<std::recursive_mutex> lck(base_type::ctrlMtx);
             base_type::tempStop();
             _keep = keep;
-            ringBuf.setMaxLatency(keep * 2);
+            //ringBuf.setMaxLatency(keep * 2);
             base_type::tempStart();
         }
 
@@ -81,9 +81,9 @@ namespace dsp::buffer {
 
         void doStop() override {
             _in->stopReader();
-            ringBuf.stopReader();
+            //ringBuf.stopReader();
             out.stopWriter();
-            ringBuf.stopWriter();
+            //ringBuf.stopWriter();
 
             if (workThread.joinable()) {
                 workThread.join();
@@ -93,9 +93,9 @@ namespace dsp::buffer {
             }
 
             _in->clearReadStop();
-            ringBuf.clearReadStop();
+            //ringBuf.clearReadStop();
             out.clearWriteStop();
-            ringBuf.clearWriteStop();
+            //ringBuf.clearWriteStop();
         }
 
         void bufferWorker() {
