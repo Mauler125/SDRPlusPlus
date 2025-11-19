@@ -14,9 +14,9 @@ namespace dsp::buffer {
         RingBuffer(int maxLatency) { init(maxLatency); }
 
         ~RingBuffer() {
-            if (!_init) { return; }
-            buffer::free(_buffer);
-            _init = false;
+            if (_buffer) {
+                buffer::free(_buffer);
+            }
         }
 
         void init(int maxLatency) {
@@ -30,11 +30,10 @@ namespace dsp::buffer {
             writable = size;
             _buffer = buffer::alloc<T>(size);
             buffer::clear(_buffer, size);
-            _init = true;
         }
 
         int read(T* data, int len) {
-            assert(_init);
+            assert(_buffer);
             int dataRead = 0;
             int toRead = 0;
             while (dataRead < len) {
@@ -64,7 +63,7 @@ namespace dsp::buffer {
         }
 
         int readAndSkip(T* data, int len, int skip) {
-            assert(_init);
+            assert(_buffer);
             int dataRead = 0;
             int toRead = 0;
             while (dataRead < len) {
@@ -110,7 +109,7 @@ namespace dsp::buffer {
         }
 
         int waitUntilReadable() {
-            assert(_init);
+            assert(_buffer);
             if (_stopReader) { return -1; }
             int _r = getReadable();
             if (_r != 0) { return _r; }
@@ -121,7 +120,7 @@ namespace dsp::buffer {
         }
 
         int getReadable(bool lock = true) {
-            assert(_init);
+            assert(_buffer);
             if (lock) { _readable_mtx.lock(); };
             int _r = readable;
             if (lock) { _readable_mtx.unlock(); };
@@ -129,7 +128,7 @@ namespace dsp::buffer {
         }
 
         int write(T* data, int len) {
-            assert(_init);
+            assert(_buffer);
             int dataWritten = 0;
             int toWrite = 0;
             while (dataWritten < len) {
@@ -160,7 +159,7 @@ namespace dsp::buffer {
         }
 
         int waitUntilwritable() {
-            assert(_init);
+            assert(_buffer);
             if (_stopWriter) { return -1; }
             int _w = getWritable();
             if (_w != 0) { return _w; }
@@ -171,7 +170,7 @@ namespace dsp::buffer {
         }
 
         int getWritable(bool lock = true) {
-            assert(_init);
+            assert(_buffer);
             if (lock) { _writable_mtx.lock(); };
             int _w = writable;
             if (lock) {
@@ -184,44 +183,44 @@ namespace dsp::buffer {
         }
 
         void stopReader() {
-            assert(_init);
+            assert(_buffer);
             _stopReader = true;
             canReadVar.notify_one();
         }
 
         void stopWriter() {
-            assert(_init);
+            assert(_buffer);
             _stopWriter = true;
             canWriteVar.notify_one();
         }
 
         bool getReadStop() {
-            assert(_init);
+            assert(_buffer);
             return _stopReader;
         }
 
         bool getWriteStop() {
-            assert(_init);
+            assert(_buffer);
             return _stopWriter;
         }
 
         void clearReadStop() {
-            assert(_init);
+            assert(_buffer);
             _stopReader = false;
         }
 
         void clearWriteStop() {
-            assert(_init);
+            assert(_buffer);
             _stopWriter = false;
         }
 
         void setMaxLatency(int maxLatency) {
-            assert(_init);
+            assert(_buffer);
             this->maxLatency = maxLatency;
         }
 
     private:
-        T* _buffer;
+        T* _buffer = nullptr;
         std::mutex _readable_mtx;
         std::mutex _writable_mtx;
         std::condition_variable canReadVar;
@@ -234,6 +233,5 @@ namespace dsp::buffer {
         int maxLatency;
         bool _stopReader;
         bool _stopWriter;
-        bool _init = false;
     };
 }
