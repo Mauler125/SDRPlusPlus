@@ -37,7 +37,7 @@ void ConfigManager::load(json def, bool lock) {
         file.close();
     }
     catch (const std::exception& e) {
-        flog::error("Config file '{}' is corrupted, resetting it: {}", path, e.what());
+        flog::error("Config file '{0}' is corrupted, resetting it: {1}", path, e.what());
         conf = def;
         save(false);
     }

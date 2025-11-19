@@ -159,7 +159,7 @@ void ModuleManager::postInit(std::string name) {
 
 std::string ModuleManager::getInstanceModuleName(std::string name) {
     if (instances.find(name) == instances.end()) {
-        flog::error("Cannot get module name of'{0}', instance doesn't exist", name);
+        flog::error("Cannot get module name of '{0}', instance doesn't exist", name);
         return "";
     }
     return std::string(instances[name].module.info->name);
