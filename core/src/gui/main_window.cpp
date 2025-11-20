@@ -506,8 +506,9 @@ void MainWindow::draw() {
             ImGui::Text("Frame rate: %.1f FPS", ImGui::GetIO().Framerate);
             ImGui::Text("Center frequency: %.0f Hz", gui::waterfall.getCenterFrequency());
             ImGui::Text("Source name: %s", sourceName.c_str());
-            ImGui::Text("Dear ImGui version: %s", ImGui::GetVersion());
-            ImGui::Checkbox("Show metrics window", &metricsWindow);
+            ImGui::Checkbox("Show metrics tool window", &metricsToolWindow);
+            ImGui::Checkbox("Show style editor window", &styleEditorWindow);
+            ImGui::Checkbox("Show Dear ImGui about window", &imguiAboutWindow);
 
             // ImGui::Checkbox("Bypass buffering", &sigpath::iqFrontEnd.inputBuffer.bypass);
             // ImGui::Text("Buffering: %d", (sigpath::iqFrontEnd.inputBuffer.writeCur - sigpath::iqFrontEnd.inputBuffer.readCur + 32) % 32);
@@ -662,8 +663,14 @@ void MainWindow::draw() {
         credits::show();
     }
 
-    if (metricsWindow) {
-        ImGui::ShowMetricsWindow(&metricsWindow);
+    if (metricsToolWindow) {
+        ImGui::ShowMetricsWindow(&metricsToolWindow);
+    }
+    if (styleEditorWindow) {
+        ImGui::ShowStyleEditor();
+    }
+    if (imguiAboutWindow) {
+        ImGui::ShowAboutWindow(&imguiAboutWindow);
     }
 }
 
