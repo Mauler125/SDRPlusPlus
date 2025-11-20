@@ -7,6 +7,7 @@
 #include <memory>
 #include <thread>
 #include <condition_variable>
+#include <atomic>
 
 #ifdef _WIN32
 #include <WinSock2.h>
@@ -59,8 +60,8 @@ namespace net {
         void readWorker();
         void writeWorker();
 
-        bool stopWorkers = false;
-        bool connectionOpen = false;
+        std::atomic_bool stopWorkers = false;
+        std::atomic_bool connectionOpen = false;
         bool _udp;
         Socket _sock;
 
@@ -101,8 +102,8 @@ namespace net {
     private:
         void worker();
 
-        bool listening = false;
-        bool stopWorker = false;
+        std::atomic_bool stopWorker = false;
+        std::atomic_bool listening = false;
 
         Socket sock;
 

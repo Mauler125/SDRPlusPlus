@@ -6,6 +6,7 @@
 #include <vector>
 #include <mutex>
 #include <chrono>
+#include <atomic>
 
 #define RFSPACE_MAX_SIZE                8192
 #define RFSPACE_HEARTBEAT_INTERVAL_MS   1000
@@ -145,7 +146,7 @@ namespace rfspace {
         std::thread heartBeatThread;
         std::mutex heartBeatMtx;
         std::condition_variable heartBeatCnd;
-        volatile bool stopHeartBeat = false;
+        std::atomic_bool stopHeartBeat = false;
 
         bool devIdAvailable = false;
         std::condition_variable devIdCnd;

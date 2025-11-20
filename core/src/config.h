@@ -4,6 +4,7 @@
 #include <string>
 #include <mutex>
 #include <condition_variable>
+#include <atomic>
 
 using nlohmann::json;
 
@@ -25,12 +26,14 @@ private:
     void autoSaveWorker();
 
     std::string path = "";
-    volatile bool changed = false;
-    volatile bool autoSaveEnabled = false;
     std::thread autoSaveThread;
     std::mutex mtx;
 
     std::mutex termMtx;
     std::condition_variable termCond;
-    volatile bool termFlag = false;
+
+    std::atomic_bool changed{ false };
+    std::atomic_bool autoSaveEnabled{ false };
+
+    std::atomic_bool termFlag{ false };
 };

@@ -1,5 +1,6 @@
 #pragma once
 #include "../block.h"
+#include <atomic>
 #define TEST_BUFFER_SIZE 32
 
 // IMPORTANT: THIS IS TRASH AND MUST BE REWRITTEN IN THE FUTURE
@@ -126,8 +127,8 @@ namespace dsp::buffer {
         int readCur = 0;
         int writeCur = 0;
 
-        bool bypass = false;
-        bool stopWorker = false;
+        std::atomic_bool bypass = false;
+        std::atomic_bool stopWorker = false;
 
         T* buffers[TEST_BUFFER_SIZE];
         int sizes[TEST_BUFFER_SIZE];

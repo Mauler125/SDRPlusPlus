@@ -75,7 +75,7 @@ void ConfigManager::acquire() {
 }
 
 void ConfigManager::release(bool modified) {
-    changed |= modified;
+    if (modified) { changed.store(true, std::memory_order_relaxed); }
     mtx.unlock();
 }
 
@@ -95,7 +95,7 @@ void ConfigManager::autoSaveWorker() {
         // Sleep but listen for wakeup call
         {
             std::unique_lock<std::mutex> lock(termMtx);
-            termCond.wait_for(lock, std::chrono::milliseconds(1000), [this]() { return termFlag; });
+            termCond.wait_for(lock, std::chrono::milliseconds(1000), [this]() { return termFlag.load(); });
         }
     }
 }

@@ -2,6 +2,7 @@
 #include <string.h>
 #include <mutex>
 #include <condition_variable>
+#include <atomic>
 #include <volk/volk.h>
 #include "buffer/buffer.h"
 
@@ -143,8 +144,8 @@ namespace dsp {
         bool canSwap = true;
         bool dataReady = false;
 
-        bool readerStop = false;
-        bool writerStop = false;
+        std::atomic_bool readerStop = false;
+        std::atomic_bool writerStop = false;
 
         int bufferSize = 0;
         int dataSize = 0;
