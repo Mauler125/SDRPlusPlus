@@ -238,7 +238,7 @@ namespace sourcemenu {
 
     bool addOffsetDialog() {
         bool open = true;
-        gui::mainWindow.lockWaterfallControls = true;
+        gui::mainWindow.muteInputThisFrame(true);
 
         float menuWidth = ImGui::GetContentRegionAvail().x;
 

@@ -221,7 +221,9 @@ namespace ImGui {
                                   ImVec2(fftAreaMin.x, fftAreaMax.y - 1),
                                   text, style::uiScale);
 
-        DrawCrosshairUnderCursor(ImRect(fftAreaMin, fftAreaMax), IM_COL32(200, 200, 0, 255), 1.0f, crosshairFlags);
+        if (gui::mainWindow.processMouseInputs) {
+            DrawCrosshairUnderCursor(ImRect(fftAreaMin, fftAreaMax), IM_COL32(200, 200, 0, 255), 1.0f, crosshairFlags);
+        }
     }
 
     void WaterFall::drawWaterfall() {
@@ -250,7 +252,7 @@ namespace ImGui {
         
         ImVec2 mPos = ImGui::GetMousePos();
 
-        if (IS_IN_AREA(mPos, wfMin, wfMax) && !gui::mainWindow.lockWaterfallControls && !inputHandled) {
+        if (!gui::mainWindow.processMouseInputs && !inputHandled && IS_IN_AREA(mPos, wfMin, wfMax)) {
             for (auto const& [name, vfo] : vfos) {
                 window->DrawList->AddRectFilled(vfo->wfRectMin, vfo->wfRectMax, vfo->color);
                 if (!vfo->lineVisible) { continue; }
@@ -883,7 +885,7 @@ namespace ImGui {
         window->DrawList->AddRectFilled(widgetPos, widgetEndPos, bg);
         window->DrawList->AddLine(ImVec2(widgetPos.x, freqAreaMax.y), ImVec2(widgetPos.x + widgetSize.x, freqAreaMax.y), IM_COL32(50, 50, 50, 255), style::uiScale);
 
-        if (!gui::mainWindow.lockWaterfallControls) {
+        if (gui::mainWindow.processMouseInputs && gui::mainWindow.processKeyboardInputs) {
             inputHandled = false;
             InputHandlerArgs args;
             args.fftRectMin = fftAreaMin;
@@ -1412,7 +1414,7 @@ namespace ImGui {
             window->DrawList->AddRectFilled(notchMin, notchMax, IM_COL32(255, 0, 0, 127));
         }
 
-        if (!gui::mainWindow.lockWaterfallControls && !gui::waterfall.inputHandled) {
+        if (!gui::mainWindow.processMouseInputs && !gui::waterfall.inputHandled) {
             ImVec2 mousePos = ImGui::GetMousePos();
             if (rectMax.x - rectMin.x < 10) { return; }
             if (reference != REF_LOWER && !bandwidthLocked && !leftClamped) {

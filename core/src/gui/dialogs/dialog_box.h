@@ -22,7 +22,7 @@ namespace ImGui {
         if (!open) { return -1; }
 
         // Draw popup
-        gui::mainWindow.lockWaterfallControls = true;
+        gui::mainWindow.muteInputThisFrame(true);
         std::string idstr = std::string("##") + std::string(id);
         ImGui::OpenPopup(id);
         if (ImGui::BeginPopup(id, ImGuiWindowFlags_NoResize)) {

@@ -156,7 +156,7 @@ namespace SmGui {
                 i += 2;
             }
             else if (elem.step == DRAW_STEP_BEGIN_POPUP) {
-                gui::mainWindow.lockWaterfallControls = true;
+                gui::mainWindow.muteInputThisFrame(true);
                 if (!BeginPopup(elements[i].str.c_str(), elements[i+1].i)) {
                     i += 2;
                     while (i < elemCount && !(elements[i].type == DRAW_LIST_ELEM_TYPE_DRAW_STEP && elements[i].step == DRAW_STEP_END_POPUP)) { i++; }

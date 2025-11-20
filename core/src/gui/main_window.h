@@ -15,6 +15,9 @@ class MainWindow {
 public:
     void init();
     void draw();
+    bool canProcessMouseInputs();
+    bool canProcessKeyboardInputs();
+    void muteInputThisFrame(bool mute);
     void setViewBandwidthSlider(float bandwidth);
     bool sdrIsRunning();
     void setFirstMenuRender();
@@ -28,7 +31,8 @@ public:
     void setPlayState(bool _playing);
     bool isPlaying();
 
-    bool lockWaterfallControls = false;
+    bool processMouseInputs = false;
+    bool processKeyboardInputs = false;
     bool playButtonLocked = false;
 
     Event<bool> onPlayStateChange;
