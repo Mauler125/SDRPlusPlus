@@ -41,9 +41,9 @@ namespace dsp {
     template <class I, class O>
     class Processor : public block {
     public:
-        Processor() {}
+        Processor() : out(true), _in(nullptr) {}
 
-        Processor(stream<I>* in) { init(in); }
+        Processor(stream<I>* in) : out(false) { init(in); }
 
         virtual ~Processor() {}
 

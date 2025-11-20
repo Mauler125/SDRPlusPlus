@@ -26,7 +26,12 @@ namespace dsp {
     public:
         stream() {
             writeBuf = buffer::alloc<T>(STREAM_BUFFER_SIZE);
-            readBuf = buffer::alloc<T>(STREAM_BUFFER_SIZE);
+        stream(bool doDefaultAlloc = true) {
+            if (doDefaultAlloc) {
+                readBuf = buffer::alloc<T>(STREAM_BUFFER_SIZE);
+                writeBuf = buffer::alloc<T>(STREAM_BUFFER_SIZE);
+                bufferSize = STREAM_BUFFER_SIZE;
+            }
         }
 
         virtual ~stream() {
