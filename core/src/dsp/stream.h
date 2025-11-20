@@ -15,17 +15,15 @@ namespace dsp {
         virtual bool swap(int size) { return false; }
         virtual int read() { return -1; }
         virtual void flush() {}
-        virtual void stopWriter() {}
-        virtual void clearWriteStop() {}
         virtual void stopReader() {}
         virtual void clearReadStop() {}
+        virtual void stopWriter() {}
+        virtual void clearWriteStop() {}
     };
 
     template <class T>
     class stream : public untyped_stream {
     public:
-        stream() {
-            writeBuf = buffer::alloc<T>(STREAM_BUFFER_SIZE);
         stream(bool doDefaultAlloc = true) {
             if (doDefaultAlloc) {
                 readBuf = buffer::alloc<T>(STREAM_BUFFER_SIZE);
@@ -39,10 +37,11 @@ namespace dsp {
         }
 
         virtual void setBufferSize(int samples) {
-            buffer::free(writeBuf);
-            buffer::free(readBuf);
-            writeBuf = buffer::alloc<T>(samples);
+            if (readBuf) { buffer::free(readBuf); }
             readBuf = buffer::alloc<T>(samples);
+            if (writeBuf) { buffer::free(writeBuf); }
+            writeBuf = buffer::alloc<T>(samples);
+            bufferSize = samples;
         }
 
         virtual inline bool swap(int size) {
@@ -96,18 +95,6 @@ namespace dsp {
             swapCV.notify_all();
         }
 
-        virtual void stopWriter() {
-            {
-                std::lock_guard<std::mutex> lck(swapMtx);
-                writerStop = true;
-            }
-            swapCV.notify_all();
-        }
-
-        virtual void clearWriteStop() {
-            writerStop = false;
-        }
-
         virtual void stopReader() {
             {
                 std::lock_guard<std::mutex> lck(rdyMtx);
@@ -120,15 +107,31 @@ namespace dsp {
             readerStop = false;
         }
 
-        void free() {
-            if (writeBuf) { buffer::free(writeBuf); }
-            if (readBuf) { buffer::free(readBuf); }
-            writeBuf = NULL;
-            readBuf = NULL;
+        virtual void stopWriter() {
+            {
+                std::lock_guard<std::mutex> lck(swapMtx);
+                writerStop = true;
+            }
+            swapCV.notify_all();
         }
 
-        T* writeBuf;
-        T* readBuf;
+        virtual void clearWriteStop() {
+            writerStop = false;
+        }
+
+        void free() {
+            if (readBuf) {
+                buffer::free(readBuf);
+                readBuf = NULL;
+            }
+            if (writeBuf) {
+                buffer::free(writeBuf);
+                writeBuf = NULL;
+            }
+        }
+
+        T* readBuf = nullptr;
+        T* writeBuf = nullptr;
 
     private:
         std::mutex swapMtx;
@@ -143,6 +146,7 @@ namespace dsp {
         bool readerStop = false;
         bool writerStop = false;
 
+        int bufferSize = 0;
         int dataSize = 0;
     };
 }
