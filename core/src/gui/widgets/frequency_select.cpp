@@ -134,7 +134,7 @@ void FrequencySelect::draw() {
         ImVec2 mousePos = ImGui::GetMousePos();
         bool leftClick = ImGui::IsMouseClicked(ImGuiMouseButton_Left);
         bool rightClick = ImGui::IsMouseClicked(ImGuiMouseButton_Right);
-        int mw = io.MouseWheel;
+        int mw = io.MouseWheel + io.MouseWheelH;
         bool onDigit = false;
         bool hovered = false;
 

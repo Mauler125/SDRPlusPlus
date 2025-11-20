@@ -570,7 +570,7 @@ void MainWindow::draw() {
         }
 
         // Handle scrollwheel
-        int wheel = ImGui::GetIO().MouseWheel;
+        int wheel = ImGui::GetIO().MouseWheel + ImGui::GetIO().MouseWheelH;
         if (wheel != 0 && (gui::waterfall.mouseInFFT || gui::waterfall.mouseInWaterfall)) {
             double nfreq;
             if (vfo != NULL) {
