@@ -149,11 +149,15 @@ namespace ImGui {
         float textVOffset = 10.0f * style::uiScale;
 
         // Vertical scale
+        float scaleTickOfsset = 7 * style::uiScale;
         for (float line = startLine; line > fftMin; line -= verticalFftRange) {
             float yPos = fftAreaMax.y - ((line - fftMin) * scaleFactor);
             window->DrawList->AddLine(ImVec2(fftAreaMin.x, roundf(yPos)),
                                       ImVec2(fftAreaMax.x, roundf(yPos)),
                                       IM_COL32(50, 50, 50, 255), style::uiScale);
+            window->DrawList->AddLine(ImVec2(fftAreaMin.x, roundf(yPos)),
+                                      ImVec2(fftAreaMin.x - scaleTickOfsset, roundf(yPos)),
+                                      text, style::uiScale);
             sprintf(buf, "%ddBFS", (int)roundf(line));
             ImVec2 txtSz = ImGui::CalcTextSize(buf);
             window->DrawList->AddText(ImVec2(fftAreaMin.x - txtSz.x - textVOffset, roundf(yPos - (txtSz.y / 2.0))), text, buf);
@@ -162,14 +166,13 @@ namespace ImGui {
         // Horizontal scale
         double startFreq = ceilf(lowerFreq / range) * range;
         double horizScale = (double)dataWidth / viewBandwidth;
-        float scaleVOfsset = 7 * style::uiScale;
         for (double freq = startFreq; freq < upperFreq; freq += range) {
             double xPos = fftAreaMin.x + ((freq - lowerFreq) * horizScale);
             window->DrawList->AddLine(ImVec2(roundf(xPos), fftAreaMin.y + 1),
                                       ImVec2(roundf(xPos), fftAreaMax.y),
                                       IM_COL32(50, 50, 50, 255), style::uiScale);
             window->DrawList->AddLine(ImVec2(roundf(xPos), fftAreaMax.y),
-                                      ImVec2(roundf(xPos), fftAreaMax.y + scaleVOfsset),
+                                      ImVec2(roundf(xPos), fftAreaMax.y + scaleTickOfsset),
                                       text, style::uiScale);
             printAndScale(freq, buf);
             ImVec2 txtSz = ImGui::CalcTextSize(buf);
