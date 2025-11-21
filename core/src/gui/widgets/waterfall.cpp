@@ -212,6 +212,10 @@ namespace ImGui {
         args.window = window;
         onFFTRedraw.emit(args);
 
+        if (gui::mainWindow.processMouseInputs) {
+            DrawCrosshairUnderCursor(ImRect(fftAreaMin, fftAreaMax), IM_COL32(200, 200, 0, 255), 1.0f, crosshairFlags);
+        }
+
         // X Axis
         window->DrawList->AddLine(ImVec2(fftAreaMin.x, fftAreaMax.y),
                                   ImVec2(fftAreaMax.x, fftAreaMax.y),
@@ -220,10 +224,6 @@ namespace ImGui {
         window->DrawList->AddLine(ImVec2(fftAreaMin.x, fftAreaMin.y),
                                   ImVec2(fftAreaMin.x, fftAreaMax.y - 1),
                                   text, style::uiScale);
-
-        if (gui::mainWindow.processMouseInputs) {
-            DrawCrosshairUnderCursor(ImRect(fftAreaMin, fftAreaMax), IM_COL32(200, 200, 0, 255), 1.0f, crosshairFlags);
-        }
     }
 
     void WaterFall::drawWaterfall() {
