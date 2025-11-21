@@ -12,6 +12,7 @@ namespace sdrpp_credits {
         "Howard0su",
         "John Donkersley",
         "Joshua Kimsey",
+        "Kawe Mazidjatari",
         "Manawyrm",
         "Martin Hauke",
         "Marvin Sinister",
