@@ -41,33 +41,36 @@ private:
     static void vfoAddedHandler(VFOManager::VFO* vfo, void* ctx);
 
     // FFT Variables
-    int fftSize = 8192 * 8;
-    std::mutex fft_mtx;
     fftwf_complex *fft_in, *fft_out;
     fftwf_plan fftwPlan;
+    std::mutex fft_mtx;
 
     // GUI Variables
-    bool firstMenuRender = true;
-    bool startedWithMenuClosed = false;
+    int fftSize = 8192 * 8;
     float fftMin = -70.0;
     float fftMax = 0.0;
     float bw = 8000000;
-    bool playing = false;
-    bool openCredits = false;
+
     std::string audioStreamName = "";
     std::string sourceName = "";
+
     int menuWidth = 300;
-    bool grabbingMenu = false;
     int newWidth = 300;
     int fftHeight = 300;
-    bool showMenu = true;
     int tuningMode = tuner::TUNER_MODE_NORMAL;
     int selectedWindow = 0;
-    dsp::stream<dsp::complex_t> dummyStream;
+
+    bool playing = false;
+    bool autostart = false;
+    bool firstMenuRender = true;
+    bool startedWithMenuClosed = false;
+    bool grabbingMenu = false;
+    bool openCredits = false;
+    bool showMenu = true;
     bool showImGuiDemo = false;
     bool showImPlotDemo = false;
     bool initComplete = false;
-    bool autostart = false;
 
+    dsp::stream<dsp::complex_t> dummyStream;
     EventHandler<VFOManager::VFO*> vfoCreatedHandler;
 };
