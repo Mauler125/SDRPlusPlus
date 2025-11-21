@@ -688,7 +688,10 @@ void MainWindow::draw() {
         ImGui::ShowMetricsWindow(&metricsToolWindow);
     }
     if (styleEditorWindow) {
-        ImGui::ShowStyleEditor();
+        if (ImGui::Begin("Dear ImGui Style Editor", &styleEditorWindow)) {
+            ImGui::ShowStyleEditor();
+        }
+        ImGui::End();
     }
     if (imguiAboutWindow) {
         ImGui::ShowAboutWindow(&imguiAboutWindow);
