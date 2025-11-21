@@ -154,10 +154,12 @@ namespace ImGui {
         float* acquireLatestFFT(int& width);
         void releaseLatestFFT();
 
+        bandplan::BandPlan_t* bandplan = NULL;
+
         bool centerFreqMoved = false;
         bool vfoFreqChanged = false;
         bool bandplanEnabled = false;
-        bandplan::BandPlan_t* bandplan = NULL;
+        bool doCursorWarp = false;
 
         bool mouseInFFTResize = false;
         bool mouseInFreq = false;
@@ -325,9 +327,12 @@ namespace ImGui {
         bool fftResizeSelect = false;
         bool freqScaleSelect = false;
         bool vfoBorderSelect = false;
+        bool isMouseDragging = false;
+
         WaterfallVFO* relatedVfo = NULL;
         ImVec2 mouseDownPos;
 
         ImVec2 lastMousePos;
+        ImVec2 dragStartPos = ImVec2(0.0f, 0.0f);
     };
 };

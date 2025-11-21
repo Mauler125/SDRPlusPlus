@@ -8,6 +8,7 @@
 #include <utils/flog.h>
 #include <gui/gui.h>
 #include <gui/style.h>
+#include <gui/tools.h>
 
 static const float s_defaultColorMap[][3] = {
     { 0x00, 0x00, 0x20 },
@@ -290,13 +291,20 @@ namespace ImGui {
         if (selectedVFO != "") {
             selVfo = vfos[selectedVFO];
         }
-        ImVec2 mousePos = ImGui::GetMousePos();
-        ImVec2 drag = ImGui::GetMouseDragDelta(ImGuiMouseButton_Left);
-        ImVec2 dragOrigin(mousePos.x - drag.x, mousePos.y - drag.y);
 
         bool mouseHovered, mouseHeld;
         bool mouseClicked = ImGui::ButtonBehavior(ImRect(fftAreaMin, wfMax), GetID("WaterfallID"), &mouseHovered, &mouseHeld,
                                                   ImGuiButtonFlags_MouseButtonLeft | ImGuiButtonFlags_PressedOnClick);
+
+        ImVec2 mousePos = ImGui::GetMousePos();
+
+        if (mouseClicked) {
+            dragStartPos = mousePos;
+            isMouseDragging = true;
+        }
+
+        ImVec2 drag = mousePos - dragStartPos;
+        ImVec2 dragOrigin = isMouseDragging ? dragStartPos : mousePos;
 
         mouseInFFTResize = (dragOrigin.x > widgetPos.x && dragOrigin.x < widgetPos.x + widgetSize.x && dragOrigin.y >= widgetPos.y + newFFTAreaHeight - (2.0f * style::uiScale) && dragOrigin.y <= widgetPos.y + newFFTAreaHeight + (2.0f * style::uiScale));
         mouseInFreq = IS_IN_AREA(dragOrigin, freqAreaMin, freqAreaMax);
@@ -329,7 +337,9 @@ namespace ImGui {
             fftResizeSelect = false;
             freqScaleSelect = false;
             vfoBorderSelect = false;
+            isMouseDragging = false;
             lastDrag = 0;
+            dragStartPos = ImVec2(0, 0);
             crosshairFlags = ImGuiCrosshairFlags_None;
         }
 
@@ -865,6 +875,15 @@ namespace ImGui {
     }
 
     void WaterFall::draw() {
+        if (doCursorWarp && ImGui::IsMouseDragging(ImGuiMouseButton_Left)) {
+            ImGuiContext& g = *GImGui;
+            ImVec2 oldMousePos = g.IO.MousePos;
+
+            if (ImGui::WrapMousePosEx(ImGuiWrapMouseFlags_Both, ImGui::GetCurrentWindow()->Rect())) {
+                dragStartPos += (g.IO.MousePos - oldMousePos);
+            }
+        }
+
         buf_mtx.lock();
         window = GetCurrentWindow();
 
@@ -908,7 +927,16 @@ namespace ImGui {
             args.freqToPixelRatio = (double)dataWidth / viewBandwidth;
             args.pixelToFreqRatio = viewBandwidth / (double)dataWidth;
             onInputProcess.emit(args);
-            if (!inputHandled) { processInputs(); }
+            if (!inputHandled) {
+                processInputs();
+            }
+
+            if (!ImGui::IsMouseDown(ImGuiMouseButton_Left)) {
+                doCursorWarp = false;
+            }
+            else if (centerFreqMoved) {
+                doCursorWarp = true;
+            }
         }
 
         updateAllVFOs(true);
