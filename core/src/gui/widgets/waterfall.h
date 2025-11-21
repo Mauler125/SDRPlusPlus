@@ -227,6 +227,7 @@ namespace ImGui {
         void drawVFOs();
         void drawBandPlan();
         void processInputs();
+        void updateWidgetPositions();
         void onPositionChange();
         void onResize();
         void updateWaterfallFb();

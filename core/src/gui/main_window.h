@@ -9,7 +9,7 @@
 #include <mutex>
 #include <gui/tuner.h>
 
-#define WINDOW_FLAGS ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoBringToFrontOnFocus | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoBackground
+#define WINDOW_FLAGS ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoDocking | ImGuiWindowFlags_NoBringToFrontOnFocus | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoBackground
 
 class MainWindow {
 public:
@@ -53,7 +53,7 @@ private:
     float fftMax = 0.0;
     float bw = 8000000;
     bool playing = false;
-    bool showCredits = false;
+    bool openCredits = false;
     std::string audioStreamName = "";
     std::string sourceName = "";
     int menuWidth = 300;

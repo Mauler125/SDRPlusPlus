@@ -1,7 +1,7 @@
 #include <backend.h>
 #include "imgui.h"
 #include "imgui_impl_glfw.h"
-#include "imgui_impl_opengl3.h"
+#include "backends/imgui_impl_opengl3.h"
 #include <GLFW/glfw3.h>
 #include <utils/flog.h>
 #include <utils/opengl_include_code.h>
@@ -9,7 +9,7 @@
 #include <core.h>
 #include <filesystem>
 #include <stb_image.h>
-#include <stb_image_resize.h>
+#include <stb_image_resize2.h>
 #include <gui/gui.h>
 
 namespace backend {
@@ -39,15 +39,16 @@ namespace backend {
 
     #define OPENGL_VERSION_COUNT (sizeof(OPENGL_VERSIONS_GLSL) / sizeof(char*))
 
-    bool maximized = false;
-    bool fullScreen = false;
+    GLFWmonitor* monitor;
+    GLFWwindow* window;
     int winHeight;
     int winWidth;
-    bool _maximized = maximized;
     int fsWidth, fsHeight, fsPosX, fsPosY;
     int _winWidth, _winHeight;
-    GLFWwindow* window;
-    GLFWmonitor* monitor;
+    bool maximized = false;
+    bool fullScreen = false;
+    bool _maximized = maximized;
+    bool vsyncEnabled = false;
 
     static void glfw_error_callback(int error, const char* description) {
         flog::error("Glfw Error {0}: {1}", error, description);
@@ -143,15 +144,15 @@ namespace backend {
         icons[8].width = icons[8].height = 196;
         icons[9].pixels = (unsigned char*)malloc(256 * 256 * 4);
         icons[9].width = icons[9].height = 256;
-        stbir_resize_uint8(icons[0].pixels, icons[0].width, icons[0].height, icons[0].width * 4, icons[1].pixels, 16, 16, 16 * 4, 4);
-        stbir_resize_uint8(icons[0].pixels, icons[0].width, icons[0].height, icons[0].width * 4, icons[2].pixels, 24, 24, 24 * 4, 4);
-        stbir_resize_uint8(icons[0].pixels, icons[0].width, icons[0].height, icons[0].width * 4, icons[3].pixels, 32, 32, 32 * 4, 4);
-        stbir_resize_uint8(icons[0].pixels, icons[0].width, icons[0].height, icons[0].width * 4, icons[4].pixels, 48, 48, 48 * 4, 4);
-        stbir_resize_uint8(icons[0].pixels, icons[0].width, icons[0].height, icons[0].width * 4, icons[5].pixels, 64, 64, 64 * 4, 4);
-        stbir_resize_uint8(icons[0].pixels, icons[0].width, icons[0].height, icons[0].width * 4, icons[6].pixels, 96, 96, 96 * 4, 4);
-        stbir_resize_uint8(icons[0].pixels, icons[0].width, icons[0].height, icons[0].width * 4, icons[7].pixels, 128, 128, 128 * 4, 4);
-        stbir_resize_uint8(icons[0].pixels, icons[0].width, icons[0].height, icons[0].width * 4, icons[8].pixels, 196, 196, 196 * 4, 4);
-        stbir_resize_uint8(icons[0].pixels, icons[0].width, icons[0].height, icons[0].width * 4, icons[9].pixels, 256, 256, 256 * 4, 4);
+        stbir_resize_uint8_linear(icons[0].pixels, icons[0].width, icons[0].height, icons[0].width * 4, icons[1].pixels, 16, 16, 16 * 4, STBIR_RGBA);
+        stbir_resize_uint8_linear(icons[0].pixels, icons[0].width, icons[0].height, icons[0].width * 4, icons[2].pixels, 24, 24, 24 * 4, STBIR_RGBA);
+        stbir_resize_uint8_linear(icons[0].pixels, icons[0].width, icons[0].height, icons[0].width * 4, icons[3].pixels, 32, 32, 32 * 4, STBIR_RGBA);
+        stbir_resize_uint8_linear(icons[0].pixels, icons[0].width, icons[0].height, icons[0].width * 4, icons[4].pixels, 48, 48, 48 * 4, STBIR_RGBA);
+        stbir_resize_uint8_linear(icons[0].pixels, icons[0].width, icons[0].height, icons[0].width * 4, icons[5].pixels, 64, 64, 64 * 4, STBIR_RGBA);
+        stbir_resize_uint8_linear(icons[0].pixels, icons[0].width, icons[0].height, icons[0].width * 4, icons[6].pixels, 96, 96, 96 * 4, STBIR_RGBA);
+        stbir_resize_uint8_linear(icons[0].pixels, icons[0].width, icons[0].height, icons[0].width * 4, icons[7].pixels, 128, 128, 128 * 4, STBIR_RGBA);
+        stbir_resize_uint8_linear(icons[0].pixels, icons[0].width, icons[0].height, icons[0].width * 4, icons[8].pixels, 196, 196, 196 * 4, STBIR_RGBA);
+        stbir_resize_uint8_linear(icons[0].pixels, icons[0].width, icons[0].height, icons[0].width * 4, icons[9].pixels, 256, 256, 256 * 4, STBIR_RGBA);
         glfwSetWindowIcon(window, 10, icons);
         stbi_image_free(icons[0].pixels);
         for (int i = 1; i < 10; i++) {
@@ -171,7 +172,7 @@ namespace backend {
         IMGUI_CHECKVERSION();
         ImGui::CreateContext();
         ImGuiIO& io = ImGui::GetIO();
-        (void)io;
+        io.ConfigFlags |= (ImGuiConfigFlags_DockingEnable | ImGuiConfigFlags_ViewportsEnable);
         io.IniFilename = NULL;
 
         // Setup Platform/Renderer bindings
@@ -179,7 +180,7 @@ namespace backend {
 
         if (!ImGui_ImplOpenGL3_Init(glsl_version)) {
             // If init fail, try to fall back on GLSL 1.2
-            flog::warn("Could not init using OpenGL with normal GLSL version, falling back to GLSL 1.2");
+            flog::warn("Could not initialize OpenGL with normal GLSL version, falling back to GLSL 1.2");
             if (!ImGui_ImplOpenGL3_Init("#version 120")) {
                 flog::error("Failed to initialize OpenGL with GLSL 1.2");
                 return -1;
@@ -206,19 +207,40 @@ namespace backend {
         ImGui_ImplOpenGL3_NewFrame();
         ImGui_ImplGlfw_NewFrame();
         ImGui::NewFrame();
+
+        if (ImGui::GetIO().ConfigFlags & ImGuiConfigFlags_DockingEnable) {
+            ImGui::DockSpaceOverViewport(0, 0, ImGuiDockNodeFlags_PassthruCentralNode, 0);
+        }
     }
 
     void render(bool vsync) {
         // Rendering
         ImGui::Render();
+
+        if (ImGui::GetIO().ConfigFlags & ImGuiConfigFlags_ViewportsEnable) {
+            ImGui::UpdatePlatformWindows();
+            ImGui::RenderPlatformWindowsDefault();
+
+            // Context changes in the above RenderPlatformWindowsDefault() call
+            // and we need to restore it here!
+            glfwMakeContextCurrent(window);
+        }
+
         int display_w, display_h;
         glfwGetFramebufferSize(window, &display_w, &display_h);
         glViewport(0, 0, display_w, display_h);
-        glClearColor(gui::themeManager.clearColor.x, gui::themeManager.clearColor.y, gui::themeManager.clearColor.z, gui::themeManager.clearColor.w);
+        glClearColor(gui::themeManager.clearColor.x,
+                     gui::themeManager.clearColor.y,
+                     gui::themeManager.clearColor.z,
+                     gui::themeManager.clearColor.w);
         glClear(GL_COLOR_BUFFER_BIT);
         ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 
-        glfwSwapInterval(vsync);
+        if (vsync != vsyncEnabled) {
+            glfwSwapInterval(vsync);
+            vsyncEnabled = vsync;
+        }
+
         glfwSwapBuffers(window);
     }
 
@@ -251,7 +273,7 @@ namespace backend {
 
             glfwGetWindowSize(window, &_winWidth, &_winHeight);
 
-            if (ImGui::IsKeyPressed(GLFW_KEY_F11)) {
+            if (ImGui::IsKeyPressed(ImGuiKey_F11)) {
                 fullScreen = !fullScreen;
                 if (fullScreen) {
                     flog::info("Fullscreen: ON");
@@ -283,8 +305,6 @@ namespace backend {
             }
 
             if (winWidth > 0 && winHeight > 0) {
-                ImGui::SetNextWindowPos(ImVec2(0, 0));
-                ImGui::SetNextWindowSize(ImVec2(_winWidth, _winHeight));
                 gui::mainWindow.draw();
             }
 

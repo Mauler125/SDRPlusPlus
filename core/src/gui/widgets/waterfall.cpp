@@ -755,8 +755,22 @@ namespace ImGui {
         glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, dataWidth, waterfallHeight, 0, GL_RGBA, GL_UNSIGNED_BYTE, (uint8_t*)waterfallFb);
     }
 
+    void WaterFall::updateWidgetPositions() {
+        fftAreaMin = ImVec2(widgetPos.x + (80.0f * style::uiScale), widgetPos.y + (9.0f * style::uiScale));
+        fftAreaMax = ImVec2(fftAreaMin.x + dataWidth, fftAreaMin.y + fftHeight + 1);
+
+        freqAreaMin = ImVec2(fftAreaMin.x, fftAreaMax.y + 1);
+        freqAreaMax = ImVec2(fftAreaMax.x, fftAreaMax.y + (40.0f * style::uiScale));
+
+        wfMin = ImVec2(fftAreaMin.x, freqAreaMax.y + 1);
+        wfMax = ImVec2(fftAreaMin.x + dataWidth, wfMin.y + waterfallHeight);
+    }
+
     void WaterFall::onPositionChange() {
-        // Nothing to see here...
+        // NEW: since we upgraded to ImGui docking, this needs to be
+        // performed as well in order to keep the waterfall display
+        // in view during position changed!
+        updateWidgetPositions();
     }
 
     void WaterFall::onResize() {
@@ -832,20 +846,12 @@ namespace ImGui {
             latestFFTHold[i] = -1000.0f;
         }
 
-        fftAreaMin = ImVec2(widgetPos.x + (80.0f * style::uiScale), widgetPos.y + (9.0f * style::uiScale));
-        fftAreaMax = ImVec2(fftAreaMin.x + dataWidth, fftAreaMin.y + fftHeight + 1);
-
-        freqAreaMin = ImVec2(fftAreaMin.x, fftAreaMax.y + 1);
-        freqAreaMax = ImVec2(fftAreaMax.x, fftAreaMax.y + (40.0f * style::uiScale));
-
-        wfMin = ImVec2(fftAreaMin.x, freqAreaMax.y + 1);
-        wfMax = ImVec2(fftAreaMin.x + dataWidth, wfMin.y + waterfallHeight);
-
+        updateWidgetPositions();
         const ImVec2 targetTextSize = ImGui::CalcTextSize("000.000");
 
         maxHorizontalSteps = dataWidth / (targetTextSize.x + 10);
         maxVerticalFftSteps = fftHeight / targetTextSize.y;
-        maxVerticalWfSteps = (waterfallHeight / targetTextSize.y) - 1; // -1 because last step will clip.
+        maxVerticalWfSteps = (waterfallHeight / targetTextSize.y) - 1; // -1 because first step will clip.
 
         range = findBestFrequencyRange(viewBandwidth, maxHorizontalSteps);
         verticalFftRange = findBestFrequencyRange(fftMax - fftMin, maxVerticalFftSteps);
