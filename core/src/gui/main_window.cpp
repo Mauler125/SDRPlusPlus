@@ -27,6 +27,7 @@
 #include <gui/colormaps.h>
 #include <gui/widgets/snr_meter.h>
 #include <gui/tuner.h>
+#include <implot/implot.h>
 
 void MainWindow::init() {
     LoadingScreen::show("Initializing UI");
@@ -518,9 +519,8 @@ void MainWindow::draw() {
             ImGui::Text("Frame rate: %.1f FPS", ImGui::GetIO().Framerate);
             ImGui::Text("Center frequency: %.0f Hz", gui::waterfall.getCenterFrequency());
             ImGui::Text("Source name: %s", sourceName.c_str());
-            ImGui::Checkbox("Show metrics tool window", &metricsToolWindow);
-            ImGui::Checkbox("Show style editor window", &styleEditorWindow);
-            ImGui::Checkbox("Show Dear ImGui about window", &imguiAboutWindow);
+            ImGui::Checkbox("Show ImGui Demo window", &showImGuiDemo);
+            ImGui::Checkbox("Show ImPlot Demo window", &showImPlotDemo);
 
             // ImGui::Checkbox("Bypass buffering", &sigpath::iqFrontEnd.inputBuffer.bypass);
             // ImGui::Text("Buffering: %d", (sigpath::iqFrontEnd.inputBuffer.writeCur - sigpath::iqFrontEnd.inputBuffer.readCur + 32) % 32);
@@ -684,17 +684,11 @@ void MainWindow::draw() {
 
     credits::show();
 
-    if (metricsToolWindow) {
-        ImGui::ShowMetricsWindow(&metricsToolWindow);
+    if (showImGuiDemo) {
+        ImGui::ShowDemoWindow(&showImGuiDemo);
     }
-    if (styleEditorWindow) {
-        if (ImGui::Begin("Dear ImGui Style Editor", &styleEditorWindow)) {
-            ImGui::ShowStyleEditor();
-        }
-        ImGui::End();
-    }
-    if (imguiAboutWindow) {
-        ImGui::ShowAboutWindow(&imguiAboutWindow);
+    if (showImPlotDemo) {
+        ImPlot::ShowDemoWindow(&showImPlotDemo);
     }
 }
 

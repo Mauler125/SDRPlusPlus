@@ -62,12 +62,10 @@ private:
     int fftHeight = 300;
     bool showMenu = true;
     int tuningMode = tuner::TUNER_MODE_NORMAL;
-    dsp::stream<dsp::complex_t> dummyStream;
-    bool metricsToolWindow = false;
-    bool styleEditorWindow = false;
-    bool imguiAboutWindow = false;
     int selectedWindow = 0;
-
+    dsp::stream<dsp::complex_t> dummyStream;
+    bool showImGuiDemo = false;
+    bool showImPlotDemo = false;
     bool initComplete = false;
     bool autostart = false;
 
