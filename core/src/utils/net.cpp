@@ -254,8 +254,11 @@ namespace net {
     }
 
     int Socket::send(const uint8_t* data, size_t len, const Address* dest) {
+        sockaddr* const a = (sockaddr*)(dest ? &dest->addr : (raddr ? &raddr->addr : NULL));
+        if (!a) { return -1; }
+
         // Send data
-        int err = sendto(sock, (const char*)data, len, 0, (sockaddr*)(dest ? &dest->addr : (raddr ? &raddr->addr : NULL)), sizeof(sockaddr_in6));
+        const int err = sendto(sock, (const char*)data, len, 0, (sockaddr*)a, sizeof(sockaddr_in6));
 
         // On error, close socket
         if (err <= 0 && !WOULD_BLOCK) {
