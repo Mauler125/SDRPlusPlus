@@ -18,8 +18,9 @@
 #endif
 
 #include "base_types.h"
+#include "utils/str_tools.h"
 
-#define FORMAT_BUF_SIZE 16
+#define FORMAT_BUF_SIZE 21
 #define ESCAPE_CHAR     '\\'
 
 namespace flog {
@@ -61,9 +62,9 @@ namespace flog {
 
     void __log__(Type type, const char* fmt, const std::vector<std::string>& args) {
         // Reserve a buffer for the final output
-        int argCount = args.size();
-        int fmtLen = strlen(fmt) + 1;
-        int totSize = fmtLen;
+        size_t argCount = args.size();
+        size_t fmtLen = strlen(fmt) + 1;
+        size_t totSize = fmtLen;
         for (const auto& a : args) { totSize += a.size(); }
         std::string out;
         out.reserve(totSize);
@@ -72,11 +73,11 @@ namespace flog {
         FILE* outStream = (type == TYPE_ERROR) ? stderr : stdout;
 
         // Parse format string
+        size_t formatCounter = 0;
+        size_t formatLen = 0;
         bool escaped = false;
-        int formatCounter = 0;
         bool inFormat = false;
-        int formatLen = 0;
-        char formatBuf[FORMAT_BUF_SIZE+1];
+        char formatBuf[FORMAT_BUF_SIZE];
         for (int i = 0; i < fmtLen; i++) {
             // Get char
             const char c = fmt[i];
@@ -119,7 +120,9 @@ namespace flog {
                 else {
                     // Parse number
                     formatBuf[formatLen] = 0;
-                    formatCounter = std::atoi(formatBuf);
+                    if (!utils::strToNum(formatBuf, formatLen, formatCounter)) {
+                        formatCounter = 0;
+                    }
 
                     // Use ID if available or print wrong format string
                     if (formatCounter < argCount) {
