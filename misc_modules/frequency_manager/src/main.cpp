@@ -125,7 +125,7 @@ private:
 
     bool bookmarkEditDialog() {
         bool open = true;
-        gui::mainWindow.lockWaterfallControls = true;
+        gui::mainWindow.muteInputThisFrame(true);
 
         std::string id = "Edit##freq_manager_edit_popup_" + name;
         ImGui::OpenPopup(id.c_str());
@@ -194,7 +194,7 @@ private:
 
     bool newListDialog() {
         bool open = true;
-        gui::mainWindow.lockWaterfallControls = true;
+        gui::mainWindow.muteInputThisFrame(true);
 
         float menuWidth = ImGui::GetContentRegionAvail().x;
 
@@ -242,7 +242,7 @@ private:
     }
 
     bool selectListsDialog() {
-        gui::mainWindow.lockWaterfallControls = true;
+        gui::mainWindow.muteInputThisFrame(true);
 
         float menuWidth = ImGui::GetContentRegionAvail().x;
 

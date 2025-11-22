@@ -22,10 +22,17 @@ namespace ImGui {
         if (!open) { return -1; }
 
         // Draw popup
-        gui::mainWindow.lockWaterfallControls = true;
+        gui::mainWindow.muteInputThisFrame(true);
         std::string idstr = std::string("##") + std::string(id);
         ImGui::OpenPopup(id);
         if (ImGui::BeginPopup(id, ImGuiWindowFlags_NoResize)) {
+            if (ImGui::IsMouseClicked(0) && !ImGui::IsWindowHovered(ImGuiHoveredFlags_AllowWhenBlockedByPopup)) {
+                ImGui::CloseCurrentPopup();
+                ImGui::EndPopup();
+                open = false;
+                return -1;
+            }
+
             // Draw widgets
             draw();
 
@@ -37,8 +44,8 @@ namespace ImGui {
                 // Draw button
                 if (bid) { ImGui::SameLine(); }
                 if (ImGui::Button((buttons + idstr).c_str())) {
-                    open = false;
                     ImGui::EndPopup();
+                    open = false;
                     return bid;
                 }
 

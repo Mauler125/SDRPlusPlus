@@ -2,6 +2,7 @@
 #include <vector>
 #include <mutex>
 #include <gui/widgets/bandplan.h>
+#include <gui/widgets/crosshair.h>
 #include <imgui/imgui.h>
 #include <imgui/imgui_internal.h>
 #include <utils/event.h>
@@ -90,7 +91,7 @@ namespace ImGui {
         float* getFFTBuffer();
         void pushFFT();
 
-        void updatePallette(float colors[][3], int colorCount);
+        void updatePallette(const float colors[][3], int colorCount);
         void updatePalletteFromArray(float* colors, int colorCount);
 
         void setCenterFrequency(double freq);
@@ -139,6 +140,8 @@ namespace ImGui {
 
         void setBandPlanPos(int pos);
 
+        void setFFTRate(int rate);
+
         void setFFTHold(bool hold);
         void setFFTHoldSpeed(float speed);
 
@@ -151,10 +154,12 @@ namespace ImGui {
         float* acquireLatestFFT(int& width);
         void releaseLatestFFT();
 
+        bandplan::BandPlan_t* bandplan = NULL;
+
         bool centerFreqMoved = false;
         bool vfoFreqChanged = false;
         bool bandplanEnabled = false;
-        bandplan::BandPlan_t* bandplan = NULL;
+        bool doCursorWarp = false;
 
         bool mouseInFFTResize = false;
         bool mouseInFreq = false;
@@ -224,6 +229,7 @@ namespace ImGui {
         void drawVFOs();
         void drawBandPlan();
         void processInputs();
+        void updateWidgetPositions();
         void onPositionChange();
         void onResize();
         void updateWaterfallFb();
@@ -251,10 +257,12 @@ namespace ImGui {
         std::mutex texMtx;
         std::mutex smoothingBufMtx;
 
-        float vRange;
+        float verticalFftRange;
+        float verticalWfRange;
 
-        int maxVSteps;
-        int maxHSteps;
+        int maxHorizontalSteps;
+        int maxVerticalFftSteps;
+        int maxVerticalWfSteps;
 
         int dataWidth;           // Width of the FFT and waterfall
         int fftHeight;           // Height of the fft graph
@@ -291,8 +299,6 @@ namespace ImGui {
         int fftLines = 0;
 
         uint32_t* waterfallFb;
-
-        bool draggingFW = false;
         int FFTAreaHeight;
         int newFFTAreaHeight;
 
@@ -302,6 +308,9 @@ namespace ImGui {
         bool _fullUpdate = true;
 
         int bandPlanPos = BANDPLAN_POS_BOTTOM;
+        ImGuiCrosshairFlags crosshairFlags = ImGuiCrosshairFlags_None;
+
+        float fftRate = 20.f; // Default = displaymenu::fftRate; mighr want to make a define for this.
 
         bool fftHold = false;
         float fftHoldSpeed = 0.3f;
@@ -317,11 +326,13 @@ namespace ImGui {
         // UI Select elements
         bool fftResizeSelect = false;
         bool freqScaleSelect = false;
-        bool vfoSelect = false;
         bool vfoBorderSelect = false;
+        bool isMouseDragging = false;
+
         WaterfallVFO* relatedVfo = NULL;
         ImVec2 mouseDownPos;
 
         ImVec2 lastMousePos;
+        ImVec2 dragStartPos = ImVec2(0.0f, 0.0f);
     };
 };

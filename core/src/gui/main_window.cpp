@@ -13,6 +13,7 @@
 #include <config.h>
 #include <signal_path/signal_path.h>
 #include <core.h>
+#include <backend.h>
 #include <gui/menus/source.h>
 #include <gui/menus/display.h>
 #include <gui/menus/bandplan.h>
@@ -27,6 +28,7 @@
 #include <gui/colormaps.h>
 #include <gui/widgets/snr_meter.h>
 #include <gui/tuner.h>
+#include <implot/implot.h>
 
 void MainWindow::init() {
     LoadingScreen::show("Initializing UI");
@@ -258,6 +260,12 @@ void MainWindow::vfoAddedHandler(VFOManager::VFO* vfo, void* ctx) {
 }
 
 void MainWindow::draw() {
+    const ImGuiViewport* const vp = ImGui::GetMainViewport();
+
+    ImGui::SetNextWindowViewport(vp->ID);
+    ImGui::SetNextWindowPos(vp->Pos);
+    ImGui::SetNextWindowSize(vp->Size);
+
     ImGui::Begin("Main", NULL, WINDOW_FLAGS);
     ImVec4 textCol = ImGui::GetStyleColorVec4(ImGuiCol_Text);
 
@@ -329,37 +337,40 @@ void MainWindow::draw() {
         core::configManager.release(true);
     }
 
+    processMouseInputs = canProcessMouseInputs();
+    processKeyboardInputs = canProcessKeyboardInputs();
+    gui::menu.canDragMenuItems = processMouseInputs && processKeyboardInputs;
+
     // To Bar
     // ImGui::BeginChild("TopBarChild", ImVec2(0, 49.0f * style::uiScale), false, ImGuiWindowFlags_HorizontalScrollbar);
+
+    ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(5, 5));
     ImVec2 btnSize(30 * style::uiScale, 30 * style::uiScale);
-    ImGui::PushID(ImGui::GetID("sdrpp_menu_btn"));
-    if (ImGui::ImageButton(icons::MENU, btnSize, ImVec2(0, 0), ImVec2(1, 1), 5, ImVec4(0, 0, 0, 0), textCol) || ImGui::IsKeyPressed(ImGuiKey_Menu, false)) {
+
+    if (ImGui::ImageButton("sdrpp_menu_btn", icons::MENU, btnSize, ImVec2(0, 0), ImVec2(1, 1), ImVec4(0, 0, 0, 0), textCol) || (processKeyboardInputs && ImGui::IsKeyPressed(ImGuiKey_Menu, false))) {
         showMenu = !showMenu;
         core::configManager.acquire();
         core::configManager.conf["showMenu"] = showMenu;
         core::configManager.release(true);
     }
-    ImGui::PopID();
 
     ImGui::SameLine();
 
     bool tmpPlaySate = playing;
     if (playButtonLocked && !tmpPlaySate) { style::beginDisabled(); }
     if (playing) {
-        ImGui::PushID(ImGui::GetID("sdrpp_stop_btn"));
-        if (ImGui::ImageButton(icons::STOP, btnSize, ImVec2(0, 0), ImVec2(1, 1), 5, ImVec4(0, 0, 0, 0), textCol) || ImGui::IsKeyPressed(ImGuiKey_End, false)) {
+        if (ImGui::ImageButton("sdrpp_stop_btn", icons::STOP, btnSize, ImVec2(0, 0), ImVec2(1, 1), ImVec4(0, 0, 0, 0), textCol) || (processKeyboardInputs && ImGui::IsKeyPressed(ImGuiKey_End, false))) {
             setPlayState(false);
         }
-        ImGui::PopID();
     }
     else { // TODO: Might need to check if there even is a device
-        ImGui::PushID(ImGui::GetID("sdrpp_play_btn"));
-        if (ImGui::ImageButton(icons::PLAY, btnSize, ImVec2(0, 0), ImVec2(1, 1), 5, ImVec4(0, 0, 0, 0), textCol) || ImGui::IsKeyPressed(ImGuiKey_End, false)) {
+        if (ImGui::ImageButton("sdrpp_play_btn", icons::PLAY, btnSize, ImVec2(0, 0), ImVec2(1, 1), ImVec4(0, 0, 0, 0), textCol) || (processKeyboardInputs && ImGui::IsKeyPressed(ImGuiKey_End, false))) {
             setPlayState(true);
         }
-        ImGui::PopID();
     }
+
     if (playButtonLocked && !tmpPlaySate) { style::endDisabled(); }
+    ImGui::PopStyleVar();
 
     // Handle auto-start
     if (autostart) {
@@ -380,20 +391,19 @@ void MainWindow::draw() {
     ImGui::SameLine();
 
     ImGui::SetCursorPosY(origY);
+    ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(5, 5));
+
     if (tuningMode == tuner::TUNER_MODE_CENTER) {
-        ImGui::PushID(ImGui::GetID("sdrpp_ena_st_btn"));
-        if (ImGui::ImageButton(icons::CENTER_TUNING, btnSize, ImVec2(0, 0), ImVec2(1, 1), 5, ImVec4(0, 0, 0, 0), textCol)) {
+        if (ImGui::ImageButton("sdrpp_ena_st_btn", icons::CENTER_TUNING, btnSize, ImVec2(0, 0), ImVec2(1, 1), ImVec4(0, 0, 0, 0), textCol)) {
             tuningMode = tuner::TUNER_MODE_NORMAL;
             gui::waterfall.VFOMoveSingleClick = false;
             core::configManager.acquire();
             core::configManager.conf["centerTuning"] = false;
             core::configManager.release(true);
         }
-        ImGui::PopID();
     }
     else { // TODO: Might need to check if there even is a device
-        ImGui::PushID(ImGui::GetID("sdrpp_dis_st_btn"));
-        if (ImGui::ImageButton(icons::NORMAL_TUNING, btnSize, ImVec2(0, 0), ImVec2(1, 1), 5, ImVec4(0, 0, 0, 0), textCol)) {
+        if (ImGui::ImageButton("sdrpp_dis_st_btn", icons::NORMAL_TUNING, btnSize, ImVec2(0, 0), ImVec2(1, 1), ImVec4(0, 0, 0, 0), textCol)) {
             tuningMode = tuner::TUNER_MODE_CENTER;
             gui::waterfall.VFOMoveSingleClick = true;
             tuner::tune(tuner::TUNER_MODE_CENTER, gui::waterfall.selectedVFO, gui::freqSelect.frequency);
@@ -401,9 +411,9 @@ void MainWindow::draw() {
             core::configManager.conf["centerTuning"] = true;
             core::configManager.release(true);
         }
-        ImGui::PopID();
     }
 
+    ImGui::PopStyleVar();
     ImGui::SameLine();
 
     int snrOffset = 87.0f * style::uiScale;
@@ -423,32 +433,42 @@ void MainWindow::draw() {
     // Logo button
     ImGui::SetCursorPosX(ImGui::GetWindowSize().x - (48 * style::uiScale));
     ImGui::SetCursorPosY(10.0f * style::uiScale);
-    if (ImGui::ImageButton(icons::LOGO, ImVec2(32 * style::uiScale, 32 * style::uiScale), ImVec2(0, 0), ImVec2(1, 1), 0)) {
-        showCredits = true;
-    }
-    if (ImGui::IsMouseDown(ImGuiMouseButton_Left)) {
-        showCredits = false;
-    }
-    if (ImGui::IsKeyPressed(ImGuiKey_Escape)) {
-        showCredits = false;
+    ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(0, 0));
+    if (ImGui::ImageButton("sdrpp_logo_btn", icons::LOGO, ImVec2(32 * style::uiScale, 32 * style::uiScale), ImVec2(0, 0), ImVec2(1, 1))) {
+        openCredits = true;
     }
 
-    // Reset waterfall lock
-    lockWaterfallControls = showCredits;
+    ImGui::PopStyleVar();
+    if (credits::isOpen && ImGui::IsKeyPressed(ImGuiKey_Escape)) {
+        credits::isOpen = false;
+    }
+
+    // Reset input locks
+    if (credits::isOpen) {
+        processMouseInputs = false;
+        processKeyboardInputs = false;
+    }
 
     // Handle menu resize
+    ImVec2 winPos = ImGui::GetWindowPos();
     ImVec2 winSize = ImGui::GetWindowSize();
     ImVec2 mousePos = ImGui::GetMousePos();
-    if (!lockWaterfallControls && showMenu) {
+    ImVec2 mouseLocal = mousePos - winPos;
+    if (processMouseInputs && showMenu) {
         float curY = ImGui::GetCursorPosY();
         bool click = ImGui::IsMouseClicked(ImGuiMouseButton_Left);
         bool down = ImGui::IsMouseDown(ImGuiMouseButton_Left);
         if (grabbingMenu) {
-            newWidth = mousePos.x;
+            newWidth = mouseLocal.x;
             newWidth = std::clamp<float>(newWidth, 250, winSize.x - 250);
-            ImGui::GetForegroundDrawList()->AddLine(ImVec2(newWidth, curY), ImVec2(newWidth, winSize.y - 10), ImGui::GetColorU32(ImGuiCol_SeparatorActive));
+            ImGui::GetForegroundDrawList()->AddLine(
+                ImVec2(winPos.x + newWidth, winPos.y + curY),
+                ImVec2(winPos.x + newWidth, winPos.y + winSize.y - 10),
+                ImGui::GetColorU32(ImGuiCol_SeparatorActive));
         }
-        if (mousePos.x >= newWidth - (2.0f * style::uiScale) && mousePos.x <= newWidth + (2.0f * style::uiScale) && mousePos.y > curY) {
+        if (mouseLocal.x >= newWidth - (2.0f * style::uiScale) &&
+            mouseLocal.x <= newWidth + (2.0f * style::uiScale) &&
+            mouseLocal.y > curY) {
             ImGui::SetMouseCursor(ImGuiMouseCursor_ResizeEW);
             if (click) {
                 grabbingMenu = true;
@@ -467,7 +487,9 @@ void MainWindow::draw() {
     }
 
     // Process menu keybinds
-    displaymenu::checkKeybinds();
+    if (processKeyboardInputs) {
+        displaymenu::checkKeybinds();
+    }
 
     // Left Column
     if (showMenu) {
@@ -503,27 +525,22 @@ void MainWindow::draw() {
 
         if (ImGui::CollapsingHeader("Debug")) {
             ImGui::Text("Frame time: %.3f ms/frame", ImGui::GetIO().DeltaTime * 1000.0f);
-            ImGui::Text("Framerate: %.1f FPS", ImGui::GetIO().Framerate);
-            ImGui::Text("Center Frequency: %.0f Hz", gui::waterfall.getCenterFrequency());
+            ImGui::Text("Frame rate: %.1f FPS", ImGui::GetIO().Framerate);
+            ImGui::Text("Center frequency: %.0f Hz", gui::waterfall.getCenterFrequency());
             ImGui::Text("Source name: %s", sourceName.c_str());
-            ImGui::Checkbox("Show demo window", &demoWindow);
-            ImGui::Text("ImGui version: %s", ImGui::GetVersion());
+            ImGui::Checkbox("Show ImGui Demo window", &showImGuiDemo);
+            ImGui::Checkbox("Show ImPlot Demo window", &showImPlotDemo);
 
             // ImGui::Checkbox("Bypass buffering", &sigpath::iqFrontEnd.inputBuffer.bypass);
-
             // ImGui::Text("Buffering: %d", (sigpath::iqFrontEnd.inputBuffer.writeCur - sigpath::iqFrontEnd.inputBuffer.readCur + 32) % 32);
 
-            if (ImGui::Button("Test Bug")) {
-                flog::error("Will this make the software crash?");
-            }
+            ImGui::Checkbox("Use VSync", &backend::vsyncEnabled);
+            ImGui::Checkbox("Waterfall single click", &gui::waterfall.VFOMoveSingleClick);
 
-            if (ImGui::Button("Testing something")) {
+            if (ImGui::Button("Draw main menu first")) {
                 gui::menu.order[0].open = true;
                 firstMenuRender = true;
             }
-
-            ImGui::Checkbox("WF Single Click", &gui::waterfall.VFOMoveSingleClick);
-            ImGui::Checkbox("Lock Menu Order", &gui::menu.locked);
 
             ImGui::Spacing();
         }
@@ -549,34 +566,34 @@ void MainWindow::draw() {
 
     ImGui::EndChild();
 
-    if (!lockWaterfallControls) {
-        // Handle arrow keys
-        if (vfo != NULL && (gui::waterfall.mouseInFFT || gui::waterfall.mouseInWaterfall)) {
-            bool freqChanged = false;
-            if (ImGui::IsKeyPressed(ImGuiKey_LeftArrow) && !gui::freqSelect.digitHovered) {
-                double nfreq = gui::waterfall.getCenterFrequency() + vfo->generalOffset - vfo->snapInterval;
-                nfreq = roundl(nfreq / vfo->snapInterval) * vfo->snapInterval;
-                tuner::tune(tuningMode, gui::waterfall.selectedVFO, nfreq);
-                freqChanged = true;
-            }
-            if (ImGui::IsKeyPressed(ImGuiKey_RightArrow) && !gui::freqSelect.digitHovered) {
-                double nfreq = gui::waterfall.getCenterFrequency() + vfo->generalOffset + vfo->snapInterval;
-                nfreq = roundl(nfreq / vfo->snapInterval) * vfo->snapInterval;
-                tuner::tune(tuningMode, gui::waterfall.selectedVFO, nfreq);
-                freqChanged = true;
-            }
-            if (freqChanged) {
-                core::configManager.acquire();
-                core::configManager.conf["frequency"] = gui::waterfall.getCenterFrequency();
-                if (vfo != NULL) {
-                    core::configManager.conf["vfoOffsets"][gui::waterfall.selectedVFO] = vfo->generalOffset;
-                }
-                core::configManager.release(true);
-            }
+    // Handle arrow keys
+    if (processKeyboardInputs && (vfo != NULL && (gui::waterfall.mouseInFFT || gui::waterfall.mouseInWaterfall))) {
+        bool freqChanged = false;
+        if (ImGui::IsKeyPressed(ImGuiKey_LeftArrow) && !gui::freqSelect.digitHovered) {
+            double nfreq = gui::waterfall.getCenterFrequency() + vfo->generalOffset - vfo->snapInterval;
+            nfreq = roundl(nfreq / vfo->snapInterval) * vfo->snapInterval;
+            tuner::tune(tuningMode, gui::waterfall.selectedVFO, nfreq);
+            freqChanged = true;
         }
+        if (ImGui::IsKeyPressed(ImGuiKey_RightArrow) && !gui::freqSelect.digitHovered) {
+            double nfreq = gui::waterfall.getCenterFrequency() + vfo->generalOffset + vfo->snapInterval;
+            nfreq = roundl(nfreq / vfo->snapInterval) * vfo->snapInterval;
+            tuner::tune(tuningMode, gui::waterfall.selectedVFO, nfreq);
+            freqChanged = true;
+        }
+        if (freqChanged) {
+            core::configManager.acquire();
+            core::configManager.conf["frequency"] = gui::waterfall.getCenterFrequency();
+            if (vfo != NULL) {
+                core::configManager.conf["vfoOffsets"][gui::waterfall.selectedVFO] = vfo->generalOffset;
+            }
+            core::configManager.release(true);
+        }
+    }
 
+    if (processMouseInputs) {
         // Handle scrollwheel
-        int wheel = ImGui::GetIO().MouseWheel;
+        int wheel = ImGui::GetIO().MouseWheel + ImGui::GetIO().MouseWheelH;
         if (wheel != 0 && (gui::waterfall.mouseInFFT || gui::waterfall.mouseInWaterfall)) {
             double nfreq;
             if (vfo != NULL) {
@@ -647,7 +664,7 @@ void MainWindow::draw() {
     ImGui::SetCursorPosX((ImGui::GetWindowSize().x / 2.0) - (ImGui::CalcTextSize("Min").x / 2.0));
     ImGui::TextUnformatted("Min");
     ImGui::SetCursorPosX((ImGui::GetWindowSize().x / 2.0) - 10 * style::uiScale);
-    ImGui::SetItemUsingMouseWheel();
+    ImGui::SetItemKeyOwner(ImGuiKey_MouseWheelY);
     if (ImGui::VSliderFloat("##_9_", wfSliderSize, &fftMin, 0.0, -160.0f, "")) {
         fftMin = std::min<float>(fftMax - 10, fftMin);
         core::configManager.acquire();
@@ -664,13 +681,33 @@ void MainWindow::draw() {
 
     ImGui::End();
 
-    if (showCredits) {
-        credits::show();
+    if (openCredits) {
+        ImGui::OpenPopup("Credits");
+        openCredits = false;
+        credits::isOpen = true;
     }
 
-    if (demoWindow) {
-        ImGui::ShowDemoWindow();
+    credits::show();
+
+    if (showImGuiDemo) {
+        ImGui::ShowDemoWindow(&showImGuiDemo);
     }
+    if (showImPlotDemo) {
+        ImPlot::ShowDemoWindow(&showImPlotDemo);
+    }
+}
+
+bool MainWindow::canProcessMouseInputs() {
+    return ImGui::IsWindowHovered(ImGuiHoveredFlags_RootAndChildWindows | ImGuiHoveredFlags_AllowWhenBlockedByActiveItem);
+}
+
+bool MainWindow::canProcessKeyboardInputs() {
+    return ImGui::IsWindowFocused(ImGuiFocusedFlags_RootAndChildWindows);
+}
+
+void MainWindow::muteInputThisFrame(bool mute) {
+    processMouseInputs = !mute;
+    processKeyboardInputs = !mute;
 }
 
 void MainWindow::setPlayState(bool _playing) {

@@ -2,6 +2,8 @@
 #include <string>
 
 namespace backend {
+    extern bool vsyncEnabled;
+
     int init(std::string resDir = "");
     void beginFrame();
     void render(bool vsync = true);

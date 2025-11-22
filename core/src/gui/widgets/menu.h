@@ -27,7 +27,13 @@ public:
 
     std::vector<MenuOption_t> order;
 
+    // Note: locked gives a tooltip message when trying to
+    // order elements to tell you that you disabled it. If
+    // we render windows above our main window, we don't
+    // want the tool tips either, so canDragMenuItems has
+    // to be unset in those cases to fully block all of it.
     bool locked = false;
+    bool canDragMenuItems = true;
 
 private:
     bool isInOrderList(std::string name);

@@ -5,5 +5,5 @@
 
 namespace LoadingScreen {
     void init();
-    void show(std::string msg);
+    void show(const std::string& msg);
 };

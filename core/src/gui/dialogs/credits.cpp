@@ -9,19 +9,42 @@
 namespace credits {
     ImFont* bigFont;
     ImVec2 imageSize(128.0f, 128.0f);
+    bool isOpen = false;
 
     void init() {
         imageSize = ImVec2(128.0f * style::uiScale, 128.0f * style::uiScale);
     }
 
-    void show() {
+    static void begin() {
+        if (!isOpen) {
+            return;
+        }
+
+        const ImGuiViewport* const vp = ImGui::GetMainViewport();
+
+        ImGui::SetNextWindowViewport(vp->ID);
+        ImGui::SetNextWindowPos(vp->Pos + vp->Size * 0.5f, ImGuiCond_Always, ImVec2(0.5f, 0.5f));
+
         ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(20.0f, 20.0f));
         ImGui::PushStyleColor(ImGuiCol_Border, ImVec4(0, 0, 0, 0));
-        ImVec2 dispSize = ImGui::GetIO().DisplaySize;
-        ImVec2 center = ImVec2(dispSize.x / 2.0f, dispSize.y / 2.0f);
-        ImGui::SetNextWindowPos(center, ImGuiCond_Always, ImVec2(0.5f, 0.5f));
-        ImGui::OpenPopup("Credits");
-        ImGui::BeginPopupModal("Credits", NULL, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoMove);
+    }
+    static void end() {
+        if (!isOpen) {
+            return;
+        }
+
+        ImGui::EndPopup();
+        ImGui::PopStyleColor();
+        ImGui::PopStyleVar();
+    }
+
+    void show() {
+        begin();
+
+        if (!ImGui::BeginPopupModal("Credits", &isOpen, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoMove)) {
+            end();
+            return;
+        }
 
         ImGui::PushFont(style::hugeFont);
         ImGui::TextUnformatted("SDR++          ");
@@ -64,10 +87,8 @@ namespace credits {
         ImGui::Spacing();
         ImGui::Spacing();
         ImGui::Spacing();
-        ImGui::TextUnformatted("SDR++ v" VERSION_STR " (Built at " __TIME__ ", " __DATE__ ")");
 
-        ImGui::EndPopup();
-        ImGui::PopStyleColor();
-        ImGui::PopStyleVar();
+        ImGui::TextUnformatted("SDR++ v" VERSION_STR " (Built at " __TIME__ ", " __DATE__ ")");
+        end();
     }
 }
