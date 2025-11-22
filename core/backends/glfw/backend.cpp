@@ -49,7 +49,7 @@ namespace backend {
     bool maximized = false;
     bool fullScreen = false;
     bool _maximized = maximized;
-    bool vsyncEnabled = false;
+    bool vsyncEnabled = true;
 
     static void glfw_error_callback(int error, const char* description) {
         flog::error("Glfw Error {0}: {1}", error, description);
