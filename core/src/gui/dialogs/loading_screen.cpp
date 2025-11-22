@@ -14,7 +14,7 @@ namespace LoadingScreen {
         imageSize = ImVec2(128.0f * style::uiScale, 128.0f * style::uiScale);
     }
 
-    void show(std::string msg) {
+    void show(const std::string& msg) {
         backend::beginFrame();
 
         ImGui::Begin("Main", NULL, WINDOW_FLAGS);
@@ -33,7 +33,7 @@ namespace LoadingScreen {
 
         ImVec2 origPos = ImGui::GetCursorPos();
         ImGui::SetCursorPosY(origPos.y + 50);
-        ImGui::Text("%s", msg.c_str());
+        ImGui::TextUnformatted(msg.c_str(), &msg[msg.length()]);
         ImGui::SetCursorPos(origPos);
 
         ImGui::EndPopup();
