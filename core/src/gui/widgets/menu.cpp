@@ -40,37 +40,39 @@ bool Menu::draw(bool updateStates) {
         if (items.find(opt.name) == items.end()) {
             continue;
         }
-        if (opt.name == draggedMenuName) {
-            ImGui::BeginTooltip();
-            ImGui::Text("%s", draggedMenuName.c_str());
-            ImGui::EndTooltip();
-            continue;
-        }
 
-        // Draw dragged menu item
-        if (displayedCount == insertBefore && !draggedMenuName.empty()) {
-            if (updateStates) { ImGui::SetNextItemOpen(false); }
-            ImVec2 posMin = ImGui::GetCursorScreenPos();
-            ImVec2 posMax = ImVec2(posMin.x + menuWidth, posMin.y + ImGui::GetFrameHeight());
-            style::beginDisabled();
-            ImRect orignalRect = window->WorkRect;
-            ImGui::CollapsingHeader((draggedMenuName + "##sdrpp_main_menu_dragging").c_str());
-            if (items[draggedOpt.name].inst != NULL) {
-                window->WorkRect = orignalRect;
-                ImVec2 pos = ImGui::GetCursorPos();
-                ImGui::SetCursorPosX(pos.x + checkboxOffset.x);
-                ImGui::SetCursorPosY(pos.y + checkboxOffset.y);
-                bool enabled = items[draggedOpt.name].inst->isEnabled();
-                ImGui::Checkbox(("##_menu_checkbox_" + draggedOpt.name).c_str(), &enabled);
-                ImGui::SetCursorPos(pos);
+        if (canDragMenuItems) {
+            if (opt.name == draggedMenuName) {
+                ImGui::BeginTooltip();
+                ImGui::TextUnformatted(draggedMenuName.c_str(), &draggedMenuName[draggedMenuName.length()]);
+                ImGui::EndTooltip();
+                continue;
             }
-            style::endDisabled();
-            window->DrawList->AddRect(posMin, posMax, textColor, 0.0f, 0, style::uiScale);
+
+            // Draw dragged menu item
+            if (displayedCount == insertBefore && !draggedMenuName.empty()) {
+                if (updateStates) { ImGui::SetNextItemOpen(false); }
+                ImVec2 posMin = ImGui::GetCursorScreenPos();
+                ImVec2 posMax = ImVec2(posMin.x + menuWidth, posMin.y + ImGui::GetFrameHeight());
+                style::beginDisabled();
+                ImRect orignalRect = window->WorkRect;
+                ImGui::CollapsingHeader((draggedMenuName + "##sdrpp_main_menu_dragging").c_str());
+                if (items[draggedOpt.name].inst != NULL) {
+                    window->WorkRect = orignalRect;
+                    ImVec2 pos = ImGui::GetCursorPos();
+                    ImGui::SetCursorPosX(pos.x + checkboxOffset.x);
+                    ImGui::SetCursorPosY(pos.y + checkboxOffset.y);
+                    bool enabled = items[draggedOpt.name].inst->isEnabled();
+                    ImGui::Checkbox(("##_menu_checkbox_" + draggedOpt.name).c_str(), &enabled);
+                    ImGui::SetCursorPos(pos);
+                }
+                style::endDisabled();
+                window->DrawList->AddRect(posMin, posMax, textColor, 0.0f, 0, style::uiScale);
+            }
         }
+
         displayedCount++;
-
         MenuItem_t& item = items[opt.name];
-
 
         ImRect orginalRect = window->WorkRect;
         if (item.inst != NULL) {
@@ -88,15 +90,17 @@ bool Menu::draw(bool updateStates) {
             clickedMenuName = opt.name;
         }
 
-        bool menuDragged = (menuClicked && ImGui::IsMouseDragging(ImGuiMouseButton_Left) && draggedMenuName.empty() && clickedMenuName == opt.name);
-        if (menuDragged && !locked) {
-            draggedMenuName = opt.name;
-            draggedId = rawId - 1;
-            draggedOpt = opt;
-            continue;
-        }
-        else if (menuDragged) {
-            ImGui::SetTooltip("Menu Order Locked!");
+        if (canDragMenuItems) {
+            const bool menuDragged = (menuClicked && ImGui::IsMouseDragging(ImGuiMouseButton_Left) && draggedMenuName.empty() && clickedMenuName == opt.name);
+            if (menuDragged && !locked) {
+                draggedMenuName = opt.name;
+                draggedId = rawId - 1;
+                draggedOpt = opt;
+                continue;
+            }
+            else if (menuDragged) {
+                ImGui::SetTooltip("Menu Order Locked!");
+            }
         }
 
         // Draw menu header and menu content. There is a lot of boilerplate because the checkbox has to be drawn before the menu, TODO: fix

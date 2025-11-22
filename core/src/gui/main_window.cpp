@@ -339,6 +339,7 @@ void MainWindow::draw() {
 
     processMouseInputs = canProcessMouseInputs();
     processKeyboardInputs = canProcessKeyboardInputs();
+    gui::menu.canDragMenuItems = processMouseInputs && processKeyboardInputs;
 
     // To Bar
     // ImGui::BeginChild("TopBarChild", ImVec2(0, 49.0f * style::uiScale), false, ImGuiWindowFlags_HorizontalScrollbar);
