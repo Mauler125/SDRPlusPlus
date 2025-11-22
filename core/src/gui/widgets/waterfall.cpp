@@ -163,7 +163,7 @@ namespace ImGui {
             window->DrawList->AddLine(ImVec2(fftAreaMin.x, roundf(yPos)),
                                       ImVec2(fftAreaMin.x - scaleTickOfsset, roundf(yPos)),
                                       text, style::uiScale);
-            const int textLen = std::clamp(sprintf(buf, "%ddBFS", (int)roundf(line)));
+            const int textLen = std::clamp(sprintf(buf, "%ddBFS", (int)roundf(line)), 0, bufLen);
             ImVec2 txtSz = ImGui::CalcTextSize(buf);
             window->DrawList->AddText(ImVec2(fftAreaMin.x - txtSz.x - textVOffset, roundf(yPos - (txtSz.y / 2.0))), text, buf, &buf[textLen]);
         }
