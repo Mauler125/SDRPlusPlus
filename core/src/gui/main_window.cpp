@@ -13,6 +13,7 @@
 #include <config.h>
 #include <signal_path/signal_path.h>
 #include <core.h>
+#include <backend.h>
 #include <gui/menus/source.h>
 #include <gui/menus/display.h>
 #include <gui/menus/bandplan.h>
@@ -525,6 +526,7 @@ void MainWindow::draw() {
             // ImGui::Checkbox("Bypass buffering", &sigpath::iqFrontEnd.inputBuffer.bypass);
             // ImGui::Text("Buffering: %d", (sigpath::iqFrontEnd.inputBuffer.writeCur - sigpath::iqFrontEnd.inputBuffer.readCur + 32) % 32);
 
+            ImGui::Checkbox("Use VSync", &backend::vsyncEnabled);
             ImGui::Checkbox("Waterfall single click", &gui::waterfall.VFOMoveSingleClick);
 
             if (ImGui::Button("Draw main menu first")) {

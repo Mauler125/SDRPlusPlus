@@ -215,6 +215,12 @@ namespace backend {
         }
     }
 
+    // IMPORTANT: this value is so that it will always call
+    // glfwSwapInterval on the first render call and set it
+    // to whatever was passed in by caller! Don't change it
+    // to bool because else this will break.
+    static uint8_t s_lastSwapIntervalStateSync = UINT8_MAX;
+
     void render(bool vsync) {
         // Rendering
         ImGui::Render();
@@ -238,9 +244,9 @@ namespace backend {
         glClear(GL_COLOR_BUFFER_BIT);
         ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 
-        if (vsync != vsyncEnabled) {
+        if (vsync != s_lastSwapIntervalStateSync) {
             glfwSwapInterval(vsync);
-            vsyncEnabled = vsync;
+            s_lastSwapIntervalStateSync = vsync;
         }
 
         glfwSwapBuffers(window);
@@ -310,7 +316,7 @@ namespace backend {
                 gui::mainWindow.draw();
             }
 
-            render();
+            render(vsyncEnabled);
         }
 
         return 0;
