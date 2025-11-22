@@ -1,36 +1,7 @@
 #pragma once
-#include <stdint.h>
-#include <string>
-#include <mutex>
-#include <memory>
-#include <map>
-
-#ifdef _WIN32
-#include <WinSock2.h>
-#include <WS2tcpip.h>
-#include <iphlpapi.h>
-#else
-#include <unistd.h>
-#include <strings.h>
-#include <sys/types.h>
-#include <sys/socket.h>
-#include <netinet/in.h>
-#include <netdb.h>
-#include <signal.h>
-#include <poll.h>
-#include <fcntl.h>
-#include <ifaddrs.h>
-#endif
+#include "net_shared.h"
 
 namespace net {
-#ifdef _WIN32
-    typedef SOCKET SockHandle_t;
-    typedef int socklen_t;
-#else
-    typedef int SockHandle_t;
-#endif
-    typedef uint32_t IP_t;
-
     class Socket;
     class Listener;
 
@@ -38,6 +9,7 @@ namespace net {
         IP_t address;
         IP_t netmask;
         IP_t broadcast;
+        uint16_t family = AF_UNSPEC;
     };
 
     class Address {
@@ -45,9 +17,15 @@ namespace net {
         friend Listener;
     public:
         /**
-         * Default constructor. Corresponds to 0.0.0.0:0.
+         * Default constructor. Corresponds to 0.0.0.0:0 or [::0]:0.
          */
         Address();
+
+        /**
+         * Do not instantiate this class manually. Use the provided functions.
+         * @param host Hostname or IP and TCP/UDP port (RFC 2732 format).
+         */
+        Address(const std::string& host);
 
         /**
          * Do not instantiate this class manually. Use the provided functions.
@@ -58,28 +36,48 @@ namespace net {
 
         /**
          * Do not instantiate this class manually. Use the provided functions.
-         * @param ip IP in host byte order.
+         * @param ip IP address.
          * @param port TCP/UDP port.
          */
-        Address(IP_t ip, int port);
+        Address(const IP_t& ip, int port);
+
+        /**
+         * Clear the IP address and port.
+         */
+        void clear();
+
+        /**
+         * Set the IP address and port from string.
+         * @param inStr Input address string (can be IPv4, IPv6 or hostname).
+         * @param useDNS Resolve input as hostname via DNS.
+         * @return True on success, false otherwise.
+         */
+        bool setFromStr(const std::string& inStr, const bool useDNS);
 
         /**
          * Get the IP address.
+         * @param baseOnly Only return IP address. If false, returns address with port in RFC 2732 format.
          * @return IP address in standard string format.
          */
-        std::string getIPStr() const;
+        std::string toStr(const bool baseOnly) const;
 
         /**
          * Get the IP address.
-         * @return IP address in host byte order.
+         * @return IP address.
          */
         IP_t getIP() const;
 
         /**
          * Set the IP address.
-         * @param ip IP address in host byte order.
+         * @param ip IP address.
          */
-        void setIP(IP_t ip);
+        void setIP(const IP_t& ip);
+
+         /**
+         * Set the IP address.
+         * @param ip IP (v4) address in host byte order.
+         */
+        void setIP(const uint32_t ip);
 
         /**
          * Get the TCP/UDP port.
@@ -93,7 +91,7 @@ namespace net {
          */
         void setPort(int port);
 
-        struct sockaddr_in addr;
+        struct sockaddr_in6 addr;
     };
 
     enum {
@@ -173,7 +171,6 @@ namespace net {
         Address* raddr = NULL;
         SockHandle_t sock;
         bool open = true;
-
     };
 
     class Listener {
