@@ -450,18 +450,25 @@ void MainWindow::draw() {
     }
 
     // Handle menu resize
+    ImVec2 winPos = ImGui::GetWindowPos();
     ImVec2 winSize = ImGui::GetWindowSize();
     ImVec2 mousePos = ImGui::GetMousePos();
+    ImVec2 mouseLocal = mousePos - winPos;
     if (processMouseInputs && showMenu) {
         float curY = ImGui::GetCursorPosY();
         bool click = ImGui::IsMouseClicked(ImGuiMouseButton_Left);
         bool down = ImGui::IsMouseDown(ImGuiMouseButton_Left);
         if (grabbingMenu) {
-            newWidth = mousePos.x;
+            newWidth = mouseLocal.x;
             newWidth = std::clamp<float>(newWidth, 250, winSize.x - 250);
-            ImGui::GetForegroundDrawList()->AddLine(ImVec2(newWidth, curY), ImVec2(newWidth, winSize.y - 10), ImGui::GetColorU32(ImGuiCol_SeparatorActive));
+            ImGui::GetForegroundDrawList()->AddLine(
+                ImVec2(winPos.x + newWidth, winPos.y + curY),
+                ImVec2(winPos.x + newWidth, winPos.y + winSize.y - 10),
+                ImGui::GetColorU32(ImGuiCol_SeparatorActive));
         }
-        if (mousePos.x >= newWidth - (2.0f * style::uiScale) && mousePos.x <= newWidth + (2.0f * style::uiScale) && mousePos.y > curY) {
+        if (mouseLocal.x >= newWidth - (2.0f * style::uiScale) &&
+            mouseLocal.x <= newWidth + (2.0f * style::uiScale) &&
+            mouseLocal.y > curY) {
             ImGui::SetMouseCursor(ImGuiMouseCursor_ResizeEW);
             if (click) {
                 grabbingMenu = true;
