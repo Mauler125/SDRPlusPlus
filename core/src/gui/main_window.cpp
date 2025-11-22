@@ -538,11 +538,6 @@ void MainWindow::draw() {
             ImGui::Spacing();
         }
 
-        // todo:
-        // merge pr that fixes zooming!
-        // try to fix input leaking behind imgui windows!
-        // try dotted horizontal line for fft view!
-
         ImGui::EndChild();
     }
     else {
