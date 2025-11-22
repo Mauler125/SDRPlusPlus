@@ -65,7 +65,7 @@ private:
 
         // If editing, show menu
         if (!_this->editedTask.empty()) {
-            gui::mainWindow.lockWaterfallControls = true;
+            gui::mainWindow.muteInputThisFrame(true);
             std::string id = "Edit Task##scheduler_edit_task_" + _this->name;
             ImGui::OpenPopup(id.c_str());
             if (ImGui::BeginPopup(id.c_str(), ImGuiWindowFlags_NoResize)) {

@@ -214,7 +214,7 @@ public:
         symDiag.draw();
 
         if (showWindow) {
-            gui::mainWindow.lockWaterfallControls = true;
+            gui::mainWindow.muteInputThisFrame(true);
             ImGui::Begin("NOAA HRPT Decoder");
             ImGui::BeginTabBar("NOAAHRPTTabs");
 

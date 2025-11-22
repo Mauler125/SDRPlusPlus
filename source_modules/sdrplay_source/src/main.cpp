@@ -860,7 +860,7 @@ private:
 
     bool agcParamMenu(bool& valid) {
         bool open = true;
-        gui::mainWindow.lockWaterfallControls = true;
+        gui::mainWindow.muteInputThisFrame(true);
         SmGui::OpenPopup("Edit##sdrplay_source_edit_agc_params_");
         if (SmGui::BeginPopup("Edit##sdrplay_source_edit_agc_params_", ImGuiWindowFlags_NoResize)) {
             if (SmGui::BeginTable(("sdrplay_source_agc_param_tbl" + name).c_str(), 2)) {
