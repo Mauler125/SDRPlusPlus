@@ -1,5 +1,6 @@
 #pragma once
 #include "../block.h"
+#include <atomic>
 #define TEST_BUFFER_SIZE 32
 
 // IMPORTANT: THIS IS TRASH AND MUST BE REWRITTEN IN THE FUTURE
@@ -92,12 +93,13 @@ namespace dsp::buffer {
             }
         }
 
-        stream<T> out;
+        inline stream<T>* getOutStream() {
+            return &out;
+        }
 
-        int writeCur = 0;
-        int readCur = 0;
-
-        bool bypass = false;
+        inline void setBypass(bool enable) {
+            bypass = enable;
+        }
 
     private:
         void doStart() {
@@ -120,13 +122,19 @@ namespace dsp::buffer {
         }
 
         stream<T>* _in;
+        stream<T> out;
+
+        int readCur = 0;
+        int writeCur = 0;
+
+        std::atomic_bool bypass = false;
+        std::atomic_bool stopWorker = false;
+
+        T* buffers[TEST_BUFFER_SIZE];
+        int sizes[TEST_BUFFER_SIZE];
 
         std::thread readWorkerThread;
         std::mutex bufMtx;
         std::condition_variable cnd;
-        T* buffers[TEST_BUFFER_SIZE];
-        int sizes[TEST_BUFFER_SIZE];
-
-        bool stopWorker = false;
     };
 }

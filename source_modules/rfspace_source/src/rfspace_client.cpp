@@ -259,7 +259,7 @@ namespace rfspace {
             getControlItem(RFSPACE_CTRL_ITEM_STATE, dummy, sizeof(dummy));
 
             std::unique_lock<std::mutex> lck(heartBeatMtx);
-            bool to = heartBeatCnd.wait_for(lck, std::chrono::milliseconds(RFSPACE_HEARTBEAT_INTERVAL_MS), [=](){ return stopHeartBeat; });
+            bool to = heartBeatCnd.wait_for(lck, std::chrono::milliseconds(RFSPACE_HEARTBEAT_INTERVAL_MS), [=](){ return stopHeartBeat.load(); });
             
             if (to) { return; }
         }

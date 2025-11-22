@@ -7,7 +7,7 @@
 using namespace std::chrono_literals;
 
 namespace server {
-    Client::Client(std::shared_ptr<net::Socket> sock, dsp::stream<dsp::complex_t>* out) {
+    Client::Client(std::shared_ptr<net::Socket> sock, dsp::stream<dsp::complex_t>* out) : decompIn(false) {
         this->sock = sock;
         output = out;
 

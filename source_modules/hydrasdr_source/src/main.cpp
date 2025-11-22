@@ -137,7 +137,7 @@ public:
         catch (const std::exception& e) {
             char buf[1024];
             sprintf(buf, "%016" PRIX64, serial);
-            flog::error("Could not open HydraSDR {}", buf);
+            flog::error("Could not open HydraSDR {0}", buf);
         }
         devId = devices.valueId(serial);
         selectedSerial = serial;

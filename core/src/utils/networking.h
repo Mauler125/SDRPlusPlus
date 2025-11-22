@@ -33,9 +33,11 @@ namespace net {
         void readWorker();
         void writeWorker();
 
-        bool stopWorkers = false;
-        bool connectionOpen = false;
-
+        std::atomic_bool stopWorkers = false;
+        std::atomic_bool connectionOpen = false;
+        bool _udp;
+        SockHandle_t _sock;
+        struct sockaddr_in6 remoteAddr;
         std::mutex readMtx;
         std::mutex writeMtx;
         std::mutex readQueueMtx;
@@ -49,10 +51,6 @@ namespace net {
         std::vector<ConnWriteEntry> writeQueue;
         std::thread readWorkerThread;
         std::thread writeWorkerThread;
-
-        SockHandle_t _sock;
-        bool _udp;
-        struct sockaddr_in6 remoteAddr;
     };
 
     typedef std::unique_ptr<ConnClass> Conn;
@@ -76,16 +74,16 @@ namespace net {
     private:
         void worker();
 
-        bool listening = false;
-        bool stopWorker = false;
+        std::atomic_bool stopWorker = false;
+        std::atomic_bool listening = false;
+
+        SockHandle_t sock;
 
         std::mutex acceptMtx;
         std::mutex acceptQueueMtx;
         std::condition_variable acceptQueueCnd;
         std::vector<ListenerAcceptEntry> acceptQueue;
         std::thread acceptWorkerThread;
-
-        SockHandle_t sock;
     };
 
     typedef std::unique_ptr<ListenerClass> Listener;
