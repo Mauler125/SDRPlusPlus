@@ -4,6 +4,7 @@
 #include <string>
 #include <cstring>
 #include <mutex>
+#include <atomic>
 #include <memory>
 #include <vector>
 #include <map>
