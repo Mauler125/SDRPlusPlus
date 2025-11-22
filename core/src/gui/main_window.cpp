@@ -695,7 +695,7 @@ void MainWindow::draw() {
 }
 
 bool MainWindow::canProcessMouseInputs() {
-    return ImGui::IsWindowHovered(ImGuiHoveredFlags_RootAndChildWindows);
+    return ImGui::IsWindowHovered(ImGuiHoveredFlags_RootAndChildWindows | ImGuiHoveredFlags_AllowWhenBlockedByActiveItem);
 }
 
 bool MainWindow::canProcessKeyboardInputs() {
