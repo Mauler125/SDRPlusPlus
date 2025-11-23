@@ -1,6 +1,7 @@
 #include "rigctl.h"
 #include "base_types.h"
 #include <math.h>
+#include "utils/str_tools.h"
 
 namespace net::rigctl {
     Client::Client(std::shared_ptr<Socket> sock) {
@@ -274,15 +275,22 @@ namespace net::rigctl {
         while (true) {
             // Receive command
             std::vector<std::string> args;
-            int argCount = recvLine(sock, args);
+            const int argCount = recvLine(sock, args);
             if (argCount <= 0) { break; }
 
+            const int ERROR_STAT = -1;
+
             // Parse command
-            std::string cmd = args[0];
+            const std::string& cmd = args[0];
             if (cmd == "f" || cmd == "\\get_freq") {
-                // TODO: Check if handler exists
+                if (!getFreqHandler) {
+                    sendStatus(sock, ERROR_STAT);
+                    continue;
+                }
+
                 double freq = 0;
                 int res = getFreqHandler(freq);
+
                 if (!res) {
                     sendFloat(sock, freq);
                 }
@@ -290,12 +298,23 @@ namespace net::rigctl {
                     sendStatus(sock, res);
                 }
             }
-            if (cmd == "F" || cmd == "\\set_freq") {
-                
+            else if ((cmd == "F" || cmd == "\\set_freq")) {
+                if (args.size() != 2 || !setFreqHandler) {
+                    sendStatus(sock, ERROR_STAT);
+                    continue;
+                }
+
+                double freq;
+                if (!utils::strToNum(args[1], freq)) {
+                    sendStatus(sock, ERROR_STAT);
+                    continue;
+                }
+
+                sendStatus(sock, setFreqHandler(freq));
             }
             else {
-                // Return error
-                sendStatus(sock, -1);
+                sendStatus(sock, ERROR_STAT);
+                continue;
             }
         }
     }
