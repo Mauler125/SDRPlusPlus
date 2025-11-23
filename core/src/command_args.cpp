@@ -13,7 +13,7 @@ void CommandArgsParser::defineAll() {
         std::string root = (std::string)getenv("HOME") + "/.config/sdrpp";
 #endif
 
-        define('a', "address", "Server mode address", "0.0.0.0");
+        define('a', "address", "Server mode address", "::0");
         define('h', "help", "Show help");
         define('p', "port", "Server mode port", 5259);
         const std::string absRoot = std::filesystem::absolute(".").string();

@@ -17,7 +17,7 @@ namespace net {
 
     class ConnClass {
     public:
-        ConnClass(SockHandle_t sock, struct sockaddr_in6 raddr = {}, bool udp = false);
+        ConnClass(const SockHandle_t sock, struct sockaddr_in6 raddr = {}, const bool udp = false);
         ~ConnClass();
 
         void close();
@@ -90,9 +90,9 @@ namespace net {
 
     typedef std::unique_ptr<ListenerClass> Listener;
 
-    Conn connect(std::string host, uint16_t port);
-    Listener listen(std::string host, uint16_t port);
-    Conn openUDP(std::string host, uint16_t port, std::string remoteHost, uint16_t remotePort, bool bindSocket = true);
+    Conn connect(const std::string& host, const uint16_t port);
+    Listener listen(const std::string& host, const uint16_t port);
+    Conn openUDP(const std::string& host, const uint16_t port, const std::string& remoteHost, const uint16_t remotePort, const bool bindSocket = true);
 
 #ifdef _WIN32
     extern bool winsock_init;
