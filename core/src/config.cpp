@@ -19,6 +19,7 @@ void ConfigManager::load(json def, bool lock) {
     if (lock) { mtx.lock(); }
     if (path == "") {
         flog::error("Config manager tried to load file with no path specified");
+        if (lock) { mtx.unlock(); }
         return;
     }
     if (!std::filesystem::exists(path)) {
@@ -28,6 +29,7 @@ void ConfigManager::load(json def, bool lock) {
     }
     if (!std::filesystem::is_regular_file(path)) {
         flog::error("Config file '{0}' isn't a file", path);
+        if (lock) { mtx.unlock(); }
         return;
     }
 
