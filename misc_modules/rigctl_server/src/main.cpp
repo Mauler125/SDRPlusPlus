@@ -390,7 +390,7 @@ private:
 
             // if number of arguments isn't correct, return error
             if (parts.size() != 2) {
-                resp = "RPRT 1\n";
+                resp = "RPRT -1\n";
                 client->write(resp.size(), (uint8_t*)resp.c_str());
                 return;
             }
@@ -437,7 +437,7 @@ private:
 
             // if number of arguments isn't correct, return error
             if (parts.size() != 3) {
-                resp = "RPRT 1\n";
+                resp = "RPRT -1\n";
                 client->write(resp.size(), (uint8_t*)resp.c_str());
                 return;
             }
@@ -446,7 +446,7 @@ private:
             int pos = 0;
             for (char c : parts[2]) {
                 if (!std::isdigit(c) && !(c == '-' && !pos)) {
-                    resp = "RPRT 1\n";
+                    resp = "RPRT -1\n";
                     client->write(resp.size(), (uint8_t*)resp.c_str());
                     return;
                 }
@@ -460,7 +460,7 @@ private:
                 return e.second == newModeStr;
             });
             if (it == radioModeToString.end()) {
-                resp = "RPRT 1\n";
+                resp = "RPRT -1\n";
                 client->write(resp.size(), (uint8_t*)resp.c_str());
                 return;
             }
@@ -500,7 +500,7 @@ private:
 
             // if number of arguments isn't correct or the VFO is not "VFO", return error
             if (parts.size() != 2) {
-                resp = "RPRT 1\n";
+                resp = "RPRT -1\n";
                 client->write(resp.size(), (uint8_t*)resp.c_str());
                 return;
             }
@@ -509,7 +509,7 @@ private:
                 resp = "VFO\n";
             }
             else if (parts[1] != "VFO") {
-                resp = "RPRT 1\n";
+                resp = "RPRT -1\n";
             }
 
             client->write(resp.size(), (uint8_t*)resp.c_str());
@@ -667,7 +667,7 @@ private:
         else {
             // If command is not recognized, return error
             flog::error("Rigctl client sent invalid command: '{0}'", cmd);
-            resp = "RPRT 1\n";
+            resp = "RPRT -1\n";
             client->write(resp.size(), (uint8_t*)resp.c_str());
             return;
         }
