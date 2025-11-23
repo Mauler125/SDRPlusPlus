@@ -24,6 +24,8 @@ namespace net {
         bool isOpen();
         void waitForEnd();
 
+        size_t toString(char* const buffer, const size_t bufferSize, const bool onlyBase = false) const;
+
         int read(int count, uint8_t* buf, bool enforceSize = true);
         bool write(int count, uint8_t* buf);
         void readAsync(int count, uint8_t* buf, void (*handler)(int count, uint8_t* buf, void* ctx), void* ctx, bool enforceSize = true);

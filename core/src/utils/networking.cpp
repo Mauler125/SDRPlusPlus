@@ -58,6 +58,25 @@ namespace net {
         connectionOpenCnd.wait(lck, [this]() { return !connectionOpen; });
     }
 
+    size_t ConnClass::toString(char* const buffer, const size_t bufferSize, const bool onlyBase) const {
+        assert(bufferSize > 0);
+        char stringBuf[INET6_ADDRSTRLEN];
+
+        if (inet_ntop(AF_INET6, &remoteAddr.sin6_addr, stringBuf, INET6_ADDRSTRLEN)) {
+            const int ret = onlyBase
+                                ? snprintf(buffer, bufferSize, "%s", stringBuf)
+                                : snprintf(buffer, bufferSize, "[%s]:%hu", stringBuf, (uint16_t)ntohs(remoteAddr.sin6_port));
+
+            if (ret > 0) {
+                return std::min<size_t>(static_cast<size_t>(ret), bufferSize - 1);
+            }
+        }
+        const size_t len = std::min<size_t>(sizeof("-<[ErRoR]>-"), bufferSize) - 1;
+        memcpy(buffer, "-<[ErRoR]>-", len);
+        buffer[len] = '\0';
+        return len;
+    }
+
     int ConnClass::read(int count, uint8_t* buf, bool enforceSize) {
         if (!connectionOpen) { return -1; }
         std::lock_guard lck(readMtx);
@@ -233,21 +252,19 @@ namespace net {
     Conn ListenerClass::accept() {
         if (!listening) { return NULL; }
         std::lock_guard lck(acceptMtx);
-        SockHandle_t _sock;
+
+        sockaddr_in6 addr{};
+        socklen_t addrLen = sizeof(addr);
 
         // Accept socket
-        _sock = ::accept(sock, NULL, NULL);
-#ifdef _WIN32
-        if (_sock < 0 || _sock == SOCKET_ERROR) {
-#else
+        const SockHandle_t _sock = ::accept(sock, (sockaddr*)&addr, &addrLen);
         if (_sock < 0) {
-#endif
             listening = false;
             throw std::runtime_error("Could not bind socket");
             return NULL;
         }
 
-        return Conn(new ConnClass(_sock));
+        return Conn(new ConnClass(_sock, addr));
     }
 
     void ListenerClass::acceptAsync(void (*handler)(Conn conn, void* ctx), void* ctx) {

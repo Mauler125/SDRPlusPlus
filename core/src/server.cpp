@@ -154,16 +154,20 @@ namespace server {
         listener = net::listen(host, port);
         listener->acceptAsync(_clientHandler, NULL);
 
-        flog::info("Ready, listening on {0}:{1}", host, port);
+        flog::info("Ready, listening on [{0}]:{1}", host, port);
         while(1) { std::this_thread::sleep_for(std::chrono::milliseconds(100)); }
 
         return 0;
     }
 
     void _clientHandler(net::Conn conn, void* ctx) {
+        char ipStr[INET6_ADDRSTRLEN];
+        const size_t ipStrSz = conn->toString(ipStr, sizeof(ipStr));
+        const std::string_view ipStrView(ipStr, ipStrSz);
+
         // Reject if someone else is already connected
         if (client && client->isOpen()) {
-            flog::info("REJECTED Connection from {0}:{1}, another client is already connected.", "TODO", "TODO");
+            flog::info("Rejected connection from {0}; another client is already connected", ipStrView);
             
             // Issue a disconnect command to the client
             uint8_t buf[sizeof(PacketHeader) + sizeof(CommandHeader)];
@@ -184,7 +188,7 @@ namespace server {
             return;
         }
 
-        flog::info("Connection from {0}:{1}", "TODO", "TODO");
+        flog::info("Accepted connection from {0}", ipStrView);
         client = std::move(conn);
         client->readAsync(sizeof(PacketHeader), rbuf, _packetHandler, NULL);
 
