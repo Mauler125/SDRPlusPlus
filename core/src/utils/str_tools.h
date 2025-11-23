@@ -97,4 +97,9 @@ namespace utils {
 
         return (result.ec == std::errc()) && (result.ptr == end);
     }
+
+    template <class V>
+    inline bool strToNum(const std::string& str, V& num) {
+        return strToNum<V>(str.c_str(), str.length(), num);
+    }
 }
