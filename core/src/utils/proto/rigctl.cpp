@@ -246,10 +246,19 @@ namespace net::rigctl {
         listener->stop();
         if (listenThread.joinable()) { listenThread.join(); }
 
-        // Stop individual client threads
-        while (true) {
-            // Check how many sockets are left and stop if they're all closed
-            
+        // Close all active sockets
+        {
+            std::lock_guard<std::mutex> lck(socketsMtx);
+            for (auto& sock : sockets) {
+                sock->close();
+            }
+        }
+
+        // Wait for socket threads to finish
+        for (auto& t : socketThreads) {
+            if (t.joinable()) {
+                t.join();
+            }
         }
     }
 
@@ -266,8 +275,7 @@ namespace net::rigctl {
             }
 
             // Start handler thread
-            std::thread acceptThread(&Server::acceptWorker, this, sock);
-            acceptThread.detach();
+            socketThreads.emplace_back(&Server::acceptWorker, this, sock);
         }
     }
 

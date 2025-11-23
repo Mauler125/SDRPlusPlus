@@ -317,6 +317,8 @@ namespace net::rigctl {
         std::thread listenThread;
         std::shared_ptr<net::Listener> listener;
 
+        std::vector<std::thread> socketThreads;
+
         std::mutex socketsMtx;
         std::vector<std::shared_ptr<net::Socket>> sockets;
     };
