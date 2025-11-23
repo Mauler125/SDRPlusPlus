@@ -89,7 +89,7 @@ namespace net {
                 connectionOpenCnd.notify_all();
                 return -1;
             }
-            return count; // todo(kawe): is this correct, or should we return `ret`?
+            return ret;
         }
 
         int beenRead = 0;
