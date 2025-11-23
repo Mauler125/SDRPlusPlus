@@ -184,7 +184,7 @@ namespace net::rigctl {
     int Client::setInt(std::string cmd, int value) {
         // Send command
         char buf[2048];
-        sprintf(buf, "%s %d\n", cmd.c_str(), value);
+        snprintf(buf, sizeof(buf), "%s %d\n", cmd.c_str(), value);
         sock->sendstr(buf);
 
         // Receive status
@@ -329,19 +329,19 @@ namespace net::rigctl {
 
     void Server::sendStatus(std::shared_ptr<Socket> sock, int status) {
         char buf[I32_STR_BUF_SIZE+5];
-        sprintf(buf, "RPRT %d\n", status);
+        snprintf(buf, sizeof(buf), "RPRT %d\n", status);
         sock->sendstr(buf);
     }
 
     void Server::sendInt(std::shared_ptr<Socket> sock, int value) {
         char buf[I32_STR_BUF_SIZE];
-        sprintf(buf, "%d\n", value);
+        snprintf(buf, sizeof(buf), "%d\n", value);
         sock->sendstr(buf);
     }
 
     void Server::sendFloat(std::shared_ptr<Socket> sock, double value) {
         char buf[DBL_STR_BUF_SIZE];
-        sprintf(buf, "%lg\n", value);
+        snprintf(buf, sizeof(buf), "%lg\n", value);
         sock->sendstr(buf);
     }
 }
