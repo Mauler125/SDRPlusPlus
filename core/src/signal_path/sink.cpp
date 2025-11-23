@@ -353,7 +353,7 @@ void SinkManager::showMenu() {
 
     for (auto const& [name, stream] : streams) {
         ImGui::SetCursorPosX((menuWidth / 2.0f) - (ImGui::CalcTextSize(name.c_str(), &name[name.length()]).x / 2.0f));
-        ImGui::Text("%s", name.c_str());
+        ImGui::TextUnformatted(name.c_str(), &name[name.length()]);
 
         ImGui::SetNextItemWidth(menuWidth);
         if (ImGui::Combo(CONCAT("##_sdrpp_sink_select_", name), &stream->providerId, provStr.c_str())) {
