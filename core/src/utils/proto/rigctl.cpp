@@ -214,15 +214,15 @@ namespace net::rigctl {
         return recvStatus();
     }
 
-    std::string Client::getString(std::string cmd) {
-        // TODO
-        return "";
-    }
+    //std::string Client::getString(std::string cmd) {
+    //    // TODO
+    //    return "";
+    //}
 
-    int Client::setString(std::string cmd, std::string value) {
-        // TODO
-        return -1;
-    }
+    //int Client::setString(std::string cmd, std::string value) {
+    //    // TODO
+    //    return -1;
+    //}
 
     std::shared_ptr<Client> connect(std::string host, int port) {
         return std::make_shared<Client>(net::connect(host, port));

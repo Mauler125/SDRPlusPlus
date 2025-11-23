@@ -271,8 +271,8 @@ namespace net::rigctl {
         int setInt(std::string cmd, int value);
         double getFloat(std::string cmd);
         int setFloat(std::string cmd, double value);
-        std::string getString(std::string cmd);
-        int setString(std::string cmd, std::string value);
+        //std::string getString(std::string cmd);
+        //int setString(std::string cmd, std::string value);
 
         std::shared_ptr<Socket> sock;
 
