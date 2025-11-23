@@ -6,26 +6,6 @@
 #include <utils/str_tools.h>
 
 namespace net {
-    bool _init = false;
-    
-    // === Private functions ===
-
-    void init() {
-        if (_init) { return; }
-#ifdef _WIN32
-        // Initialize WinSock2
-        WSADATA wsa;
-        if (WSAStartup(MAKEWORD(2, 2), &wsa)) {
-            throw std::runtime_error("Could not initialize WinSock2");
-            return;
-        }
-#else
-        // Disable SIGPIPE to avoid closing when the remote host disconnects
-        signal(SIGPIPE, SIG_IGN);
-#endif
-        _init = true;
-    }
-
     // === Address functions ===
 
     Address::Address() {
@@ -34,7 +14,7 @@ namespace net {
 
     Address::Address(const std::string& host) {
         // Initialize WSA if needed
-        init();
+        net::initLibrary();
         if (!setFromStr(host, true)) {
             throw std::runtime_error("Address initialization failed");
         }
@@ -42,8 +22,8 @@ namespace net {
 
     Address::Address(const std::string& host, int port) {
         // Initialize WSA if needed
-        init();
-        if (setFromStr("[" + host + "]:" + std::to_string(port), true)) {
+        net::initLibrary();
+        if (!setFromStr("[" + host + "]:" + std::to_string(port), true)) {
             throw std::runtime_error("Address initialization failed");
         }
     }
@@ -192,7 +172,7 @@ namespace net {
 
         if (!ret) {
             throw std::runtime_error("Address deserialization failed");
-            return std::string();
+            return std::string("-<[ErRoR]>-");
         }
 
         if (!baseOnly) {
@@ -218,7 +198,7 @@ namespace net {
     }
 
     int Address::getPort() const {
-        return htons(addr.sin6_port);
+        return ntohs(addr.sin6_port);
     }
 
     void Address::setPort(int port) {
@@ -230,13 +210,12 @@ namespace net {
     Socket::Socket(SockHandle_t sock, const Address* raddr) {
         this->sock = sock;
         if (raddr) {
-            this->raddr = new Address(*raddr);
+            this->raddr = std::make_unique<Address>(*raddr);
         }
     }
 
     Socket::~Socket() {
         close();
-        if (raddr) { delete raddr; }
     }
 
     void Socket::close() {
@@ -292,14 +271,26 @@ namespace net {
                 tv.tv_usec = (timeout - tv.tv_sec*1000) * 1000;
 
                 // Wait for data
-                int err = select(sock+1, &set, NULL, &set, (timeout > 0) ? &tv : NULL);
-                if (err <= 0) { return err; }
+                const int sel = select(sock + 1, &set, NULL, &set, (timeout >= 0) ? &tv : nullptr);
+                if (sel < 0) {
+                    if (!WOULD_BLOCK) { close(); }
+                    return sel;
+                }
+                if (sel == 0) { return 0; }
             }
 
             // Receive
             int addrLen = sizeof(sockaddr_in6);
             int err = ::recvfrom(sock, (char*)&data[read], maxLen - read, 0, (sockaddr*)(dest ? &dest->addr : NULL), (socklen_t*)(dest ? &addrLen : NULL));
-            if (err <= 0 && !WOULD_BLOCK) {
+
+            // Peer has closed the connection
+            if (err == 0) {
+                close();
+                return read;
+            }
+
+            // Error
+            if (err < 0 && !WOULD_BLOCK) {
                 close();
                 return err;
             }
@@ -347,33 +338,44 @@ namespace net {
 
     std::shared_ptr<Socket> Listener::accept(Address* dest, int timeout) {
         // Create FD set
-        fd_set set;
-        FD_ZERO(&set);
-        FD_SET(sock, &set);
+        fd_set readSet;
+        FD_ZERO(&readSet);
+        FD_SET(sock, &readSet);
 
         // Define timeout
-        timeval tv;
-        tv.tv_sec = timeout / 1000;
-        tv.tv_usec = (timeout - tv.tv_sec*1000) * 1000;
+        timeval tv{};
+        timeval* tvPtr = NULL;
 
-        // Wait for data or error
-        if (timeout != NONBLOCKING) {
-            int err = select(sock+1, &set, NULL, &set, (timeout > 0) ? &tv : NULL);
-            if (err <= 0) { return NULL; }
+        // Blocking or timed wait
+        if (timeout >= 0) {
+            tv.tv_sec = timeout / 1000;
+            tv.tv_usec = (timeout % 1000) * 1000;
+            tvPtr = &tv;
         }
 
-        // Accept
-        int addrLen = sizeof(sockaddr_in6);
-        SockHandle_t s = ::accept(sock, (sockaddr*)(dest ? &dest->addr : NULL), (socklen_t*)(dest ? &addrLen : NULL));
-        if ((int)s < 0) {
+        // Wait for data or error
+        const int sel = select((int)(sock)+1, &readSet, NULL, &readSet, tvPtr);
+        if (sel < 0) {
             if (!WOULD_BLOCK) { stop(); }
             return NULL;
         }
 
-        // Enable nonblocking mode
-        setNonblocking(s);
+        // Timeout
+        if (sel == 0) {
+            return NULL;
+        }
 
-        return std::make_shared<Socket>(s);
+        socklen_t addrLen = sizeof(sockaddr_in6);
+        sockaddr_in6* const addrPtr = dest ? &dest->addr : NULL;
+
+        const SockHandle_t clientSock = ::accept(sock, (sockaddr*)(addrPtr), dest ? &addrLen : NULL);
+        if (clientSock < 0) {
+            if (!WOULD_BLOCK) { stop(); }
+            return NULL;
+        }
+
+        setNonblocking(clientSock);
+        return std::make_shared<Socket>(clientSock, dest);
     }
 
     // === Creation functions ===
@@ -385,7 +387,7 @@ namespace net {
 
     std::map<std::string, InterfaceInfo> listInterfaces() {
         // Init library if needed
-        init();
+        net::initLibrary();
         std::map<std::string, InterfaceInfo> ifaces;
 
 #ifdef _WIN32
@@ -501,7 +503,9 @@ namespace net {
 
     std::shared_ptr<Listener> listen(const Address& addr) {
         // Init library if needed
-        init();
+        if (!net::initLibrary()) {
+            return NULL;
+        }
 
         // Create socket
         SockHandle_t s = socket(AF_INET6, SOCK_STREAM, IPPROTO_TCP);
@@ -553,7 +557,9 @@ namespace net {
 
     std::shared_ptr<Socket> connect(const Address& addr) {
         // Init library if needed
-        init();
+        if (!net::initLibrary()) {
+            return NULL;
+        }
 
         // Create socket
         SockHandle_t s = socket(AF_INET6, SOCK_STREAM, IPPROTO_TCP);
@@ -578,7 +584,9 @@ namespace net {
 
     std::shared_ptr<Socket> openudp(const Address& raddr, const Address& laddr, bool allowBroadcast) {
         // Init library if needed
-        init();
+        if (!net::initLibrary()) {
+            return NULL;
+        }
 
         // Create socket
         SockHandle_t s = socket(AF_INET6, SOCK_DGRAM, IPPROTO_UDP);

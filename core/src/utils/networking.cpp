@@ -4,10 +4,6 @@
 #include <stdexcept>
 
 namespace net {
-#ifdef _WIN32
-    extern bool winsock_init = false;
-#endif
-
     ConnClass::ConnClass(const SockHandle_t sock, struct sockaddr_in6 raddr, const bool udp) {
         _sock = sock;
         _udp = udp;
@@ -333,24 +329,6 @@ namespace net {
         }
     }
 
-    static bool doSystemInit() {
-#ifdef _WIN32
-        // Initialize WinSock2
-        if (!winsock_init) {
-            WSADATA wsa;
-            if (WSAStartup(MAKEWORD(2, 2), &wsa)) {
-                throw std::runtime_error("Could not initialize WinSock2");
-                return false;
-            }
-            winsock_init = true;
-        }
-        assert(winsock_init);
-#else
-        signal(SIGPIPE, SIG_IGN);
-#endif
-        return true;
-    }
-
     static SockHandle_t createSocket(const int sockType, const IPPROTO protocol, const bool reuse) {
         const SockHandle_t sock = socket(AF_INET6, sockType, protocol);
         if (sock < 0) {
@@ -419,7 +397,7 @@ namespace net {
     }
 
     Conn connect(const std::string& host, const uint16_t port) {
-        if (!doSystemInit()) {
+        if (!net::initLibrary()) {
             return NULL;
         }
 
@@ -450,7 +428,7 @@ namespace net {
     }
 
     Listener listen(const std::string& host, const uint16_t port) {
-        if (!doSystemInit()) {
+        if (!net::initLibrary()) {
             return NULL;
         }
 
@@ -493,7 +471,7 @@ namespace net {
                  const std::string& remoteHost,
                  const uint16_t remotePort,
                  const bool bindSocket) {
-        if (!doSystemInit()) {
+        if (!net::initLibrary()) {
             return NULL;
         }
 

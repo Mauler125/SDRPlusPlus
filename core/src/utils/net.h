@@ -168,7 +168,7 @@ namespace net {
         int recvline(std::string& str, int maxLen = 0, int timeout = NO_TIMEOUT, Address* dest = NULL);
 
     private:
-        Address* raddr = NULL;
+        std::unique_ptr<Address> raddr;
         SockHandle_t sock;
         bool open = true;
     };
