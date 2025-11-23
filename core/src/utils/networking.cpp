@@ -93,7 +93,7 @@ namespace net {
                 connectionOpenCnd.notify_all();
                 return -1;
             }
-            return count;
+            return count; // todo(kawe): is this correct, or should we return `ret`?
         }
 
         int beenRead = 0;
@@ -136,7 +136,7 @@ namespace net {
 
         int beenWritten = 0;
         while (beenWritten < count) {
-            ret = send(_sock, (char*)buf, count, 0);
+            ret = send(_sock, (char*)buf + beenWritten, count - beenWritten, 0);
             if (ret <= 0) {
                 {
                     std::lock_guard lck(connectionOpenMtx);
