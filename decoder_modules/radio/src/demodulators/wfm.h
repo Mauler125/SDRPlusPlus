@@ -227,7 +227,7 @@ namespace demod {
                     ImGui::TableSetColumnIndex(0);
                     ImGui::TextUnformatted("Music");
                     ImGui::TableSetColumnIndex(1);
-                    ImGui::Text("%s", rdsDecode.getMusic() ? "Yes":"No");
+                    ImGui::TextUnformatted(rdsDecode.getMusic() ? "Yes":"No");
                 }
                 else {
                     ImGui::TableNextRow();
