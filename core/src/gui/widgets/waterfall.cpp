@@ -1203,7 +1203,6 @@ namespace ImGui {
             return;
         }
         waterfallMin = min;
-        verticalWfRange = findBestFrequencyRange(waterfallMax - waterfallMin, maxVerticalWfSteps);
         if (_fullUpdate) { updateWaterfallFb(); };
     }
 
@@ -1217,7 +1216,6 @@ namespace ImGui {
             return;
         }
         waterfallMax = max;
-        verticalWfRange = findBestFrequencyRange(waterfallMax - waterfallMin, maxVerticalWfSteps);
         if (_fullUpdate) { updateWaterfallFb(); };
     }
 
