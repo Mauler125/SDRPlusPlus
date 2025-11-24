@@ -146,8 +146,16 @@ namespace server {
 
         // Load sourceId from config
         sourceId = 0;
-        if (sourceList.keyExists(sourceName)) { sourceId = sourceList.keyId(sourceName); }
-        sigpath::sourceManager.selectSource(sourceList[sourceId]);
+        if (sourceList.keyExists(sourceName)) { 
+            sourceId = sourceList.keyId(sourceName);
+        }
+
+        if (!sourceList.empty()) {
+            sigpath::sourceManager.selectSource(sourceList[sourceId]);
+        }
+        else {
+            flog::warn("Source list is empty!");
+        }
 
         // TODO: Use command line option
         std::string host = (std::string)core::args["address"];
