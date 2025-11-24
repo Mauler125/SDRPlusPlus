@@ -84,6 +84,7 @@ namespace ImGui {
     class WaterFall {
     public:
         WaterFall();
+        ~WaterFall();
 
         void init();
 

@@ -143,6 +143,21 @@ namespace ImGui {
         updatePallette(s_defaultColorMap, 13);
     }
 
+    WaterFall::~WaterFall() {
+        if (latestFFT) {
+            delete[] latestFFT;
+        }
+        if (latestFFTHold) {
+            delete[] latestFFTHold;
+        }
+        if (tempZoomFFT) {
+            delete[] tempZoomFFT;
+        }
+        if (waterfallFb) {
+            delete[] waterfallFb;
+        }
+    }
+
     void WaterFall::init() {
         glGenTextures(1, &textureId);
     }
