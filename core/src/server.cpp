@@ -17,6 +17,7 @@ namespace server {
     dsp::compression::SampleStreamCompressor comp;
     dsp::sink::Handler<uint8_t> hnd;
     net::Conn client;
+    std::mutex clientMtx;
     uint8_t* rbuf = NULL;
     uint8_t* sbuf = NULL;
     uint8_t* bbuf = NULL;
@@ -165,32 +166,48 @@ namespace server {
         const size_t ipStrSz = conn->toString(ipStr, sizeof(ipStr));
         const std::string_view ipStrView(ipStr, ipStrSz);
 
+        // Re-arm it to process new incoming connects
+        if (listener) { listener->acceptAsync(_clientHandler, NULL); }
+
         // Reject if someone else is already connected
-        if (client && client->isOpen()) {
-            flog::info("Rejected connection from {0}; another client is already connected", ipStrView);
-            
-            // Issue a disconnect command to the client
-            uint8_t buf[sizeof(PacketHeader) + sizeof(CommandHeader)];
-            PacketHeader* tmp_phdr = (PacketHeader*)buf;
-            CommandHeader* tmp_chdr = (CommandHeader*)&buf[sizeof(PacketHeader)];
-            tmp_phdr->size = sizeof(PacketHeader) + sizeof(CommandHeader);
-            tmp_phdr->type = PACKET_TYPE_COMMAND;
-            tmp_chdr->cmd = COMMAND_DISCONNECT;
-            conn->write(tmp_phdr->size, buf);
+        {
+            std::lock_guard<std::mutex> lk(clientMtx);
+            if (client && client->isOpen()) {
+                flog::info("Rejected connection from {0}; another client is already connected", ipStrView);
 
-            // TODO: Find something cleaner
-            std::this_thread::sleep_for(std::chrono::milliseconds(100));
+                // Issue a disconnect command to the client
+                uint8_t buf[sizeof(PacketHeader) + sizeof(CommandHeader)];
+                PacketHeader* tmp_phdr = (PacketHeader*)buf;
+                CommandHeader* tmp_chdr = (CommandHeader*)&buf[sizeof(PacketHeader)];
+                tmp_phdr->size = sizeof(PacketHeader) + sizeof(CommandHeader);
+                tmp_phdr->type = PACKET_TYPE_COMMAND;
+                tmp_chdr->cmd = COMMAND_DISCONNECT;
+                conn->write(tmp_phdr->size, buf);
 
-            conn->close();
-            
-            // Start another async accept
-            listener->acceptAsync(_clientHandler, NULL);
-            return;
+                // TODO: Find something cleaner
+                std::this_thread::sleep_for(std::chrono::milliseconds(100));
+
+                conn->close();
+                return;
+            }
         }
 
-        flog::info("Accepted connection from {0}", ipStrView);
-        client = std::move(conn);
-        client->readAsync(sizeof(PacketHeader), rbuf, _packetHandler, NULL);
+        {
+            std::lock_guard<std::mutex> lk(clientMtx);
+            client = std::move(conn);
+
+#if defined(_WIN32) || defined(_WIN64)
+            DWORD timeout = 5000;
+            setsockopt(client->getSocketHandle(), SOL_SOCKET, SO_RCVTIMEO, (const char*)&timeout, sizeof(timeout));
+#else
+            struct timeval timeout;
+            timeout.tv_sec = 5;
+            timeout.tv_usec = 0;
+            setsockopt(client->getSocketHandle(), SOL_SOCKET, SO_RCVTIMEO, &timeout, sizeof(timeout));
+#endif
+            flog::info("Accepted connection from {0}", ipStrView);
+            client->readAsync(sizeof(PacketHeader), rbuf, _packetHandler, _disconnectHandler, NULL);
+        }
 
         // Perform settings reset
         sigpath::sourceManager.stop();
@@ -198,22 +215,29 @@ namespace server {
         compression = false;
 
         sendSampleRate(sampleRate);
-
-        // TODO: Wait otherwise someone else could connect
-
-        listener->acceptAsync(_clientHandler, NULL);
     }
 
     void _packetHandler(int count, uint8_t* buf, void* ctx) {
+        assert(count > 0);
         PacketHeader* hdr = (PacketHeader*)buf;
 
-        // Read the rest of the data (TODO: CHECK SIZE OR SHIT WILL BE FUCKED + ADD TIMEOUT)
+        if (hdr->size > SERVER_MAX_PACKET_SIZE || hdr->size < sizeof(PacketHeader)) {
+            flog::warn("Received packet with invalid size ({0}); disconnecting client.", hdr->size);
+            _disconnectHandler(-1, ctx);
+            return;
+        }
+
+        // Read the rest of the data
         int len = 0;
         int read = 0;
         int goal = hdr->size - sizeof(PacketHeader);
         while (len < goal) {
             read = client->read(goal - len, &buf[sizeof(PacketHeader) + len]);
-            if (read < 0) { return; };
+            if (read <= 0) {
+                // Client disconnected mid-packet.
+                _disconnectHandler(read, ctx);
+                return;
+            }
             len += read;
         }
 
@@ -226,8 +250,22 @@ namespace server {
             sendError(ERROR_INVALID_PACKET);
         }
 
-        // Start another async read
-        client->readAsync(sizeof(PacketHeader), rbuf, _packetHandler, NULL);
+        // Start another async read if the client is still connected
+        if (client && client->isOpen()) {
+            client->readAsync(sizeof(PacketHeader), rbuf, _packetHandler, _disconnectHandler, NULL);
+        }
+    }
+
+    void _disconnectHandler(int err, void* ctx) {
+        {
+            std::lock_guard<std::mutex> lk(clientMtx);
+            if (client) {
+                char ipStr[INET6_ADDRSTRLEN];
+                const size_t ipStrSz = client->toString(ipStr, sizeof(ipStr));
+                const std::string_view ipStrView(ipStr, ipStrSz);
+                flog::info("Client {0} disconnected with code {1}.", ipStrView, err);
+            }
+        }
     }
 
     void _testServerHandler(uint8_t* data, int count, void* ctx) {
@@ -343,7 +381,7 @@ namespace server {
         }
     }
 
-    void sendUI(Command originCmd, std::string diffId, SmGui::DrawListElem diffValue) {
+    bool sendUI(Command originCmd, std::string diffId, SmGui::DrawListElem diffValue) {
         // Render UI
         SmGui::DrawList dl;
         renderUI(&dl, diffId, diffValue);
@@ -353,39 +391,43 @@ namespace server {
         dl.store(s_cmd_data, size);
 
         // Send to network
-        sendCommandAck(originCmd, size);
+        return sendCommandAck(originCmd, size);
     }
 
-    void sendError(Error err) {
+    bool sendError(Error err) {
         PacketHeader* hdr = (PacketHeader*)sbuf;
         s_pkt_data[0] = err;
-        sendPacket(PACKET_TYPE_ERROR, 1);
+        return sendPacket(PACKET_TYPE_ERROR, 1);
     }
 
-    void sendSampleRate(double sampleRate) {
+    bool sendSampleRate(double sampleRate) {
         *(double*)s_cmd_data = sampleRate;
-        sendCommand(COMMAND_SET_SAMPLERATE, sizeof(double));
+        return sendCommand(COMMAND_SET_SAMPLERATE, sizeof(double));
     }
 
-    void setInputSampleRate(double samplerate) {
+    bool setInputSampleRate(double samplerate) {
         sampleRate = samplerate;
-        if (!client || !client->isOpen()) { return; }
-        sendSampleRate(sampleRate);
+        if (!client || !client->isOpen()) { return false; }
+        return sendSampleRate(sampleRate);
     }
 
-    void sendPacket(PacketType type, int len) {
+    bool sendPacket(PacketType type, int len) {
+        if (!client || !client->isOpen()) {
+            return false;
+        }
+
         s_pkt_hdr->type = type;
         s_pkt_hdr->size = sizeof(PacketHeader) + len;
-        client->write(s_pkt_hdr->size, sbuf);
+        return client->write(s_pkt_hdr->size, sbuf) > 0;
     }
 
-    void sendCommand(Command cmd, int len) {
+    bool sendCommand(Command cmd, int len) {
         s_cmd_hdr->cmd = cmd;
-        sendPacket(PACKET_TYPE_COMMAND, sizeof(CommandHeader) + len);
+        return sendPacket(PACKET_TYPE_COMMAND, sizeof(CommandHeader) + len);
     }
 
-    void sendCommandAck(Command cmd, int len) {
+    bool sendCommandAck(Command cmd, int len) {
         s_cmd_hdr->cmd = cmd;
-        sendPacket(PACKET_TYPE_COMMAND_ACK, sizeof(CommandHeader) + len);
+        return sendPacket(PACKET_TYPE_COMMAND_ACK, sizeof(CommandHeader) + len);
     }
 }

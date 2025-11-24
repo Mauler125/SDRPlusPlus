@@ -30,7 +30,7 @@ namespace net {
         readQueueCnd.notify_all();
         writeQueueCnd.notify_all();
 
-        if (connectionOpen) {
+        if (connectionOpen.exchange(false)) {
             net::closeSocket(_sock);
         }
 
@@ -38,10 +38,6 @@ namespace net {
         if (readWorkerThread.joinable()) { readWorkerThread.join(); }
         if (writeWorkerThread.joinable()) { writeWorkerThread.join(); }
 
-        {
-            std::lock_guard lck(connectionOpenMtx);
-            connectionOpen = false;
-        }
         connectionOpenCnd.notify_all();
     }
 
@@ -113,8 +109,8 @@ namespace net {
         return beenRead;
     }
 
-    bool ConnClass::write(int count, uint8_t* buf) {
-        if (!connectionOpen) { return false; }
+    int ConnClass::write(int count, uint8_t* buf) {
+        if (!connectionOpen) { return -1; }
         std::lock_guard lck(writeMtx);
         int ret;
 
@@ -127,7 +123,7 @@ namespace net {
                 }
                 connectionOpenCnd.notify_all();
             }
-            return (ret > 0);
+            return ret;
         }
 
         int beenWritten = 0;
@@ -139,21 +135,22 @@ namespace net {
                     connectionOpen = false;
                 }
                 connectionOpenCnd.notify_all();
-                return false;
+                return ret;
             }
             beenWritten += ret;
         }
         
-        return true;
+        return beenWritten;
     }
 
-    void ConnClass::readAsync(int count, uint8_t* buf, void (*handler)(int count, uint8_t* buf, void* ctx), void* ctx, bool enforceSize) {
+    void ConnClass::readAsync(int count, uint8_t* buf, ConnReadEntry::PacketHandler_t packetHandler, ConnReadEntry::DisconnectHandler_t disconnectHandler, void* ctx, bool enforceSize) {
         if (!connectionOpen) { return; }
         // Create entry
         ConnReadEntry entry;
         entry.count = count;
         entry.buf = buf;
-        entry.handler = handler;
+        entry.packetHandler = packetHandler;
+        entry.disconnectHandler = disconnectHandler;
         entry.ctx = ctx;
         entry.enforceSize = enforceSize;
 
@@ -167,12 +164,14 @@ namespace net {
         readQueueCnd.notify_all();
     }
 
-    void ConnClass::writeAsync(int count, uint8_t* buf) {
+    void ConnClass::writeAsync(int count, uint8_t* buf, ConnWriteEntry::DisconnectHandler_t disconnectHandler, void* ctx) {
         if (!connectionOpen) { return; }
         // Create entry
         ConnWriteEntry entry;
         entry.count = count;
         entry.buf = buf;
+        entry.disconnectHandler = disconnectHandler;
+        entry.ctx = ctx;
 
         // Add entry to queue
         {
@@ -199,14 +198,10 @@ namespace net {
             // Read from socket and send data to the handler
             int ret = read(entry.count, entry.buf, entry.enforceSize);
             if (ret <= 0) {
-                {
-                    std::lock_guard lck(connectionOpenMtx);
-                    connectionOpen = false;
-                }
-                connectionOpenCnd.notify_all();
+                entry.disconnectHandler(ret, entry.ctx);
                 return;
             }
-            entry.handler(ret, entry.buf, entry.ctx);
+            entry.packetHandler(ret, entry.buf, entry.ctx);
         }
     }
 
@@ -223,12 +218,9 @@ namespace net {
             lck.unlock();
 
             // Write to socket
-            if (!write(entry.count, entry.buf)) {
-                {
-                    std::lock_guard lck(connectionOpenMtx);
-                    connectionOpen = false;
-                }
-                connectionOpenCnd.notify_all();
+            int ret = write(entry.count, entry.buf);
+            if (ret <= 0) {
+                entry.disconnectHandler(ret, entry.ctx);
                 return;
             }
         }
@@ -267,7 +259,7 @@ namespace net {
         if (!listening) { return; }
         // Create entry
         ListenerAcceptEntry entry;
-        entry.handler = handler;
+        entry.packetHandler = handler;
         entry.ctx = ctx;
 
         // Add entry to queue
@@ -320,7 +312,7 @@ namespace net {
                     listening = false;
                     return;
                 }
-                entry.handler(std::move(client), entry.ctx);
+                entry.packetHandler(std::move(client), entry.ctx);
             }
             catch (const std::exception& e) {
                 listening = false;

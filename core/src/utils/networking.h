@@ -3,16 +3,24 @@
 
 namespace net {
     struct ConnReadEntry {
+        typedef void (*PacketHandler_t)(int count, uint8_t* buf, void* ctx);
+        typedef void (*DisconnectHandler_t)(int err, void* ctx);
+
         int count;
-        uint8_t* buf;
-        void (*handler)(int count, uint8_t* buf, void* ctx);
-        void* ctx;
         bool enforceSize;
+        uint8_t* buf;
+        PacketHandler_t packetHandler;
+        DisconnectHandler_t disconnectHandler;
+        void* ctx;
     };
 
     struct ConnWriteEntry {
+        typedef void (*DisconnectHandler_t)(int err, void* ctx);
+
         int count;
         uint8_t* buf;
+        DisconnectHandler_t disconnectHandler;
+        void* ctx;
     };
 
     class ConnClass {
@@ -27,9 +35,12 @@ namespace net {
         size_t toString(char* const buffer, const size_t bufferSize, const bool onlyBase = false) const;
 
         int read(int count, uint8_t* buf, bool enforceSize = true);
-        bool write(int count, uint8_t* buf);
-        void readAsync(int count, uint8_t* buf, void (*handler)(int count, uint8_t* buf, void* ctx), void* ctx, bool enforceSize = true);
-        void writeAsync(int count, uint8_t* buf);
+        int write(int count, uint8_t* buf);
+        void readAsync(int count, uint8_t* buf, ConnReadEntry::PacketHandler_t packetHandler, ConnReadEntry::DisconnectHandler_t disconnectHandler, void* ctx, bool enforceSize = true);
+        void writeAsync(int count, uint8_t* buf, ConnWriteEntry::DisconnectHandler_t disconnectHandler, void* ctx);
+
+        inline SockHandle_t getSocketHandle() { return _sock; }
+        inline void forceStopWorkers() { stopWorkers = true; }
 
     private:
         void readWorker();
@@ -58,7 +69,7 @@ namespace net {
     typedef std::unique_ptr<ConnClass> Conn;
 
     struct ListenerAcceptEntry {
-        void (*handler)(Conn conn, void* ctx);
+        void (*packetHandler)(Conn conn, void* ctx);
         void* ctx;
     };
 

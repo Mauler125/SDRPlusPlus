@@ -309,7 +309,7 @@ private:
         //flog::info("New client!");
 
         _this->client = std::move(_client);
-        _this->client->readAsync(1024, _this->dataBuf, dataHandler, _this, false);
+        _this->client->readAsync(1024, _this->dataBuf, dataHandler, disconnectHandler, _this, false);
         _this->client->waitForEnd();
         _this->client->close();
 
@@ -330,7 +330,10 @@ private:
             if (_this->command.size() < MAX_COMMAND_LENGTH) { _this->command += (char)data[i]; }
         }
 
-        _this->client->readAsync(1024, _this->dataBuf, dataHandler, _this, false);
+        _this->client->readAsync(1024, _this->dataBuf, dataHandler, disconnectHandler, _this, false);
+    }
+
+    static void disconnectHandler(int err, void* ctx) {
     }
 
     std::map<int, const char*> radioModeToString = {

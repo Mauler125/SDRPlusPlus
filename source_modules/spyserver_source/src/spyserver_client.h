@@ -31,6 +31,7 @@ namespace spyserver {
         int readSize(int count, uint8_t* buffer);
 
         static void dataHandler(int count, uint8_t* buf, void* ctx);
+        static void disconnectHandler(int err, void* ctx);
 
         net::Conn client;
 
