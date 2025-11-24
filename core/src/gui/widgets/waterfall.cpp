@@ -266,8 +266,12 @@ namespace ImGui {
         char buf[128];
         const int bufLen = (int)sizeof(buf);
 
+        float scaleTickOfsset = 7 * style::uiScale;
         for (float timeMs = verticalWfRange; timeMs <= totalTimeMs; timeMs += verticalWfRange) {
             float yPos = wfMin.y + (timeMs * pixelsPerMs);
+            window->DrawList->AddLine(ImVec2(wfMin.x, roundf(yPos)),
+                                      ImVec2(wfMin.x - scaleTickOfsset, roundf(yPos)),
+                                      text, style::uiScale);
             const int textLen = std::clamp(sprintf(buf, "%.2fsec", timeMs / 1000.0f), 0, bufLen);
             ImVec2 txtSz = ImGui::CalcTextSize(buf, &buf[textLen]);
             window->DrawList->AddText(ImVec2(wfMin.x - txtSz.x - textVOffset, roundf(yPos - (txtSz.y / 2.0))), text, buf, &buf[textLen]);
