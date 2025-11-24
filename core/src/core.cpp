@@ -372,7 +372,7 @@ int sdrpp_main(int argc, char* argv[]) {
 
     // Initialize backend
     int biRes = backend::init(resDir);
-    if (biRes < 0) { return biRes; }
+    if (biRes != 0) { return biRes; }
 
     // Initialize SmGui in normal mode
     SmGui::init(false);
