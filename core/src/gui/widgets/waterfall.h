@@ -294,6 +294,7 @@ namespace ImGui {
         float* rawFFTs = NULL;
         float* latestFFT = NULL;
         float* latestFFTHold = NULL;
+        float* tempZoomFFT = NULL;
         float* smoothingBuf = NULL;
         int currentFFTLine = 0;
         int fftLines = 0;

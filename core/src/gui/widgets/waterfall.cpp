@@ -92,19 +92,27 @@ inline void doZoom(int offset, int width, int inSize, int outSize, float* in, fl
         width = 524288;
     }
 
-    float factor = (float)width / (float)outSize;
-    float sFactor = ceilf(factor);
-    float uFactor;
-    float id = offset;
-    float maxVal;
-    int sId;
+    float* bufEnd = in + inSize;
+    double factor = (double)width / (double)outSize; // The output "FFT" is `factor` times smaller than the input.
+    double id = offset;
+
     for (int i = 0; i < outSize; i++) {
-        maxVal = -INFINITY;
-        sId = (int)id;
-        uFactor = (sId + sFactor > inSize) ? sFactor - ((sId + sFactor) - inSize) : sFactor;
-        for (int j = 0; j < uFactor; j++) {
-            if (in[sId + j] > maxVal) { maxVal = in[sId + j]; }
+        // For each pixel on the output, "window" the source FFT datapoints (starting from `&data[(int) id]`
+        // and ending at `searchEnd = &data[(int) (id + factor)]`). Then find the highest peak in the range.
+        // The fractional part is discarded in the cast, so with zoomed-in view (`factor` < 1), pixels are "stretched".
+        // So with `factor` == 0.5, one pixel is `data[(int) 69]`, and the very next one is `data[(int) 69.5]`.
+        float* cursor = in + (int)id;
+        float* searchEnd = cursor + (int)factor;
+        if (searchEnd > bufEnd) { // This compiles into `cmp` and `cmovbe`, non-branching instructions.
+            searchEnd = bufEnd;
         }
+
+        float maxVal = *cursor;
+        while (cursor != searchEnd) {
+            if (*cursor > maxVal) { maxVal = *cursor; }
+            cursor++;
+        }
+
         out[i] = maxVal;
         id += factor;
     }
@@ -126,6 +134,7 @@ namespace ImGui {
         lastWidgetSize.y = 0;
         latestFFT = new float[dataWidth];
         latestFFTHold = new float[dataWidth];
+        tempZoomFFT = new float[dataWidth];
         waterfallFb = new uint32_t[1];
 
         viewBandwidth = 1.0;
@@ -665,31 +674,22 @@ namespace ImGui {
             return;
         }
         double offsetRatio = viewOffset / (wholeBandwidth / 2.0);
-        int drawDataSize;
-        int drawDataStart;
-        // TODO: Maybe put on the stack for faster alloc?
-        float* tempData = new float[dataWidth];
+        int drawDataSize = (viewBandwidth / wholeBandwidth) * rawFFTSize;
+        int drawDataStart = (((double)rawFFTSize / 2.0) * (offsetRatio + 1)) - (drawDataSize / 2);
         float pixel;
         float dataRange = waterfallMax - waterfallMin;
         int count = std::min<float>(waterfallHeight, fftLines);
         if (rawFFTs != NULL && fftLines >= 0) {
             for (int i = 0; i < count; i++) {
-                drawDataSize = (viewBandwidth / wholeBandwidth) * rawFFTSize;
-                drawDataStart = (((double)rawFFTSize / 2.0) * (offsetRatio + 1)) - (drawDataSize / 2);
-                doZoom(drawDataStart, drawDataSize, rawFFTSize, dataWidth, &rawFFTs[((i + currentFFTLine) % waterfallHeight) * rawFFTSize], tempData);
+                doZoom(drawDataStart, drawDataSize, rawFFTSize, dataWidth, &rawFFTs[((i + currentFFTLine) % waterfallHeight) * rawFFTSize], tempZoomFFT);
                 for (int j = 0; j < dataWidth; j++) {
-                    pixel = (std::clamp<float>(tempData[j], waterfallMin, waterfallMax) - waterfallMin) / dataRange;
+                    pixel = (std::clamp<float>(tempZoomFFT[j], waterfallMin, waterfallMax) - waterfallMin) / dataRange;
                     waterfallFb[(i * dataWidth) + j] = waterfallPallet[(int)(pixel * (WATERFALL_RESOLUTION - 1))];
                 }
             }
 
-            for (int i = count; i < waterfallHeight; i++) {
-                for (int j = 0; j < dataWidth; j++) {
-                    waterfallFb[(i * dataWidth) + j] = (uint32_t)255 << 24;
-                }
-            }
+            memset(waterfallFb + (count * dataWidth), (uint32_t)255 << 24, (waterfallHeight - count) * dataWidth);
         }
-        delete[] tempData;
         waterfallUpdate = true;
     }
 
@@ -845,6 +845,12 @@ namespace ImGui {
             delete[] latestFFTHold;
         }
         latestFFTHold = new float[dataWidth];
+
+        // Reallocate temporary buffer for zooming the FFT
+        if (tempZoomFFT != NULL) {
+            delete[] tempZoomFFT;
+        }
+        tempZoomFFT = new float[dataWidth];
 
         // Reallocate smoothing buffer
         if (fftSmoothing) {
