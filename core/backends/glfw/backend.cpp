@@ -171,21 +171,43 @@ namespace backend {
 
         // Setup Dear ImGui context
         IMGUI_CHECKVERSION();
-        ImGui::CreateContext();
-        ImPlot::CreateContext();
+        ImGuiContext* imguiContext = ImGui::CreateContext();
+
+        if (!imguiContext) {
+            flog::error("Failed to create Dear ImGui context");
+            return 1;
+        }
+
+        ImPlotContext* implotContext = ImPlot::CreateContext();
+
+        if (!implotContext) {
+            flog::error("Failed to create ImPlot context");
+            ImGui::DestroyContext(imguiContext);
+            return 1;
+        }
+
         ImGuiIO& io = ImGui::GetIO();
         io.ConfigFlags |= (ImGuiConfigFlags_DockingEnable | ImGuiConfigFlags_ViewportsEnable);
         io.IniFilename = NULL;
 
         // Setup Platform/Renderer bindings
-        ImGui_ImplGlfw_InitForOpenGL(window, true);
+        if (!ImGui_ImplGlfw_InitForOpenGL(window, true)) {
+            flog::error("Failed to initialize Dear ImGui platform backend");
+            ImGui::DestroyContext(imguiContext);
+            ImPlot::DestroyContext(implotContext);
+            return 1;
+        }
 
         if (!ImGui_ImplOpenGL3_Init(glsl_version)) {
             // If init fail, try to fall back on GLSL 1.2
-            flog::warn("Could not initialize OpenGL with normal GLSL version, falling back to GLSL 1.2");
-            if (!ImGui_ImplOpenGL3_Init("#version 120")) {
-                flog::error("Failed to initialize OpenGL with GLSL 1.2");
-                return -1;
+
+            const char* const fallbackVersion = "#version 120";
+            flog::warn("Failed to initialize Dear ImGui renderer backend on OpenGL with GLSL version {0}, falling back to GLSL version {1}", glsl_version, fallbackVersion);
+            if (!ImGui_ImplOpenGL3_Init(fallbackVersion)) {
+                flog::error("Failed to initialize Dear ImGui renderer backend on OpenGL with fallback GLSL version {0}", fallbackVersion);
+                ImGui::DestroyContext(imguiContext);
+                ImPlot::DestroyContext(implotContext);
+                return 1;
             }
         }
 
