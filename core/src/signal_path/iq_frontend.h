@@ -86,6 +86,7 @@ protected:
     // Parameters
     double _sampleRate;
     double _decimRatio;
+    int _fftSizeRequested;
     int _fftSize;
     double _fftRate;
     FFTWindow _fftWindow;
