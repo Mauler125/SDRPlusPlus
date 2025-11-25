@@ -141,6 +141,7 @@ namespace ImGui {
         viewBandwidth = 1.0;
         wholeBandwidth = 1.0;
 
+        lastScaleUpdateTime = std::chrono::steady_clock::now() - std::chrono::hours(1);
         updatePallette(s_defaultColorMap, 13);
     }
 
@@ -259,21 +260,102 @@ namespace ImGui {
                                   text, style::uiScale);
     }
 
+    void WaterFall::fixupTimestamps() {
+        const bool isPlaying = gui::mainWindow.isPlaying();
+
+        if (wasPlaying && !isPlaying) {
+            pauseStartTime = std::chrono::steady_clock::now();
+        }
+        else if (!wasPlaying && isPlaying) {
+            std::lock_guard<std::mutex> lck(timestampMtx);
+
+            if (fftTimestamps.size() > 1) { // Need at least 2 points
+                const auto resumeTime = std::chrono::steady_clock::now();
+                const auto pauseDuration = resumeTime - pauseStartTime;
+
+                for (auto& ts : fftTimestamps) {
+                    // NOTE: if the system plays again, its possible for fft's
+                    // to be added before we draw. These time stamps shouldn't
+                    // be shifted back!
+                    if (ts < pauseStartTime) {
+                        ts += pauseDuration;
+                    }
+                }
+
+                const auto newestTime = fftTimestamps.front();
+                const auto oldestVisibleTime = fftTimestamps.back();
+                const auto visibleDuration = newestTime - oldestVisibleTime;
+                const float actualTotalTimeMs = std::chrono::duration_cast<std::chrono::microseconds>(visibleDuration).count() / 1000.0f;
+
+                if (actualTotalTimeMs > 0) {
+                    currentPixelsPerMs = (float)waterfallHeight / actualTotalTimeMs;
+                }
+
+                lastScaleUpdateTime = resumeTime;
+            }
+            else {
+                fftTimestamps.clear();
+            }
+        }
+
+        wasPlaying = isPlaying;
+    }
+
+    void WaterFall::updateTimestamps() {
+        std::chrono::steady_clock::time_point newestTime;
+        std::chrono::steady_clock::time_point oldestVisibleTime;
+        {
+            std::lock_guard<std::mutex> lck(timestampMtx);
+
+            // Need at least 2 pts to calc duration
+            if (fftTimestamps.size() < 2) { return; }
+            newestTime = fftTimestamps.front();
+            oldestVisibleTime = fftTimestamps.back();
+        }
+
+        const auto now = std::chrono::steady_clock::now();
+
+        // Update 10 times/sec
+        const auto SCALE_UPDATE_INTERVAL = std::chrono::milliseconds(100);
+        if (now - lastScaleUpdateTime > SCALE_UPDATE_INTERVAL) {
+            const auto visibleDuration = newestTime - oldestVisibleTime;
+            const float actualTotalTimeMs = std::chrono::duration_cast<std::chrono::microseconds>(visibleDuration).count() / 1000.0f;
+
+            if (actualTotalTimeMs > 0) {
+                const float impliedTotalTimeMs = (float)waterfallHeight / currentPixelsPerMs;
+                const float error = std::abs(actualTotalTimeMs - impliedTotalTimeMs) / impliedTotalTimeMs;
+
+                // Snap if error is significant
+                const float SCALE_UPDATE_THRESHOLD = 0.05f;
+                if (error > SCALE_UPDATE_THRESHOLD) {
+                    currentPixelsPerMs = (float)waterfallHeight / actualTotalTimeMs;
+                }
+            }
+
+            lastScaleUpdateTime = now;
+        }
+    }
+
     void WaterFall::drawWaterfall() {
-        float totalTimeMs = (float)waterfallHeight * (1000.0f / (float)fftRate);
-        float pixelsPerMs = (float)waterfallHeight / totalTimeMs;
+        fixupTimestamps();
+        updateTimestamps();
+
         ImU32 text = ImGui::GetColorU32(ImGuiCol_Text);
         float textVOffset = 10.0f * style::uiScale;
         char buf[128];
         const int bufLen = (int)sizeof(buf);
 
+        float totalVisibleTimeMs = (float)waterfallHeight / currentPixelsPerMs;
+        double timeStepMs = findBestTimeRange(totalVisibleTimeMs, maxVerticalWfSteps);
+
         float scaleTickOfsset = 7 * style::uiScale;
-        for (float timeMs = verticalWfRange; timeMs <= totalTimeMs; timeMs += verticalWfRange) {
-            float yPos = wfMin.y + (timeMs * pixelsPerMs);
+        for (double timeAgoMs = timeStepMs;; timeAgoMs += timeStepMs) {
+            float yPos = wfMin.y + (timeAgoMs * currentPixelsPerMs);
+            if (yPos > wfMax.y) { break; }
             window->DrawList->AddLine(ImVec2(wfMin.x, roundf(yPos)),
                                       ImVec2(wfMin.x - scaleTickOfsset, roundf(yPos)),
                                       text, style::uiScale);
-            const int textLen = std::clamp(sprintf(buf, "%.2fsec", timeMs / 1000.0f), 0, bufLen);
+            const int textLen = std::clamp(sprintf(buf, "%.2fsec", timeAgoMs / 1000.0f), 0, bufLen);
             ImVec2 txtSz = ImGui::CalcTextSize(buf, &buf[textLen]);
             window->DrawList->AddText(ImVec2(wfMin.x - txtSz.x - textVOffset, roundf(yPos - (txtSz.y / 2.0))), text, buf, &buf[textLen]);
         }
@@ -689,6 +771,24 @@ namespace ImGui {
         return true;
     }
 
+    static void doTrimTimestamps(std::deque<std::chrono::steady_clock::time_point>& timeStamps, const int waterfallHeight) {
+        // Trim the timestamps if waterfall has shrunk
+        if (timeStamps.size() > waterfallHeight) {
+            timeStamps.resize(waterfallHeight);
+        }
+    }
+
+    void WaterFall::addTimestamp() {
+        std::lock_guard<std::mutex> lck(timestampMtx);
+        fftTimestamps.push_front(std::chrono::steady_clock::now());
+        doTrimTimestamps(fftTimestamps, waterfallHeight);
+    }
+
+    void WaterFall::trimTimestamps() {
+        std::lock_guard<std::mutex> lck(timestampMtx);
+        doTrimTimestamps(fftTimestamps, waterfallHeight);
+    }
+
     void WaterFall::updateWaterfallFb() {
         if (!waterfallVisible || rawFFTs == NULL) {
             return;
@@ -851,6 +951,8 @@ namespace ImGui {
             else {
                 rawFFTs = (float*)malloc(waterfallHeight * rawFFTSize * sizeof(float));
             }
+
+            trimTimestamps();
             // ==============
         }
 
@@ -900,7 +1002,6 @@ namespace ImGui {
 
         range = findBestFrequencyRange(viewBandwidth, maxHorizontalSteps);
         verticalFftRange = findBestFrequencyRange(fftMax - fftMin, maxVerticalFftSteps);
-        verticalWfRange = findBestTimeRange(waterfallHeight * (1000.0 / fftRate), maxVerticalWfSteps);
 
         updateWaterfallFb();
         updateAllVFOs();
@@ -1001,7 +1102,9 @@ namespace ImGui {
 
     void WaterFall::pushFFT() {
         if (rawFFTs == NULL) { return; }
+        addTimestamp();
         std::lock_guard<std::recursive_mutex> lck(latestFFTMtx);
+
         double offsetRatio = viewOffset / (wholeBandwidth / 2.0);
         int drawDataSize = (viewBandwidth / wholeBandwidth) * rawFFTSize;
         int drawDataStart = (((double)rawFFTSize / 2.0) * (offsetRatio + 1)) - (drawDataSize / 2);

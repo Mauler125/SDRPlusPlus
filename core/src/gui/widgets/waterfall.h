@@ -1,5 +1,7 @@
 #pragma once
 #include <vector>
+#include <deque>
+#include <chrono>
 #include <mutex>
 #include <gui/widgets/bandplan.h>
 #include <gui/widgets/crosshair.h>
@@ -238,6 +240,11 @@ namespace ImGui {
         void updateAllVFOs(bool checkRedrawRequired = false);
         bool calculateVFOSignalInfo(float* fftLine, WaterfallVFO* vfo, float& strength, float& snr);
 
+        void addTimestamp();
+        void trimTimestamps();
+        void fixupTimestamps();
+        void updateTimestamps();
+
         bool waterfallUpdate = false;
 
         uint32_t waterfallPallet[WATERFALL_RESOLUTION];
@@ -257,9 +264,9 @@ namespace ImGui {
         std::recursive_mutex latestFFTMtx;
         std::mutex texMtx;
         std::mutex smoothingBufMtx;
+        std::mutex timestampMtx;
 
         float verticalFftRange;
-        float verticalWfRange;
 
         int maxHorizontalSteps;
         int maxVerticalFftSteps;
@@ -308,9 +315,16 @@ namespace ImGui {
         bool bandplanVisible = false;
 
         bool _fullUpdate = true;
+        bool wasPlaying = true;
 
         int bandPlanPos = BANDPLAN_POS_BOTTOM;
+        float currentPixelsPerMs = 1.0f;
+
         ImGuiCrosshairFlags crosshairFlags = ImGuiCrosshairFlags_None;
+
+        std::chrono::steady_clock::time_point pauseStartTime;
+        std::chrono::steady_clock::time_point lastScaleUpdateTime;
+        std::deque<std::chrono::steady_clock::time_point> fftTimestamps;
 
         float fftRate = 20.f; // Default = displaymenu::fftRate; mighr want to make a define for this.
 
