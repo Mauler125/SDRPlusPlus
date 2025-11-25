@@ -149,6 +149,11 @@ else()
         ${LIBZSTD_LIBRARIES}
     )
 
+    # Allow windows binaries to be built with other tool chains
+    if (WIN32)
+        target_link_libraries(sdrpp_core PUBLIC ws2_32 iphlpapi)
+    endif()
+
     if (NOT USE_INTERNAL_LIBCORRECT)
         pkg_check_modules(CORRECT REQUIRED libcorrect)
         target_include_directories(sdrpp_core PUBLIC ${CORRECT_INCLUDE_DIRS})
