@@ -50,18 +50,19 @@ inline double findBestFrequencyRange(double bandwidth, int maxSteps) {
 }
 
 static const double s_timeRanges[] = {
-    1.0, 2.0, 5.0, 10.0, 20.0, 25.0, 50.0,
-    100.0, 200.0, 250.0, 500.0, 1000.0, 2000.0,
-    5000.0, 10000.0, 30000.0, 60000.0
+    1.0, 2.0, 3.0, 5.0, 8.0, 10.0, 12.0, 15.0,
+    20.0, 25.0, 30.0, 40.0, 50.0, 60.0, 80.0, 100.0,
+    150.0, 200.0, 250.0, 300.0, 400.0, 500.0, 750.0, 1000.0,
+    2000.0, 5000.0, 10000.0, 20000.0, 30000.0, 60000.0, 120000.0, 300000.0
 };
 
 inline double findBestTimeRange(double timeSpan, int maxSteps) {
-    for (int i = 0; i < 17; i++) {
+    for (int i = 0; i < 32; i++) {
         if (timeSpan / s_timeRanges[i] < (double)maxSteps) {
             return s_timeRanges[i];
         }
     }
-    return s_timeRanges[16];
+    return s_timeRanges[31];
 }
 
 inline int printAndScale(double freq, char* buf, const int bufLen) {
