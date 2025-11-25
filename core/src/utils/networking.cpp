@@ -321,7 +321,7 @@ namespace net {
         }
     }
 
-    static SockHandle_t createSocket(const int sockType, const IPPROTO protocol, const bool reuse) {
+    static SockHandle_t createSocket(const int sockType, const int protocol, const bool reuse) {
         const SockHandle_t sock = socket(AF_INET6, sockType, protocol);
         if (sock < 0) {
             throw std::runtime_error("Could not create socket");
@@ -337,7 +337,7 @@ namespace net {
             if (setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, (char*)&opt, sizeof(opt)) < 0) {
                 net::closeSocket(sock);
                 throw std::runtime_error("Could not enable port reuse on socket");
-                return NULL;
+                return -1;
             }
         }
 
@@ -351,7 +351,7 @@ namespace net {
         return sock;
     }
 
-    static addrinfo* getAddrInfo(const std::string& hostName, const std::string& serviceName, const int sockType, const IPPROTO protocol) {
+    static addrinfo* getAddrInfo(const std::string& hostName, const std::string& serviceName, const int sockType, const int protocol) {
         addrinfo hints{};
         hints.ai_flags = AI_PASSIVE | AI_ALL | AI_V4MAPPED;
         hints.ai_family = AF_INET6;

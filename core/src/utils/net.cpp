@@ -1,5 +1,6 @@
 #include "net.h"
 #include <string.h>
+#include <locale>
 #include <codecvt>
 #include <stdexcept>
 #include <utils/flog.h>

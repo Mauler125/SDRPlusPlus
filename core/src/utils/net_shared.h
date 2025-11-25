@@ -7,6 +7,7 @@
 #include <atomic>
 #include <memory>
 #include <vector>
+#include <stdexcept>
 #include <map>
 #include <thread>
 #include <condition_variable>
