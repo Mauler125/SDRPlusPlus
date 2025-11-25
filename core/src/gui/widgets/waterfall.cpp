@@ -378,6 +378,23 @@ namespace ImGui {
                 window->DrawList->AddLine(vfo->wfLineMin, vfo->wfLineMax, (name == selectedVFO) ? IM_COL32(255, 0, 0, 255) : IM_COL32(255, 255, 0, 255), style::uiScale);
             }
         }
+
+        if (gui::mainWindow.processMouseInputs) {
+            const ImRect wfRect(wfMin, wfMax);
+
+            if (wfRect.Contains(ImGui::GetIO().MousePos)) {
+                const float flashSpeed = 10.0f;
+                wfCursorFlashAccum += ImGui::GetIO().DeltaTime;
+
+                // NOTE: using a single color on the waterfall display might be
+                // hard to see so alternate between black and white.
+                const float t = (sinf(wfCursorFlashAccum * flashSpeed) * 0.5f) + 0.5f;
+                const int intensity = (int)(t * 255.0f);
+
+                const ImU32 color = IM_COL32(intensity, intensity, intensity, 255);
+                DrawCrosshairUnderCursor(ImRect(wfMin, wfMax), color, 1.0f, ImGuiCrosshairFlags_CullVertical);
+            }
+        }
     }
 
     void WaterFall::drawVFOs() {

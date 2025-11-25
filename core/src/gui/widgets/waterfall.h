@@ -321,6 +321,7 @@ namespace ImGui {
         float currentPixelsPerMs = 1.0f;
 
         ImGuiCrosshairFlags crosshairFlags = ImGuiCrosshairFlags_None;
+        float wfCursorFlashAccum = 0.0f;
 
         std::chrono::steady_clock::time_point pauseStartTime;
         std::chrono::steady_clock::time_point lastScaleUpdateTime;
