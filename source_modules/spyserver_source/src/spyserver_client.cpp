@@ -16,7 +16,7 @@ namespace spyserver {
 
         sendHandshake("SDR++");
 
-        client->readAsync(sizeof(SpyServerMessageHeader), (uint8_t*)&receivedHeader, dataHandler, this);
+        client->readAsync(sizeof(SpyServerMessageHeader), (uint8_t*)&receivedHeader, dataHandler, disconnectHandler, this);
     }
 
     SpyServerClientClass::~SpyServerClientClass() {
@@ -163,7 +163,7 @@ namespace spyserver {
         _this->client->readAsync(sizeof(SpyServerMessageHeader), (uint8_t*)&_this->receivedHeader, dataHandler, disconnectHandler, _this);
     }
 
-    static void SpyServerClientClass::disconnectHandler(int err, void* ctx) {
+    void SpyServerClientClass::disconnectHandler(int err, void* ctx) {
     }
 
     SpyServerClient connect(std::string host, uint16_t port, dsp::stream<dsp::complex_t>* out) {
