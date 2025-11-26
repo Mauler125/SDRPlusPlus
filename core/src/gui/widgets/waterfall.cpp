@@ -265,7 +265,7 @@ namespace ImGui {
         onFFTRedraw.emit(args);
 
         if (gui::mainWindow.processMouseInputs) {
-            DrawCrosshairUnderCursor(ImRect(fftAreaMin, fftAreaMax), IM_COL32(200, 200, 0, 255), 1.0f, crosshairFlags);
+            DrawCrosshairUnderCursor(ImRect(fftAreaMin, fftAreaMax), ImGui::ColorConvertFloat4ToU32(gui::themeManager.crosshairColor), 1.0f, crosshairFlags);
         }
 
         // X Axis
