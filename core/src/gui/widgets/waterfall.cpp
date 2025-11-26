@@ -182,6 +182,10 @@ namespace ImGui {
         glGenTextures(1, &textureId);
     }
 
+    void WaterFall::shutdown() {
+        glDeleteTextures(1, &textureId);
+    }
+
     void WaterFall::drawFFT() {
         std::lock_guard<std::recursive_mutex> lck(latestFFTMtx);
         // Calculate scaling factor

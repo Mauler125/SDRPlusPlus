@@ -14,6 +14,7 @@
 class MainWindow {
 public:
     void init();
+    void shutdown();
     void draw();
     bool canProcessMouseInputs();
     bool canProcessKeyboardInputs();

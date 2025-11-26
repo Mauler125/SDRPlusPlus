@@ -229,6 +229,13 @@ void MainWindow::init() {
     core::moduleManager.doPostInitAll();
 }
 
+void MainWindow::shutdown() {
+    fftwf_destroy_plan(fftwPlan);
+    fftwf_free(fft_out);
+    fftwf_free(fft_in);
+    gui::waterfall.shutdown();
+}
+
 float* MainWindow::acquireFFTBuffer(void* ctx) {
     return gui::waterfall.getFFTBuffer();
 }

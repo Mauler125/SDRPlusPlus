@@ -416,6 +416,8 @@ int sdrpp_main(int argc, char* argv[]) {
     core::configManager.save();
 #endif
 
+    gui::mainWindow.shutdown();
+
     flog::info("Exiting successfully");
     return 0;
 }

@@ -89,6 +89,7 @@ namespace ImGui {
         ~WaterFall();
 
         void init();
+        void shutdown();
 
         void draw();
         float* getFFTBuffer();
