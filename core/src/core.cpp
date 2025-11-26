@@ -283,10 +283,18 @@ int sdrpp_main(int argc, char* argv[]) {
 
     // Load config
     flog::info("Loading config");
-    core::configManager.setPath(core::args["config"].s() + "/config.json");
-    core::configManager.load(defConfig);
-    core::configManager.enableAutoSave();
-    core::configManager.acquire();
+    {
+        const std::string& configRoot = core::args["config"].s();
+
+        if (!std::filesystem::is_directory(configRoot)) {
+            std::filesystem::create_directory(configRoot);
+        }
+
+        core::configManager.setPath(configRoot + "/config.json");
+        core::configManager.load(defConfig);
+        core::configManager.enableAutoSave();
+        core::configManager.acquire();
+    }
 
     // Android can't load just any .so file. This means we have to hardcode the name of the modules
 #ifdef __ANDROID__
