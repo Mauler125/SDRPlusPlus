@@ -65,20 +65,38 @@ inline double findBestTimeRange(double timeSpan, int maxSteps) {
     return s_timeRanges[31];
 }
 
-inline int printAndScale(double freq, char* buf, const int bufLen) {
+inline int printScaledFrequency(double freq, char* buf, const int bufLen) {
     double freqAbs = fabs(freq);
     int ret = 0;
     if (freqAbs < 1000) {
-        ret = sprintf(buf, "%.6gHz", freq);
+        ret = snprintf(buf, bufLen, "%.6gHz", freq);
     }
     else if (freqAbs < 1000000) {
-        ret = sprintf(buf, "%.6lgKHz", freq / 1000.0);
+        ret = snprintf(buf, bufLen, "%.6lgKHz", freq / 1000.0);
     }
     else if (freqAbs < 1000000000) {
-        ret = sprintf(buf, "%.6lgMHz", freq / 1000000.0);
+        ret = snprintf(buf, bufLen, "%.6lgMHz", freq / 1000000.0);
     }
     else if (freqAbs < 1000000000000) {
-        ret = sprintf(buf, "%.6lgGHz", freq / 1000000000.0);
+        ret = snprintf(buf, bufLen, "%.6lgGHz", freq / 1000000000.0);
+    }
+
+    return std::clamp(ret, 0, bufLen);
+}
+
+inline int printScaledTime(double ms, char* buf, const int bufLen) {
+    const double seconds = ms / 1000.0;
+    int ret = 0;
+    if (seconds >= 3600.0) {
+        const double hours = seconds / 3600.0;
+        ret = snprintf(buf, bufLen, "%.2fhrs", hours);
+    }
+    else if (seconds >= 60.0) {
+        const double minutes = seconds / 60.0;
+        ret = snprintf(buf, bufLen, "%.2fmin", minutes);
+    }
+    else {
+        ret = snprintf(buf, bufLen, "%.2fsec", seconds);
     }
 
     return std::clamp(ret, 0, bufLen);
@@ -205,7 +223,7 @@ namespace ImGui {
             window->DrawList->AddLine(ImVec2(roundf(xPos), fftAreaMax.y),
                                       ImVec2(roundf(xPos), fftAreaMax.y + scaleTickOfsset),
                                       text, style::uiScale);
-            const int textLen = printAndScale(freq, buf, bufLen);
+            const int textLen = printScaledFrequency(freq, buf, bufLen);
             ImVec2 txtSz = ImGui::CalcTextSize(buf, &buf[textLen]);
             window->DrawList->AddText(ImVec2(roundf(xPos - (txtSz.x / 2.0)), fftAreaMax.y + txtSz.y), text, buf, &buf[textLen]);
         }
@@ -355,7 +373,7 @@ namespace ImGui {
             window->DrawList->AddLine(ImVec2(wfMin.x, roundf(yPos)),
                                       ImVec2(wfMin.x - scaleTickOfsset, roundf(yPos)),
                                       text, style::uiScale);
-            const int textLen = std::clamp(sprintf(buf, "%.2fsec", timeAgoMs / 1000.0f), 0, bufLen);
+            const int textLen = printScaledTime(timeAgoMs, buf, bufLen);
             ImVec2 txtSz = ImGui::CalcTextSize(buf, &buf[textLen]);
             window->DrawList->AddText(ImVec2(wfMin.x - txtSz.x - textVOffset, roundf(yPos - (txtSz.y / 2.0))), text, buf, &buf[textLen]);
         }
@@ -676,9 +694,9 @@ namespace ImGui {
 
                     if (ImGui::GetIO().KeyCtrl) {
                         ImGui::Separator();
-                        printAndScale(_vfo->generalOffset + centerFreq, buf, bufLen);
+                        printScaledFrequency(_vfo->generalOffset + centerFreq, buf, bufLen);
                         ImGui::Text("Frequency: %s", buf);
-                        printAndScale(_vfo->bandwidth, buf, bufLen);
+                        printScaledFrequency(_vfo->bandwidth, buf, bufLen);
                         ImGui::Text("Bandwidth: %s", buf);
                         ImGui::Text("Bandwidth Locked: %s", _vfo->bandwidthLocked ? "Yes" : "No");
 
