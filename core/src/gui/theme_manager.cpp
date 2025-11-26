@@ -8,19 +8,28 @@
 
 bool ThemeManager::loadThemesFromDir(std::string path) {
     // // TEST JUST TO DUMP THE ORIGINAL THEME
-    // auto& style = ImGui::GetStyle();
-    // ImVec4* colors = style.Colors;
-
-    // printf("\n\n");
-    // for (auto [name, id] : sm_imguiColorStringToCodeTable) {
-    //     ImVec4 col = colors[id];
-    //     uint8_t r = 255 - (col.x * 255.0f);
-    //     uint8_t g = 255 - (col.y * 255.0f);
-    //     uint8_t b = 255 - (col.z * 255.0f);
-    //     uint8_t a = col.w * 255.0f;
-    //     printf("\"%s\": \"#%02X%02X%02X%02X\",\n", name.c_str(), r, g, b, a);
-    // }
-    // printf("\n\n");
+    //printf("ImGui theme:\n\n");
+    //auto& imguiStyle = ImGui::GetStyle();
+    //for (auto [name, id] : sm_imguiColorStringToCodeTable) {
+    //    ImVec4 col = imguiStyle.Colors[id];
+    //    uint8_t r = 255 - (col.x * 255.0f);
+    //    uint8_t g = 255 - (col.y * 255.0f);
+    //    uint8_t b = 255 - (col.z * 255.0f);
+    //    uint8_t a = col.w * 255.0f;
+    //    printf("\"%s\": \"#%02X%02X%02X%02X\",\n", name.data(), r, g, b, a);
+    //}
+    //printf("\n\n");
+    //printf("ImPlot theme:\n\n");
+    //auto& implotStyle = ImPlot::GetStyle();
+    //for (auto [name, id] : sm_implotColorStringToCodeTable) {
+    //    ImVec4 col = implotStyle.Colors[id];
+    //    uint8_t r = 255 - (col.x * 255.0f);
+    //    uint8_t g = 255 - (col.y * 255.0f);
+    //    uint8_t b = 255 - (col.z * 255.0f);
+    //    uint8_t a = col.w * 255.0f;
+    //    printf("\"%s\": \"#%02X%02X%02X%02X\",\n", name.data(), r, g, b, a);
+    //}
+    //printf("\n\n");
 
 
     if (!std::filesystem::is_directory(path)) {
