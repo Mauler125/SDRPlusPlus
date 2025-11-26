@@ -449,47 +449,12 @@ void MainWindow::draw() {
         processKeyboardInputs = false;
     }
 
-    // Handle menu resize
-    ImVec2 winPos = ImGui::GetWindowPos();
-    ImVec2 winSize = ImGui::GetWindowSize();
-    ImVec2 mousePos = ImGui::GetMousePos();
-    ImVec2 mouseLocal = mousePos - winPos;
-    if (processMouseInputs && showMenu) {
-        float curY = ImGui::GetCursorPosY();
-        bool click = ImGui::IsMouseClicked(ImGuiMouseButton_Left);
-        bool down = ImGui::IsMouseDown(ImGuiMouseButton_Left);
-        if (grabbingMenu) {
-            newWidth = mouseLocal.x;
-            newWidth = std::clamp<float>(newWidth, 250, winSize.x - 250);
-            ImGui::GetForegroundDrawList()->AddLine(
-                ImVec2(winPos.x + newWidth, winPos.y + curY),
-                ImVec2(winPos.x + newWidth, winPos.y + winSize.y - 10),
-                ImGui::GetColorU32(ImGuiCol_SeparatorActive));
-        }
-        if (mouseLocal.x >= newWidth - (2.0f * style::uiScale) &&
-            mouseLocal.x <= newWidth + (2.0f * style::uiScale) &&
-            mouseLocal.y > curY) {
-            ImGui::SetMouseCursor(ImGuiMouseCursor_ResizeEW);
-            if (click) {
-                grabbingMenu = true;
-            }
-        }
-        else {
-            ImGui::SetMouseCursor(ImGuiMouseCursor_Arrow);
-        }
-        if (!down && grabbingMenu) {
-            grabbingMenu = false;
-            menuWidth = newWidth;
-            core::configManager.acquire();
-            core::configManager.conf["menuWidth"] = menuWidth;
-            core::configManager.release(true);
-        }
-    }
-
     // Process menu keybinds
     if (processKeyboardInputs) {
         displaymenu::checkKeybinds();
     }
+
+    ImVec2 winSize = ImGui::GetWindowSize();
 
     // Left Column
     if (showMenu) {
@@ -559,6 +524,42 @@ void MainWindow::draw() {
     ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(0, 0));
     ImGui::NextColumn();
     ImGui::PopStyleVar();
+
+    // Handle menu resize
+    if (processMouseInputs && showMenu) {
+        const float curY = ImGui::GetCursorPosY();
+        const bool click = ImGui::IsMouseClicked(ImGuiMouseButton_Left);
+        const bool down = ImGui::IsMouseDown(ImGuiMouseButton_Left);
+        const ImVec2 winPos = ImGui::GetWindowPos();
+        const ImVec2 mousePos = ImGui::GetMousePos();
+        const ImVec2 mouseLocal = mousePos - winPos;
+        if (grabbingMenu) {
+            newWidth = mouseLocal.x;
+            newWidth = std::clamp<float>(newWidth, 250, winSize.x - 250);
+            ImGui::GetForegroundDrawList()->AddLine(
+                ImVec2(winPos.x + newWidth, winPos.y + curY),
+                ImVec2(winPos.x + newWidth, winPos.y + winSize.y - 10),
+                ImGui::GetColorU32(ImGuiCol_SeparatorActive));
+        }
+        if (mouseLocal.x >= newWidth - (2.0f * style::uiScale) &&
+            mouseLocal.x <= newWidth + (2.0f * style::uiScale) &&
+            mouseLocal.y > curY) {
+            ImGui::SetMouseCursor(ImGuiMouseCursor_ResizeEW);
+            if (click) {
+                grabbingMenu = true;
+            }
+        }
+        else {
+            ImGui::SetMouseCursor(ImGuiMouseCursor_Arrow);
+        }
+        if (!down && grabbingMenu) {
+            grabbingMenu = false;
+            menuWidth = newWidth;
+            core::configManager.acquire();
+            core::configManager.conf["menuWidth"] = menuWidth;
+            core::configManager.release(true);
+        }
+    }
 
     ImGui::BeginChild("Waterfall");
 
