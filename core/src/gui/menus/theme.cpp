@@ -36,6 +36,10 @@ namespace thememenu {
     }
 
      void applyTheme() {
+         if (themeNames.empty()) {
+             return;
+         }
+
          gui::themeManager.applyTheme(themeNames[themeId]);
      }
 
