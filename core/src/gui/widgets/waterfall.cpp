@@ -40,13 +40,13 @@ static const double s_frequencyRanges[] = {
 };
 
 inline double findBestFrequencyRange(double bandwidth, int maxSteps) {
-    for (int i = 0; i < 32; i++) {
+    for (int i = 0; i < std::size(s_frequencyRanges); i++) {
         if (bandwidth / s_frequencyRanges[i] < (double)maxSteps) {
             return s_frequencyRanges[i];
         }
     }
 
-    return s_frequencyRanges[31];
+    return s_frequencyRanges[std::size(s_frequencyRanges) - 1];
 }
 
 static const double s_timeRanges[] = {
@@ -57,12 +57,12 @@ static const double s_timeRanges[] = {
 };
 
 inline double findBestTimeRange(double timeSpan, int maxSteps) {
-    for (int i = 0; i < 32; i++) {
+    for (int i = 0; i < std::size(s_timeRanges); i++) {
         if (timeSpan / s_timeRanges[i] < (double)maxSteps) {
             return s_timeRanges[i];
         }
     }
-    return s_timeRanges[31];
+    return s_timeRanges[std::size(s_timeRanges) - 1];
 }
 
 inline int printScaledFrequency(double freq, char* buf, const int bufLen) {
