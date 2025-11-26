@@ -1,6 +1,7 @@
 #include <json.hpp>
 #include <gui/theme_manager.h>
 #include <imgui_internal.h>
+#include <implot/implot.h>
 #include <utils/flog.h>
 #include <filesystem>
 #include <fstream>
@@ -11,7 +12,7 @@ bool ThemeManager::loadThemesFromDir(std::string path) {
     // ImVec4* colors = style.Colors;
 
     // printf("\n\n");
-    // for (auto [name, id] : IMGUI_COL_IDS) {
+    // for (auto [name, id] : sm_imguiColorStringToCodeTable) {
     //     ImVec4 col = colors[id];
     //     uint8_t r = 255 - (col.x * 255.0f);
     //     uint8_t g = 255 - (col.y * 255.0f);
@@ -26,7 +27,7 @@ bool ThemeManager::loadThemesFromDir(std::string path) {
         flog::error("Theme directory doesn't exist: {0}", path);
         return false;
     }
-    themes.clear();
+    m_loadedThemes.clear();
     for (const auto& file : std::filesystem::directory_iterator(path)) {
         std::string _path = file.path().generic_string();
         if (file.path().extension().generic_string() != ".json") {
@@ -64,7 +65,7 @@ bool ThemeManager::loadTheme(std::string path) {
     }
     std::string name = data["name"];
 
-    if (themes.find(name) != themes.end()) {
+    if (m_loadedThemes.find(name) != m_loadedThemes.end()) {
         flog::error("A theme named '{0}' already exists", name);
         return false;
     }
@@ -95,7 +96,8 @@ bool ThemeManager::loadTheme(std::string path) {
         bool isValid = false;
 
         // If param is a color, check that it's a valid RGBA hex value
-        if (IMGUI_COL_IDS.find(param) != IMGUI_COL_IDS.end()) {
+        if (sm_imguiColorStringToCodeTable.find(param) != sm_imguiColorStringToCodeTable.end() ||
+            sm_implotColorStringToCodeTable.find(param) != sm_implotColorStringToCodeTable.end()) {
             if (val[0] != '#' || !std::all_of(val.begin() + 1, val.end(), ::isxdigit) || val.length() != 9) {
                 flog::error("Theme {0} contains invalid {1} field. Expected hex RGBA color", path, param);
                 return false;
@@ -110,30 +112,30 @@ bool ThemeManager::loadTheme(std::string path) {
     }
 
     thm.data = data;
-    themes[name] = thm;
+    m_loadedThemes[name] = thm;
 
     return true;
 }
 
 bool ThemeManager::applyTheme(std::string name) {
-    if (themes.find(name) == themes.end()) {
+    if (m_loadedThemes.find(name) == m_loadedThemes.end()) {
         flog::error("Unknown theme: {0}", name);
         return false;
     }
 
     ImGui::StyleColorsDark();
 
-    auto& style = ImGui::GetStyle();
+    auto& imguiStyle = ImGui::GetStyle();
+    auto& implotStyle = ImPlot::GetStyle();
 
-    style.WindowRounding = 0.0f;
-    style.ChildRounding = 0.0f;
-    style.FrameRounding = 0.0f;
-    style.GrabRounding = 0.0f;
-    style.PopupRounding = 0.0f;
-    style.ScrollbarRounding = 0.0f;
+    imguiStyle.WindowRounding = 0.0f;
+    imguiStyle.ChildRounding = 0.0f;
+    imguiStyle.FrameRounding = 0.0f;
+    imguiStyle.GrabRounding = 0.0f;
+    imguiStyle.PopupRounding = 0.0f;
+    imguiStyle.ScrollbarRounding = 0.0f;
 
-    ImVec4* colors = style.Colors;
-    Theme thm = themes[name];
+    Theme thm = m_loadedThemes[name];
 
     uint8_t ret[4];
     std::map<std::string, std::string> params = thm.data;
@@ -165,9 +167,15 @@ bool ThemeManager::applyTheme(std::string name) {
         }
 
         // If param is a color, check that it's a valid RGBA hex value
-        if (IMGUI_COL_IDS.find(param) != IMGUI_COL_IDS.end()) {
+        if (sm_imguiColorStringToCodeTable.find(param) != sm_imguiColorStringToCodeTable.end()) {
             decodeRGBA(val, ret);
-            colors[IMGUI_COL_IDS[param]] = ImVec4((float)ret[0] / 255.0f, (float)ret[1] / 255.0f, (float)ret[2] / 255.0f, (float)ret[3] / 255.0f);
+            imguiStyle.Colors[sm_imguiColorStringToCodeTable.at(param)] = ImVec4((float)ret[0] / 255.0f, (float)ret[1] / 255.0f, (float)ret[2] / 255.0f, (float)ret[3] / 255.0f);
+            continue;
+        }
+
+        if (sm_implotColorStringToCodeTable.find(param) != sm_implotColorStringToCodeTable.end()) {
+            decodeRGBA(val, ret);
+            implotStyle.Colors[sm_implotColorStringToCodeTable.at(param)] = ImVec4((float)ret[0] / 255.0f, (float)ret[1] / 255.0f, (float)ret[2] / 255.0f, (float)ret[3] / 255.0f);
             continue;
         }
     }
@@ -188,11 +196,11 @@ bool ThemeManager::decodeRGBA(std::string str, uint8_t out[4]) {
 
 std::vector<std::string> ThemeManager::getThemeNames() {
     std::vector<std::string> names;
-    for (auto [name, theme] : themes) { names.push_back(name); }
+    for (auto [name, theme] : m_loadedThemes) { names.push_back(name); }
     return names;
 }
 
-std::map<std::string, int> ThemeManager::IMGUI_COL_IDS = {
+const std::unordered_map<std::string_view, int> ThemeManager::sm_imguiColorStringToCodeTable = {
     { "Text", ImGuiCol_Text },
     { "TextDisabled", ImGuiCol_TextDisabled },
     { "WindowBg", ImGuiCol_WindowBg },
@@ -226,11 +234,16 @@ std::map<std::string, int> ThemeManager::IMGUI_COL_IDS = {
     { "ResizeGrip", ImGuiCol_ResizeGrip },
     { "ResizeGripHovered", ImGuiCol_ResizeGripHovered },
     { "ResizeGripActive", ImGuiCol_ResizeGripActive },
-    { "Tab", ImGuiCol_Tab },
+    { "InputTextCursor", ImGuiCol_InputTextCursor },
     { "TabHovered", ImGuiCol_TabHovered },
-    { "TabActive", ImGuiCol_TabActive },
-    { "TabUnfocused", ImGuiCol_TabUnfocused },
-    { "TabUnfocusedActive", ImGuiCol_TabUnfocusedActive },
+    { "Tab", ImGuiCol_Tab },
+    { "TabSelected", ImGuiCol_TabSelected },
+    { "TabSelectedOverline", ImGuiCol_TabSelectedOverline },
+    { "TabDimmed", ImGuiCol_TabDimmed },
+    { "TabDimmedSelected", ImGuiCol_TabDimmedSelected },
+    { "TabDimmedSelectedOverline", ImGuiCol_TabDimmedSelectedOverline },
+    { "DockingPreview", ImGuiCol_DockingPreview },
+    { "DockingEmptyBg", ImGuiCol_DockingEmptyBg },
     { "PlotLines", ImGuiCol_PlotLines },
     { "PlotLinesHovered", ImGuiCol_PlotLinesHovered },
     { "PlotHistogram", ImGuiCol_PlotHistogram },
@@ -240,10 +253,38 @@ std::map<std::string, int> ThemeManager::IMGUI_COL_IDS = {
     { "TableBorderLight", ImGuiCol_TableBorderLight },
     { "TableRowBg", ImGuiCol_TableRowBg },
     { "TableRowBgAlt", ImGuiCol_TableRowBgAlt },
+    { "TextLink", ImGuiCol_TextLink },
     { "TextSelectedBg", ImGuiCol_TextSelectedBg },
+    { "TreeLines", ImGuiCol_TreeLines },
     { "DragDropTarget", ImGuiCol_DragDropTarget },
-    { "NavHighlight", ImGuiCol_NavHighlight },
+    { "DragDropTargetBg", ImGuiCol_DragDropTargetBg },
+    { "UnsavedMarker", ImGuiCol_UnsavedMarker },
+    { "NavCursor", ImGuiCol_NavCursor },
     { "NavWindowingHighlight", ImGuiCol_NavWindowingHighlight },
     { "NavWindowingDimBg", ImGuiCol_NavWindowingDimBg },
-    { "ModalWindowDimBg", ImGuiCol_ModalWindowDimBg }
+    { "ModalWindowDimBg", ImGuiCol_ModalWindowDimBg },
+};
+
+const std::unordered_map<std::string_view, int> ThemeManager::sm_implotColorStringToCodeTable = {
+    { "PlotLine", ImPlotCol_Line },
+    { "PlotFill", ImPlotCol_Fill },
+    { "PlotMarkerOutline", ImPlotCol_MarkerOutline },
+    { "PlotMarkerFill", ImPlotCol_MarkerFill },
+    { "PlotErrorBar", ImPlotCol_ErrorBar },
+    { "PlotFrameBg", ImPlotCol_FrameBg },
+    { "PlotPlotBg", ImPlotCol_PlotBg },
+    { "PlotPlotBorder", ImPlotCol_PlotBorder },
+    { "PlotLegendBg", ImPlotCol_LegendBg },
+    { "PlotLegendBorder", ImPlotCol_LegendBorder },
+    { "PlotLegendText", ImPlotCol_LegendText },
+    { "PlotTitleText", ImPlotCol_TitleText },
+    { "PlotInlayText", ImPlotCol_InlayText },
+    { "PlotAxisText", ImPlotCol_AxisText },
+    { "PlotAxisGrid", ImPlotCol_AxisGrid },
+    { "PlotAxisTick", ImPlotCol_AxisTick },
+    { "PlotAxisBg", ImPlotCol_AxisBg },
+    { "PlotAxisBgHovered", ImPlotCol_AxisBgHovered },
+    { "PlotAxisBgActive", ImPlotCol_AxisBgActive },
+    { "PlotSelection", ImPlotCol_Selection },
+    { "PlotCrosshairs", ImPlotCol_Crosshairs },
 };

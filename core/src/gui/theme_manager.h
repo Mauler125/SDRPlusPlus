@@ -1,9 +1,11 @@
 #pragma once
 #include <map>
+#include <unordered_map>
 #include <mutex>
 #include <imgui.h>
 #include <vector>
 #include <json.hpp>
+#include <string_view>
 
 using nlohmann::json;
 
@@ -28,7 +30,8 @@ public:
 private:
     static bool decodeRGBA(std::string str, uint8_t out[4]);
 
-    static std::map<std::string, int> IMGUI_COL_IDS;
+    static const std::unordered_map<std::string_view, int> sm_imguiColorStringToCodeTable;
+    static const std::unordered_map<std::string_view, int> sm_implotColorStringToCodeTable;
 
-    std::map<std::string, Theme> themes;
+    std::map<std::string, Theme> m_loadedThemes;
 };
