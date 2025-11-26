@@ -29,6 +29,7 @@ endif (OPT_BACKEND_ANDROID)
 
 # Add code to dyn lib
 add_library(sdrpp_core SHARED ${SRC} ${BACKEND_SRC})
+set_target_properties(sdrpp_core PROPERTIES OUTPUT_NAME "core")
 
 # Set compiler options
 target_compile_options(sdrpp_core PRIVATE ${SDRPP_COMPILER_FLAGS})
