@@ -1675,18 +1675,16 @@ namespace ImGui {
     }
 
     void WaterFall::hideWaterfall() {
-        buf_mtx.lock();
+        std::lock_guard<std::recursive_mutex> lck(buf_mtx);
         waterfallVisible = false;
         onResize();
-        buf_mtx.unlock();
     }
 
     void WaterFall::setFFTHeight(int height) {
+        std::lock_guard<std::recursive_mutex> lck(buf_mtx);
         FFTAreaHeight = height;
         newFFTAreaHeight = height;
-        buf_mtx.lock();
         onResize();
-        buf_mtx.unlock();
     }
 
     int WaterFall::getFFTHeight() {
