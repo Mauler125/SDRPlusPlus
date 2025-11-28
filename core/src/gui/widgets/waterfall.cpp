@@ -856,6 +856,7 @@ namespace ImGui {
         float dataRange = waterfallMax - waterfallMin;
         int count = std::min<float>(waterfallHeight, fftLines);
         if (rawFFTs != NULL && fftLines >= 0) {
+            std::lock_guard<std::recursive_mutex> lck(latestFFTMtx);
             for (int i = 0; i < count; i++) {
                 const int ringIndex = (i + currentFFTLine) % waterfallHeight;
                 doZoom(drawDataStart, drawDataSize, rawFFTSize, dataWidth, &rawFFTs[ringIndex * rawFFTSize], tempZoomFFT);
@@ -945,6 +946,8 @@ namespace ImGui {
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
         glPixelStorei(GL_UNPACK_ROW_LENGTH, 0);
+
+        std::lock_guard<std::recursive_mutex> lck(latestFFTMtx);
         glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, dataWidth, waterfallHeight, 0, GL_RGBA, GL_UNSIGNED_BYTE, (uint8_t*)waterfallFb);
     }
 
@@ -1427,6 +1430,7 @@ namespace ImGui {
     }
 
     void WaterFall::setFFTRate(int rate) {
+        std::lock_guard<std::recursive_mutex> lck(buf_mtx);
         fftRate = rate;
         onResize();
     }
