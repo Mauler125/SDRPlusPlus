@@ -1657,15 +1657,15 @@ namespace ImGui {
     };
 
     void WaterFall::showWaterfall() {
-        buf_mtx.lock();
+        std::lock_guard<std::recursive_mutex> lck(buf_mtx);
         if (rawFFTs == NULL) {
             flog::error("Null rawFFT");
+            return;
         }
         waterfallVisible = true;
         onResize();
         memset(rawFFTs, 0, waterfallHeight * rawFFTSize * sizeof(float));
         updateWaterfallFb();
-        buf_mtx.unlock();
     }
 
     void WaterFall::hideWaterfall() {
