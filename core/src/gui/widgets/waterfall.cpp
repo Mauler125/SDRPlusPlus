@@ -372,14 +372,14 @@ namespace ImGui {
 
         float scaleTickOfsset = 7 * style::uiScale;
         for (double timeAgoMs = timeStepMs;; timeAgoMs += timeStepMs) {
-            float yPos = wfMin.y + (timeAgoMs * currentPixelsPerMs);
-            if (yPos > wfMax.y) { break; }
-            window->DrawList->AddLine(ImVec2(wfMin.x, roundf(yPos)),
-                                      ImVec2(wfMin.x - scaleTickOfsset, roundf(yPos)),
+            float yPos = wfAreaMin.y + (timeAgoMs * currentPixelsPerMs);
+            if (yPos > wfAreaMax.y) { break; }
+            window->DrawList->AddLine(ImVec2(wfAreaMin.x, roundf(yPos)),
+                                      ImVec2(wfAreaMin.x - scaleTickOfsset, roundf(yPos)),
                                       text, style::uiScale);
             const int textLen = printScaledTime(timeAgoMs, buf, bufLen);
             ImVec2 txtSz = ImGui::CalcTextSize(buf, &buf[textLen]);
-            window->DrawList->AddText(ImVec2(wfMin.x - txtSz.x - textVOffset, roundf(yPos - (txtSz.y / 2.0))), text, buf, &buf[textLen]);
+            window->DrawList->AddText(ImVec2(wfAreaMin.x - txtSz.x - textVOffset, roundf(yPos - (txtSz.y / 2.0))), text, buf, &buf[textLen]);
         }
 
         if (waterfallUpdate) {
@@ -392,13 +392,13 @@ namespace ImGui {
             const float vMin = (float)currentFFTLine / (float)waterfallHeight;
             const float vMax = vMin + 1.0f;
 
-            window->DrawList->AddImage((void*)(intptr_t)textureId, wfMin, wfMax,
+            window->DrawList->AddImage((void*)(intptr_t)textureId, wfAreaMin, wfAreaMax,
                                        ImVec2(0.0f, vMin), ImVec2(1.0f, vMax));
         }
         
         ImVec2 mPos = ImGui::GetMousePos();
 
-        if (!gui::mainWindow.processMouseInputs && !inputHandled && IS_IN_AREA(mPos, wfMin, wfMax)) {
+        if (!gui::mainWindow.processMouseInputs && !inputHandled && IS_IN_AREA(mPos, wfAreaMin, wfAreaMax)) {
             for (auto const& [name, vfo] : vfos) {
                 window->DrawList->AddRectFilled(vfo->wfRectMin, vfo->wfRectMax, vfo->color);
                 if (!vfo->lineVisible) { continue; }
@@ -407,7 +407,7 @@ namespace ImGui {
         }
 
         if (gui::mainWindow.processMouseInputs) {
-            const ImRect wfRect(wfMin, wfMax);
+            const ImRect wfRect(wfAreaMin, wfAreaMax);
 
             if (wfRect.Contains(ImGui::GetIO().MousePos)) {
                 const float flashSpeed = 10.0f;
@@ -419,7 +419,7 @@ namespace ImGui {
                 const int intensity = (int)(t * 255.0f);
 
                 const ImU32 color = IM_COL32(intensity, intensity, intensity, 255);
-                DrawCrosshairUnderCursor(ImRect(wfMin, wfMax), color, 1.0f, ImGuiCrosshairFlags_CullVertical);
+                DrawCrosshairUnderCursor(ImRect(wfAreaMin, wfAreaMax), color, 1.0f, ImGuiCrosshairFlags_CullVertical);
             }
         }
     }
@@ -452,7 +452,7 @@ namespace ImGui {
         }
 
         bool mouseHovered, mouseHeld;
-        bool mouseClicked = ImGui::ButtonBehavior(ImRect(fftAreaMin, wfMax), GetID("WaterfallID"), &mouseHovered, &mouseHeld,
+        bool mouseClicked = ImGui::ButtonBehavior(ImRect(fftAreaMin, wfAreaMax), GetID("WaterfallID"), &mouseHovered, &mouseHeld,
                                                   ImGuiButtonFlags_MouseButtonLeft | ImGuiButtonFlags_PressedOnClick);
 
         ImVec2 mousePos = ImGui::GetMousePos();
@@ -468,7 +468,7 @@ namespace ImGui {
         mouseInFFTResize = (dragOrigin.x > widgetPos.x && dragOrigin.x < widgetPos.x + widgetSize.x && dragOrigin.y >= widgetPos.y + newFFTAreaHeight - (2.0f * style::uiScale) && dragOrigin.y <= widgetPos.y + newFFTAreaHeight + (2.0f * style::uiScale));
         mouseInFreq = IS_IN_AREA(dragOrigin, freqAreaMin, freqAreaMax);
         mouseInFFT = IS_IN_AREA(dragOrigin, fftAreaMin, fftAreaMax);
-        mouseInWaterfall = IS_IN_AREA(dragOrigin, wfMin, wfMax);
+        mouseInWaterfall = IS_IN_AREA(dragOrigin, wfAreaMin, wfAreaMax);
 
         int mouseWheel = ImGui::GetIO().MouseWheel + ImGui::GetIO().MouseWheelH;
 
@@ -958,8 +958,8 @@ namespace ImGui {
         freqAreaMin = ImVec2(fftAreaMin.x, fftAreaMax.y + 1);
         freqAreaMax = ImVec2(fftAreaMax.x, fftAreaMax.y + (40.0f * style::uiScale));
 
-        wfMin = ImVec2(fftAreaMin.x, freqAreaMax.y + 1);
-        wfMax = ImVec2(fftAreaMin.x + dataWidth, wfMin.y + waterfallHeight);
+        wfAreaMin = ImVec2(fftAreaMin.x, freqAreaMax.y + 1);
+        wfAreaMax = ImVec2(fftAreaMin.x + dataWidth, wfAreaMin.y + waterfallHeight);
     }
 
     void WaterFall::onPositionChange() {
@@ -1110,8 +1110,8 @@ namespace ImGui {
             args.fftRectMax = fftAreaMax;
             args.freqScaleRectMin = freqAreaMin;
             args.freqScaleRectMax = freqAreaMax;
-            args.waterfallRectMin = wfMin;
-            args.waterfallRectMax = wfMax;
+            args.waterfallRectMin = wfAreaMin;
+            args.waterfallRectMax = wfAreaMax;
             args.lowFreq = lowerFreq;
             args.highFreq = upperFreq;
             args.freqToPixelRatio = (double)dataWidth / viewBandwidth;
@@ -1398,10 +1398,10 @@ namespace ImGui {
         for (auto const& [name, vfo] : vfos) {
             if (checkRedrawRequired && !vfo->redrawRequired) { continue; }
             vfo->updateDrawingVars(viewBandwidth, dataWidth, viewOffset, widgetPos, fftHeight);
-            vfo->wfRectMin = ImVec2(vfo->rectMin.x, wfMin.y);
-            vfo->wfRectMax = ImVec2(vfo->rectMax.x, wfMax.y);
-            vfo->wfLineMin = ImVec2(vfo->lineMin.x, wfMin.y - 1);
-            vfo->wfLineMax = ImVec2(vfo->lineMax.x, wfMax.y - 1);
+            vfo->wfRectMin = ImVec2(vfo->rectMin.x, wfAreaMin.y);
+            vfo->wfRectMax = ImVec2(vfo->rectMax.x, wfAreaMax.y);
+            vfo->wfLineMin = ImVec2(vfo->lineMin.x, wfAreaMin.y - 1);
+            vfo->wfLineMax = ImVec2(vfo->lineMax.x, wfAreaMax.y - 1);
             vfo->wfLbwSelMin = ImVec2(vfo->wfRectMin.x - 2, vfo->wfRectMin.y);
             vfo->wfLbwSelMax = ImVec2(vfo->wfRectMin.x + 2, vfo->wfRectMax.y);
             vfo->wfRbwSelMin = ImVec2(vfo->wfRectMax.x - 2, vfo->wfRectMin.y);

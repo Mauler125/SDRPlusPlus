@@ -224,8 +224,8 @@ namespace ImGui {
         ImVec2 fftAreaMax;
         ImVec2 freqAreaMin;
         ImVec2 freqAreaMax;
-        ImVec2 wfMin;
-        ImVec2 wfMax;
+        ImVec2 wfAreaMin;
+        ImVec2 wfAreaMax;
 
     private:
         void drawWaterfall();
