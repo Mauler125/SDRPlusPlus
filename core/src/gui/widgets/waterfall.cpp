@@ -1142,8 +1142,11 @@ namespace ImGui {
     }
 
     float* WaterFall::getFFTBuffer() {
-        if (rawFFTs == NULL) { return NULL; }
         buf_mtx.lock();
+        if (rawFFTs == NULL) {
+            buf_mtx.unlock();
+            return NULL;
+        }
         if (waterfallVisible) {
             currentFFTLine--;
             fftLines++;
@@ -1155,7 +1158,10 @@ namespace ImGui {
     }
 
     void WaterFall::pushFFT() {
-        if (rawFFTs == NULL) { return; }
+        if (rawFFTs == NULL) {
+            buf_mtx.unlock();
+            return;
+        }
         addTimestamp();
         std::lock_guard<std::recursive_mutex> lck(latestFFTMtx);
 
