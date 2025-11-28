@@ -439,7 +439,7 @@ namespace ImGui {
             return;
         }
         if (!available) {
-            selectedVFO = "";
+            selectedVFO.clear();
             selectedVFOChanged = true;
         }
     }
@@ -447,7 +447,7 @@ namespace ImGui {
     void WaterFall::processInputs() {
         // Pre calculate useful values
         WaterfallVFO* selVfo = NULL;
-        if (selectedVFO != "") {
+        if (!selectedVFO.empty()) {
             selVfo = vfos[selectedVFO];
         }
 
@@ -728,47 +728,59 @@ namespace ImGui {
 
         // Handle Page Up to cycle through VFOs
         if (ImGui::IsKeyPressed(ImGuiKey_PageUp) && selVfo != NULL) {
-            std::string next = (--vfos.end())->first;
-            std::string lowest = "";
+            const std::string* next = NULL;
+            const std::string* lowest = NULL;
             double lowestOffset = INFINITY;
-            double firstVfoOffset = selVfo->generalOffset;
             double smallestDistance = INFINITY;
-            bool found = false;
-            for (auto& [_name, _vfo] : vfos) {
-                if (_vfo->generalOffset > firstVfoOffset && (_vfo->generalOffset - firstVfoOffset) < smallestDistance) {
-                    next = _name;
-                    smallestDistance = (_vfo->generalOffset - firstVfoOffset);
-                    found = true;
+            double firstVfoOffset = selVfo->generalOffset;
+            for (const auto& [name, vfo] : vfos) {
+                if (vfo->generalOffset > firstVfoOffset) {
+                    double dist = vfo->generalOffset - firstVfoOffset;
+                    if (dist < smallestDistance) {
+                        smallestDistance = dist;
+                        next = &name;
+                    }
                 }
-                if (_vfo->generalOffset < lowestOffset) {
-                    lowestOffset = _vfo->generalOffset;
-                    lowest = _name;
+                if (vfo->generalOffset < lowestOffset) {
+                    lowestOffset = vfo->generalOffset;
+                    lowest = &name;
                 }
             }
-            selectedVFO = found ? next : lowest;
+            if (next) {
+                selectedVFO = *next;
+            }
+            else if (lowest) {
+                selectedVFO = *lowest;
+            }
             selectedVFOChanged = true;
         }
 
         // Handle Page Down to cycle through VFOs
         if (ImGui::IsKeyPressed(ImGuiKey_PageDown) && selVfo != NULL) {
-            std::string next = (--vfos.end())->first;
-            std::string highest = "";
+            const std::string* next = NULL;
+            const std::string* highest = NULL;
             double highestOffset = -INFINITY;
-            double firstVfoOffset = selVfo->generalOffset;
             double smallestDistance = INFINITY;
-            bool found = false;
-            for (auto& [_name, _vfo] : vfos) {
-                if (_vfo->generalOffset < firstVfoOffset && (firstVfoOffset - _vfo->generalOffset) < smallestDistance) {
-                    next = _name;
-                    smallestDistance = (firstVfoOffset - _vfo->generalOffset);
-                    found = true;
+            double currentOffset = selVfo->generalOffset;
+            for (const auto& [name, vfo] : vfos) {
+                if (vfo->generalOffset < currentOffset) {
+                    double dist = currentOffset - vfo->generalOffset;
+                    if (dist < smallestDistance) {
+                        smallestDistance = dist;
+                        next = &name;
+                    }
                 }
-                if (_vfo->generalOffset > highestOffset) {
-                    highestOffset = _vfo->generalOffset;
-                    highest = _name;
+                if (vfo->generalOffset > highestOffset) {
+                    highestOffset = vfo->generalOffset;
+                    highest = &name;
                 }
             }
-            selectedVFO = found ? next : highest;
+            if (next) {
+                selectedVFO = *next;
+            }
+            else if (highest) {
+                selectedVFO = *highest;
+            }
             selectedVFOChanged = true;
         }
     }
@@ -1070,7 +1082,7 @@ namespace ImGui {
         widgetEndPos.y += window->Pos.y;
         widgetSize = ImVec2(widgetEndPos.x - widgetPos.x, widgetEndPos.y - widgetPos.y);
 
-        if (selectedVFO == "" && vfos.size() > 0) {
+        if (selectedVFO.empty() && !vfos.empty()) {
             selectFirstVFO();
         }
 
@@ -1177,7 +1189,7 @@ namespace ImGui {
             memcpy(latestFFT, smoothingBuf, dataWidth * sizeof(float));
         }
 
-        if (selectedVFO != "" && vfos.size() > 0) {
+        if (!selectedVFO.empty() && !vfos.empty()) {
             float dummy;
             if (snrSmoothing) {
                 float newSNR = 0.0f;
