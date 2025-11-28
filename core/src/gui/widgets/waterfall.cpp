@@ -392,7 +392,6 @@ namespace ImGui {
             const float vMin = (float)currentFFTLine / (float)waterfallHeight;
             const float vMax = vMin + 1.0f;
 
-            std::lock_guard<std::mutex> lck(texMtx);
             window->DrawList->AddImage((void*)(intptr_t)textureId, wfMin, wfMax,
                                        ImVec2(0.0f, vMin), ImVec2(1.0f, vMax));
         }
@@ -930,7 +929,6 @@ namespace ImGui {
     }
 
     void WaterFall::updateWaterfallTexture() {
-        std::lock_guard<std::mutex> lck(texMtx);
         glBindTexture(GL_TEXTURE_2D, textureId);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);

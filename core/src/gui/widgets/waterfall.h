@@ -263,7 +263,6 @@ namespace ImGui {
 
         std::recursive_mutex buf_mtx;
         std::recursive_mutex latestFFTMtx;
-        std::mutex texMtx;
         std::mutex smoothingBufMtx;
         std::mutex timestampMtx;
 
