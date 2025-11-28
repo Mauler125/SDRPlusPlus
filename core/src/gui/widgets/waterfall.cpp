@@ -387,8 +387,14 @@ namespace ImGui {
             updateWaterfallTexture();
         }
         {
+            // Calc the UV of the texture to scroll with new FFT plots (scanning
+            // down increases Y tex coord because the buf is filled in reverse).
+            const float vMin = (float)currentFFTLine / (float)waterfallHeight;
+            const float vMax = vMin + 1.0f;
+
             std::lock_guard<std::mutex> lck(texMtx);
-            window->DrawList->AddImage((void*)(intptr_t)textureId, wfMin, wfMax);
+            window->DrawList->AddImage((void*)(intptr_t)textureId, wfMin, wfMax,
+                                       ImVec2(0.0f, vMin), ImVec2(1.0f, vMax));
         }
         
         ImVec2 mPos = ImGui::GetMousePos();
@@ -840,14 +846,13 @@ namespace ImGui {
         int count = std::min<float>(waterfallHeight, fftLines);
         if (rawFFTs != NULL && fftLines >= 0) {
             for (int i = 0; i < count; i++) {
-                doZoom(drawDataStart, drawDataSize, rawFFTSize, dataWidth, &rawFFTs[((i + currentFFTLine) % waterfallHeight) * rawFFTSize], tempZoomFFT);
+                const int ringIndex = (i + currentFFTLine) % waterfallHeight;
+                doZoom(drawDataStart, drawDataSize, rawFFTSize, dataWidth, &rawFFTs[ringIndex * rawFFTSize], tempZoomFFT);
                 for (int j = 0; j < dataWidth; j++) {
                     pixel = (std::clamp<float>(tempZoomFFT[j], waterfallMin, waterfallMax) - waterfallMin) / dataRange;
-                    waterfallFb[(i * dataWidth) + j] = waterfallPallet[(int)(pixel * (WATERFALL_RESOLUTION - 1))];
+                    waterfallFb[(ringIndex * dataWidth) + j] = waterfallPallet[(int)(pixel * (WATERFALL_RESOLUTION - 1))];
                 }
             }
-
-            memset(waterfallFb + (count * dataWidth), (uint32_t)255 << 24, (waterfallHeight - count) * dataWidth);
         }
         waterfallUpdate = true;
     }
@@ -1150,13 +1155,13 @@ namespace ImGui {
 
         if (waterfallVisible) {
             doZoom(drawDataStart, drawDataSize, rawFFTSize, dataWidth, &rawFFTs[currentFFTLine * rawFFTSize], latestFFT);
-            memmove(&waterfallFb[dataWidth], waterfallFb, dataWidth * (waterfallHeight - 1) * sizeof(uint32_t));
             float pixel;
             float dataRange = waterfallMax - waterfallMin;
+            uint32_t* const currLine = &waterfallFb[currentFFTLine * dataWidth];
             for (int j = 0; j < dataWidth; j++) {
                 pixel = (std::clamp<float>(latestFFT[j], waterfallMin, waterfallMax) - waterfallMin) / dataRange;
                 int id = (int)(pixel * (WATERFALL_RESOLUTION - 1));
-                waterfallFb[j] = waterfallPallet[id];
+                currLine[j] = waterfallPallet[id];
             }
             waterfallUpdate = true;
         }
