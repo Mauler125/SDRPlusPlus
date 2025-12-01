@@ -170,9 +170,9 @@ namespace ImGui {
         bool mouseInFFT = false;
         bool mouseInWaterfall = false;
 
-        float selectedVFOSNR = 0.0f;
-
         bool centerFrequencyLocked = false;
+
+        float selectedVFOSNR = 0.0f;
 
         std::map<std::string, WaterfallVFO*> vfos;
         std::string selectedVFO = "";

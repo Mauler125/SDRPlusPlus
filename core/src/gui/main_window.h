@@ -26,17 +26,8 @@ public:
     static float* acquireFFTBuffer(void* ctx);
     static void releaseFFTBuffer(void* ctx);
 
-    // TODO: Replace with it's own class
-    void setVFO(double freq);
-
     void setPlayState(bool _playing);
     bool isPlaying();
-
-    bool processMouseInputs = false;
-    bool processKeyboardInputs = false;
-    bool playButtonLocked = false;
-
-    Event<bool> onPlayStateChange;
 
 private:
     static void vfoAddedHandler(VFOManager::VFO* vfo, void* ctx);
@@ -46,14 +37,17 @@ private:
     fftwf_plan fftwPlan;
     std::mutex fft_mtx;
 
+    dsp::stream<dsp::complex_t> dummyStream;
+    EventHandler<VFOManager::VFO*> vfoCreatedHandler;
+
+    std::string audioStreamName = "";
+    std::string sourceName = "";
+
     // GUI Variables
     int fftSize = 8192 * 8;
     float fftMin = -70.0;
     float fftMax = 0.0;
     float bw = 8000000;
-
-    std::string audioStreamName = "";
-    std::string sourceName = "";
 
     int menuWidth = 300;
     int newWidth = 300;
@@ -72,6 +66,10 @@ private:
     bool showImPlotDemo = false;
     bool initComplete = false;
 
-    dsp::stream<dsp::complex_t> dummyStream;
-    EventHandler<VFOManager::VFO*> vfoCreatedHandler;
+public:
+    bool processMouseInputs = false;
+    bool processKeyboardInputs = false;
+    bool playButtonLocked = false;
+
+    Event<bool> onPlayStateChange;
 };
