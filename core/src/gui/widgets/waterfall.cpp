@@ -467,6 +467,9 @@ namespace ImGui {
 
         mouseInFFTResize = (dragOrigin.x > widgetPos.x && dragOrigin.x < widgetPos.x + widgetSize.x && dragOrigin.y >= widgetPos.y + newFFTAreaHeight - (2.0f * style::uiScale) && dragOrigin.y <= widgetPos.y + newFFTAreaHeight + (2.0f * style::uiScale));
         mouseInFreq = IS_IN_AREA(dragOrigin, freqAreaMin, freqAreaMax);
+        if (!doCursorWarp) {
+            doCursorWarp = mouseInFreq;
+        }
         mouseInFFT = IS_IN_AREA(dragOrigin, fftAreaMin, fftAreaMax);
         mouseInWaterfall = IS_IN_AREA(dragOrigin, wfAreaMin, wfAreaMax);
 
@@ -1123,9 +1126,6 @@ namespace ImGui {
 
             if (!ImGui::IsMouseDown(ImGuiMouseButton_Left)) {
                 doCursorWarp = false;
-            }
-            else if (centerFreqMoved) {
-                doCursorWarp = true;
             }
         }
 
