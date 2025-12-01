@@ -48,7 +48,7 @@ ConfigManager config;
 
 class SpyServerSourceModule : public ModuleManager::Instance {
 public:
-    SpyServerSourceModule(std::string name) {
+    SpyServerSourceModule(const std::string& name) {
         this->name = name;
 
         config.acquire();
@@ -331,11 +331,11 @@ MOD_EXPORT void _INIT_() {
     config.release(corrected);
 }
 
-MOD_EXPORT ModuleManager::Instance* _CREATE_INSTANCE_(std::string name) {
+MOD_EXPORT ModuleManager::Instance* _CREATE_INSTANCE_(const std::string& name) {
     return new SpyServerSourceModule(name);
 }
 
-MOD_EXPORT void _DELETE_INSTANCE_(ModuleManager::Instance* instance) {
+MOD_EXPORT void _DELETE_INSTANCE_(ModuleManager::Instance* const instance) {
     delete (SpyServerSourceModule*)instance;
 }
 

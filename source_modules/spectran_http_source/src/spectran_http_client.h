@@ -9,7 +9,7 @@
 
 class SpectranHTTPClient {
 public:
-    SpectranHTTPClient(std::string host, int port, dsp::stream<dsp::complex_t>* stream);
+    SpectranHTTPClient(const std::string& host, int port, dsp::stream<dsp::complex_t>* stream);
 
     void startWorker();
     void streaming(bool enabled);

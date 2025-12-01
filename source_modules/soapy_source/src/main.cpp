@@ -26,7 +26,7 @@ ConfigManager config;
 
 class SoapyModule : public ModuleManager::Instance {
 public:
-    SoapyModule(std::string name) {
+    SoapyModule(const std::string& name) {
         this->name = name;
 
         //TODO: Make module tune on source select change (in sdrpp_core)
@@ -138,7 +138,7 @@ private:
         }
     }
 
-    void selectDevice(std::string name) {
+    void selectDevice(const std::string& name) {
         if (devList.size() == 0) {
             devId = -1;
             return;
@@ -552,11 +552,11 @@ MOD_EXPORT void _INIT_() {
     config.enableAutoSave();
 }
 
-MOD_EXPORT ModuleManager::Instance* _CREATE_INSTANCE_(std::string name) {
+MOD_EXPORT ModuleManager::Instance* _CREATE_INSTANCE_(const std::string& name) {
     return new SoapyModule(name);
 }
 
-MOD_EXPORT void _DELETE_INSTANCE_(ModuleManager::Instance* instance) {
+MOD_EXPORT void _DELETE_INSTANCE_(ModuleManager::Instance* const instance) {
     delete (SoapyModule*)instance;
 }
 

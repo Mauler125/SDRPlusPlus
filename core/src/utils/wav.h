@@ -39,7 +39,7 @@ namespace wav {
         Writer(int channels = 2, uint64_t samplerate = 48000, Format format = FORMAT_WAV, SampleType type = SAMP_TYPE_INT16);
         ~Writer();
 
-        bool open(std::string path);
+        bool open(const std::string& path);
         bool isOpen();
         void close();
 

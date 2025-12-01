@@ -9,11 +9,9 @@ namespace style {
     SDRPP_EXPORT ImFont* hugeFont;
     SDRPP_EXPORT float uiScale;
 
-    bool setDefaultStyle(std::string resDir);
-    bool loadFonts(std::string resDir);
+    bool loadFonts(const std::string& resDir);
     void beginDisabled();
     void endDisabled();
-    void testtt();
 }
 
 namespace ImGui {

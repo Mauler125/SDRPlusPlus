@@ -20,7 +20,7 @@ SDRPP_MOD_INFO{
 
 class HarogicSourceModule : public ModuleManager::Instance {
 public:
-    HarogicSourceModule(std::string name) {
+    HarogicSourceModule(const std::string& name) {
         this->name = name;
 
         sampleRate = 61440000.0;
@@ -497,11 +497,11 @@ MOD_EXPORT void _INIT_() {
     // Nothing here
 }
 
-MOD_EXPORT ModuleManager::Instance* _CREATE_INSTANCE_(std::string name) {
+MOD_EXPORT ModuleManager::Instance* _CREATE_INSTANCE_(const std::string& name) {
     return new HarogicSourceModule(name);
 }
 
-MOD_EXPORT void _DELETE_INSTANCE_(void* instance) {
+MOD_EXPORT void _DELETE_INSTANCE_(ModuleManager::Instance* const instance) {
     delete (HarogicSourceModule*)instance;
 }
 

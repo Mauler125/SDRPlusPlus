@@ -7,12 +7,12 @@
 
 class FolderSelect {
 public:
-    FolderSelect(std::string defaultPath);
-    bool render(std::string id);
-    void setPath(std::string path, bool markChanged = false);
+    FolderSelect(const std::string& defaultPath);
+    bool render(const std::string& id);
+    void setPath(const std::string& path, bool markChanged = false);
     bool pathIsValid();
 
-    std::string expandString(std::string input);
+    std::string expandString(const std::string& input) const;
 
     std::string path = "";
 
@@ -24,6 +24,6 @@ private:
 
     bool pathValid = false;
     bool dialogOpen = false;
-    char strPath[2048];
     bool pathChanged = false;
+    char strPath[2048];
 };

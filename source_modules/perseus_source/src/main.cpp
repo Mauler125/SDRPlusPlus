@@ -26,7 +26,7 @@ ConfigManager config;
 
 class PerseusSourceModule : public ModuleManager::Instance {
 public:
-    PerseusSourceModule(std::string name) {
+    PerseusSourceModule(const std::string& name) {
         this->name = name;
 
         sampleRate = 768000;
@@ -454,11 +454,11 @@ MOD_EXPORT void _INIT_() {
     config.enableAutoSave();
 }
 
-MOD_EXPORT ModuleManager::Instance* _CREATE_INSTANCE_(std::string name) {
+MOD_EXPORT ModuleManager::Instance* _CREATE_INSTANCE_(const std::string& name) {
     return new PerseusSourceModule(name);
 }
 
-MOD_EXPORT void _DELETE_INSTANCE_(ModuleManager::Instance* instance) {
+MOD_EXPORT void _DELETE_INSTANCE_(ModuleManager::Instance* const instance) {
     delete (PerseusSourceModule*)instance;
 }
 

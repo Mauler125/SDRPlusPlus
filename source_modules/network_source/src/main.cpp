@@ -44,7 +44,7 @@ const size_t SAMPLE_TYPE_SIZE[] {
 
 class NetworkSourceModule : public ModuleManager::Instance {
 public:
-    NetworkSourceModule(std::string name) {
+    NetworkSourceModule(const std::string& name) {
         this->name = name;
 
         samplerate = 1000000.0;
@@ -351,11 +351,11 @@ MOD_EXPORT void _INIT_() {
     config.enableAutoSave();
 }
 
-MOD_EXPORT ModuleManager::Instance* _CREATE_INSTANCE_(std::string name) {
+MOD_EXPORT ModuleManager::Instance* _CREATE_INSTANCE_(const std::string& name) {
     return new NetworkSourceModule(name);
 }
 
-MOD_EXPORT void _DELETE_INSTANCE_(ModuleManager::Instance* instance) {
+MOD_EXPORT void _DELETE_INSTANCE_(ModuleManager::Instance* const instance) {
     delete (NetworkSourceModule*)instance;
 }
 

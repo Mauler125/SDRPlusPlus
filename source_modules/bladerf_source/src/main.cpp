@@ -35,7 +35,7 @@ enum BladeRFType {
 
 class BladeRFSourceModule : public ModuleManager::Instance {
 public:
-    BladeRFSourceModule(std::string name) {
+    BladeRFSourceModule(const std::string& name) {
         this->name = name;
 
         // Define clocks
@@ -109,7 +109,7 @@ public:
         }
     }
 
-    void selectBySerial(std::string serial, bool reloadChannelId = true) {
+    void selectBySerial(const std::string& serial, bool reloadChannelId = true) {
         if (serial == "") {
             selectFirst();
             return;
@@ -651,11 +651,11 @@ MOD_EXPORT void _INIT_() {
     config.enableAutoSave();
 }
 
-MOD_EXPORT ModuleManager::Instance* _CREATE_INSTANCE_(std::string name) {
+MOD_EXPORT ModuleManager::Instance* _CREATE_INSTANCE_(const std::string& name) {
     return new BladeRFSourceModule(name);
 }
 
-MOD_EXPORT void _DELETE_INSTANCE_(ModuleManager::Instance* instance) {
+MOD_EXPORT void _DELETE_INSTANCE_(ModuleManager::Instance* const instance) {
     delete (BladeRFSourceModule*)instance;
 }
 

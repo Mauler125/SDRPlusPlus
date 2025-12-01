@@ -20,7 +20,7 @@ namespace ImGui {
 
         void clear();
 
-        void save(std::string path);
+        //void save(const std::string& path);
 
         int getLineCount();
 

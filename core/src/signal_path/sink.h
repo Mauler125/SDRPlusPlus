@@ -88,23 +88,23 @@ public:
         dsp::sink::Null<dsp::stereo_t> ns;
     };
 
-    void registerSinkProvider(std::string name, SinkProvider provider);
-    void unregisterSinkProvider(std::string name);
+    void registerSinkProvider(const std::string& name, const SinkProvider& provider);
+    void unregisterSinkProvider(const std::string& name);
 
-    void registerStream(std::string name, Stream* stream);
-    void unregisterStream(std::string name);
+    void registerStream(const std::string& name, Stream* stream);
+    void unregisterStream(const std::string& name);
 
-    void startStream(std::string name);
-    void stopStream(std::string name);
+    void startStream(const std::string& name);
+    void stopStream(const std::string& name);
 
-    float getStreamSampleRate(std::string name);
+    float getStreamSampleRate(const std::string& name);
 
-    void setStreamSink(std::string name, std::string providerName);
+    void setStreamSink(const std::string& name, const std::string& providerName);
 
-    void showVolumeSlider(std::string name, std::string prefix, float width, float btnHeight = -1.0f, float btnBorder = 0, bool sameLine = false);
+    void showVolumeSlider(const std::string& name, const std::string& prefix, float width, float btnHeight = -1.0f, float btnBorder = 0, bool sameLine = false);
 
-    dsp::stream<dsp::stereo_t>* bindStream(std::string name);
-    void unbindStream(std::string name, dsp::stream<dsp::stereo_t>* stream);
+    dsp::stream<dsp::stereo_t>* bindStream(const std::string& name);
+    void unbindStream(const std::string& name, dsp::stream<dsp::stereo_t>* stream);
 
     void loadSinksFromConfig();
     void showMenu();
@@ -120,8 +120,8 @@ public:
     Event<std::string> onStreamUnregistered;
 
 private:
-    void loadStreamConfig(std::string name);
-    void saveStreamConfig(std::string name);
+    void loadStreamConfig(const std::string& name);
+    void saveStreamConfig(const std::string& name);
     void refreshProviders();
 
     std::map<std::string, SinkProvider> providers;

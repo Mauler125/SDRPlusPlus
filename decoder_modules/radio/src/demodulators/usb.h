@@ -8,7 +8,7 @@ namespace demod {
     public:
         USB() {}
 
-        USB(std::string name, ConfigManager* config, dsp::stream<dsp::complex_t>* input, double bandwidth, double audioSR) {
+        USB(const std::string& name, ConfigManager* config, dsp::stream<dsp::complex_t>* input, double bandwidth, double audioSR) {
             init(name, config, input, bandwidth, audioSR);
         }
 
@@ -16,7 +16,7 @@ namespace demod {
             stop();
         }
 
-        void init(std::string name, ConfigManager* config, dsp::stream<dsp::complex_t>* input, double bandwidth, double audioSR) {
+        void init(const std::string& name, ConfigManager* config, dsp::stream<dsp::complex_t>* input, double bandwidth, double audioSR) {
             this->name = name;
             _config = config;
 

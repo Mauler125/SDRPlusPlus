@@ -2,7 +2,7 @@
 #include <signal_path/signal_path.h>
 #include <gui/gui.h>
 
-VFOManager::VFO::VFO(std::string name, int reference, double offset, double bandwidth, double sampleRate, double minBandwidth, double maxBandwidth, bool bandwidthLocked) {
+VFOManager::VFO::VFO(const std::string& name, int reference, double offset, double bandwidth, double sampleRate, double minBandwidth, double maxBandwidth, bool bandwidthLocked) {
     this->name = name;
     _bandwidth = bandwidth;
     dspVFO = sigpath::iqFrontEnd.addVFO(name, sampleRate, bandwidth, offset);
@@ -92,7 +92,7 @@ std::string VFOManager::VFO::getName() {
 VFOManager::VFOManager() {
 }
 
-VFOManager::VFO* VFOManager::createVFO(std::string name, int reference, double offset, double bandwidth, double sampleRate, double minBandwidth, double maxBandwidth, bool bandwidthLocked) {
+VFOManager::VFO* VFOManager::createVFO(const std::string& name, int reference, double offset, double bandwidth, double sampleRate, double minBandwidth, double maxBandwidth, bool bandwidthLocked) {
     if (vfos.find(name) != vfos.end() || name == "") {
         return NULL;
     }
@@ -119,84 +119,84 @@ void VFOManager::deleteVFO(VFOManager::VFO* vfo) {
     onVfoDeleted.emit(name);
 }
 
-void VFOManager::setOffset(std::string name, double offset) {
+void VFOManager::setOffset(const std::string& name, double offset) {
     if (vfos.find(name) == vfos.end()) {
         return;
     }
     vfos[name]->setOffset(offset);
 }
 
-double VFOManager::getOffset(std::string name) {
+double VFOManager::getOffset(const std::string& name) {
     if (vfos.find(name) == vfos.end()) {
         return 0;
     }
     return vfos[name]->getOffset();
 }
 
-void VFOManager::setCenterOffset(std::string name, double offset) {
+void VFOManager::setCenterOffset(const std::string& name, double offset) {
     if (vfos.find(name) == vfos.end()) {
         return;
     }
     vfos[name]->setCenterOffset(offset);
 }
 
-void VFOManager::setBandwidth(std::string name, double bandwidth, bool updateWaterfall) {
+void VFOManager::setBandwidth(const std::string& name, double bandwidth, bool updateWaterfall) {
     if (vfos.find(name) == vfos.end()) {
         return;
     }
     vfos[name]->setBandwidth(bandwidth, updateWaterfall);
 }
 
-void VFOManager::setSampleRate(std::string name, double sampleRate, double bandwidth) {
+void VFOManager::setSampleRate(const std::string& name, double sampleRate, double bandwidth) {
     if (vfos.find(name) == vfos.end()) {
         return;
     }
     vfos[name]->setSampleRate(sampleRate, bandwidth);
 }
 
-void VFOManager::setReference(std::string name, int ref) {
+void VFOManager::setReference(const std::string& name, int ref) {
     if (vfos.find(name) == vfos.end()) {
         return;
     }
     vfos[name]->setReference(ref);
 }
 
-void VFOManager::setBandwidthLimits(std::string name, double minBandwidth, double maxBandwidth, bool bandwidthLocked) {
+void VFOManager::setBandwidthLimits(const std::string& name, double minBandwidth, double maxBandwidth, bool bandwidthLocked) {
     if (vfos.find(name) == vfos.end()) {
         return;
     }
     vfos[name]->setBandwidthLimits(minBandwidth, maxBandwidth, bandwidthLocked);
 }
 
-bool VFOManager::getBandwidthChanged(std::string name, bool erase) {
+bool VFOManager::getBandwidthChanged(const std::string& name, bool erase) {
     if (vfos.find(name) == vfos.end()) {
         return false;
     }
     return vfos[name]->getBandwidthChanged(erase);
 }
 
-double VFOManager::getBandwidth(std::string name) {
+double VFOManager::getBandwidth(const std::string& name) {
     if (vfos.find(name) == vfos.end()) {
         return NAN;
     }
     return vfos[name]->getBandwidth();
 }
 
-int VFOManager::getReference(std::string name) {
+int VFOManager::getReference(const std::string& name) {
     if (vfos.find(name) == vfos.end()) {
         return -1;
     }
     return vfos[name]->getReference();
 }
 
-void VFOManager::setColor(std::string name, ImU32 color) {
+void VFOManager::setColor(const std::string& name, ImU32 color) {
     if (vfos.find(name) == vfos.end()) {
         return;
     }
     return vfos[name]->setColor(color);
 }
 
-bool VFOManager::vfoExists(std::string name) {
+bool VFOManager::vfoExists(const std::string& name) {
     return (vfos.find(name) != vfos.end());
 }
 

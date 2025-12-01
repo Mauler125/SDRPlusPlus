@@ -24,7 +24,7 @@ ConfigManager config;
 
 class RigctlClientModule : public ModuleManager::Instance {
 public:
-    RigctlClientModule(std::string name) {
+    RigctlClientModule(const std::string& name) {
         this->name = name;
 
         // Load default
@@ -187,11 +187,11 @@ MOD_EXPORT void _INIT_() {
     config.enableAutoSave();
 }
 
-MOD_EXPORT ModuleManager::Instance* _CREATE_INSTANCE_(std::string name) {
+MOD_EXPORT ModuleManager::Instance* _CREATE_INSTANCE_(const std::string& name) {
     return new RigctlClientModule(name);
 }
 
-MOD_EXPORT void _DELETE_INSTANCE_(void* instance) {
+MOD_EXPORT void _DELETE_INSTANCE_(ModuleManager::Instance* const instance) {
     delete (RigctlClientModule*)instance;
 }
 

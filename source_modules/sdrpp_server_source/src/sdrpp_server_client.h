@@ -144,5 +144,5 @@ namespace server {
         double currentSampleRate = 1000000.0;
     };
 
-    std::shared_ptr<Client> connect(std::string host, uint16_t port, dsp::stream<dsp::complex_t>* out);
+    std::shared_ptr<Client> connect(const std::string& host, uint16_t port, dsp::stream<dsp::complex_t>* out);
 }

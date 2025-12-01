@@ -164,6 +164,6 @@ namespace hermes {
     };
 
     std::vector<Info> discover();
-    std::shared_ptr<Client> open(std::string host, int port);
+    std::shared_ptr<Client> open(const std::string& host, int port);
     std::shared_ptr<Client> open(const net::Address& addr);
 }

@@ -2,7 +2,7 @@
 #include <string>
 
 namespace thememenu {
-    void init(std::string resDir);
+    void init(const std::string& resDir);
     void applyTheme();
     void draw(void* ctx);
 }

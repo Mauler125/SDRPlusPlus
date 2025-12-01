@@ -25,7 +25,7 @@ ConfigManager config;
 
 class HermesSourceModule : public ModuleManager::Instance {
 public:
-    HermesSourceModule(std::string name) {
+    HermesSourceModule(const std::string& name) {
         this->name = name;
 
         // Define samplerates
@@ -86,7 +86,7 @@ private:
         }
     }
 
-    void selectMac(std::string mac) {
+    void selectMac(const std::string& mac) {
         // If the device list is empty, don't select anything
         if (!devices.size()) {
             selectedMac.clear();
@@ -278,11 +278,11 @@ MOD_EXPORT void _INIT_() {
     config.enableAutoSave();
 }
 
-MOD_EXPORT ModuleManager::Instance* _CREATE_INSTANCE_(std::string name) {
+MOD_EXPORT ModuleManager::Instance* _CREATE_INSTANCE_(const std::string& name) {
     return new HermesSourceModule(name);
 }
 
-MOD_EXPORT void _DELETE_INSTANCE_(ModuleManager::Instance* instance) {
+MOD_EXPORT void _DELETE_INSTANCE_(ModuleManager::Instance* const instance) {
     delete (HermesSourceModule*)instance;
 }
 

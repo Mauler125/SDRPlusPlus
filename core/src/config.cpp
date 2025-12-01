@@ -11,11 +11,11 @@ ConfigManager::~ConfigManager() {
     disableAutoSave();
 }
 
-void ConfigManager::setPath(std::string file) {
+void ConfigManager::setPath(const std::string& file) {
     path = std::filesystem::absolute(file).string();
 }
 
-void ConfigManager::load(json def, bool lock) {
+void ConfigManager::load(const json& def, bool lock) {
     if (lock) { mtx.lock(); }
     if (path == "") {
         flog::error("Config manager tried to load file with no path specified");

@@ -23,7 +23,7 @@ ConfigManager config;
 
 class LimeSDRSourceModule : public ModuleManager::Instance {
 public:
-    LimeSDRSourceModule(std::string name) {
+    LimeSDRSourceModule(const std::string& name) {
         this->name = name;
 
         // Init limesuite if needed
@@ -92,7 +92,7 @@ public:
         selectedDevName = "";
     }
 
-    void selectByName(std::string name) {
+    void selectByName(const std::string& name) {
         for (int i = 0; i < devCount; i++) {
             if (devNames[i] == name) {
                 selectByInfoStr(devList[i]);
@@ -539,11 +539,11 @@ MOD_EXPORT void _INIT_() {
     config.enableAutoSave();
 }
 
-MOD_EXPORT ModuleManager::Instance* _CREATE_INSTANCE_(std::string name) {
+MOD_EXPORT ModuleManager::Instance* _CREATE_INSTANCE_(const std::string& name) {
     return new LimeSDRSourceModule(name);
 }
 
-MOD_EXPORT void _DELETE_INSTANCE_(ModuleManager::Instance* instance) {
+MOD_EXPORT void _DELETE_INSTANCE_(ModuleManager::Instance* const instance) {
     delete (LimeSDRSourceModule*)instance;
 }
 

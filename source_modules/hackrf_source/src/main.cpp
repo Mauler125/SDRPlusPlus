@@ -80,7 +80,7 @@ const char* bandwidthsTxt = "1.75MHz\0"
 
 class HackRFSourceModule : public ModuleManager::Instance {
 public:
-    HackRFSourceModule(std::string name) {
+    HackRFSourceModule(const std::string& name) {
         this->name = name;
 
         hackrf_init();
@@ -166,7 +166,7 @@ public:
         selectedSerial = "";
     }
 
-    void selectBySerial(std::string serial) {
+    void selectBySerial(const std::string& serial) {
         if (std::find(devList.begin(), devList.end(), serial) == devList.end()) {
             selectFirst();
             return;
@@ -422,11 +422,11 @@ MOD_EXPORT void _INIT_() {
     config.enableAutoSave();
 }
 
-MOD_EXPORT ModuleManager::Instance* _CREATE_INSTANCE_(std::string name) {
+MOD_EXPORT ModuleManager::Instance* _CREATE_INSTANCE_(const std::string& name) {
     return new HackRFSourceModule(name);
 }
 
-MOD_EXPORT void _DELETE_INSTANCE_(ModuleManager::Instance* instance) {
+MOD_EXPORT void _DELETE_INSTANCE_(ModuleManager::Instance* const instance) {
     delete (HackRFSourceModule*)instance;
 }
 

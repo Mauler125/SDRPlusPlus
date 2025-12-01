@@ -94,7 +94,7 @@ namespace backend {
         return 0;
     }
 
-    int init(std::string resDir) {
+    int init(const std::string& resDir) {
         flog::warn("Backend init");
 
         // Get window

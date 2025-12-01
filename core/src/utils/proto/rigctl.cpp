@@ -168,7 +168,7 @@ namespace net::rigctl {
         return std::stoi(args[1]);
     }
 
-    int Client::getInt(std::string cmd) {
+    int Client::getInt(const std::string& cmd) {
         // Send command
         sock->sendstr(cmd + "\n");
 
@@ -181,7 +181,7 @@ namespace net::rigctl {
         return std::stoi(args[0]); 
     }
     
-    int Client::setInt(std::string cmd, int value) {
+    int Client::setInt(const std::string& cmd, int value) {
         // Send command
         char buf[2048];
         snprintf(buf, sizeof(buf), "%s %d\n", cmd.c_str(), value);
@@ -191,7 +191,7 @@ namespace net::rigctl {
         return recvStatus();
     }
 
-    double Client::getFloat(std::string cmd) {
+    double Client::getFloat(const std::string& cmd) {
         // Send command
         sock->sendstr(cmd + "\n");
 
@@ -204,7 +204,7 @@ namespace net::rigctl {
         return std::stod(args[0]);
     }
 
-    int Client::setFloat(std::string cmd, double value) {
+    int Client::setFloat(const std::string& cmd, double value) {
         // Send command
         char buf[2048];
         snprintf(buf, sizeof(buf), "%s %lg\n", cmd.c_str(), value);
@@ -214,17 +214,17 @@ namespace net::rigctl {
         return recvStatus();
     }
 
-    //std::string Client::getString(std::string cmd) {
+    //std::string Client::getString(const std::string& cmd) {
     //    // TODO
     //    return "";
     //}
 
-    //int Client::setString(std::string cmd, std::string value) {
+    //int Client::setString(const std::string& cmd, std::string value) {
     //    // TODO
     //    return -1;
     //}
 
-    std::shared_ptr<Client> connect(std::string host, int port) {
+    std::shared_ptr<Client> connect(const std::string& host, int port) {
         return std::make_shared<Client>(net::connect(host, port));
     }
 

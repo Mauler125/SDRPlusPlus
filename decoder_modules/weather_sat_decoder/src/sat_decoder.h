@@ -9,7 +9,7 @@ public:
     virtual void stop() = 0;
     virtual void setVFO(VFOManager::VFO* vfo) = 0;
     virtual bool canRecord() = 0;
-    virtual bool startRecording(std::string recPath) { return false; };
+    virtual bool startRecording(const std::string& recPath) { return false; };
     virtual void stopRecording(){};
     virtual bool isRecording() { return false; };
     virtual void drawMenu(float menuWidth) = 0;

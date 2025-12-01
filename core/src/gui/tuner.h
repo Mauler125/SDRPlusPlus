@@ -3,8 +3,8 @@
 #include <module.h>
 
 namespace tuner {
-    void centerTuning(std::string vfoName, double freq);
-    void normalTuning(std::string vfoName, double freq);
+    void centerTuning(const std::string& vfoName, double freq);
+    void normalTuning(const std::string& vfoName, double freq);
     void iqTuning(double freq);
 
     enum {

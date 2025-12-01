@@ -552,7 +552,7 @@ namespace net {
         return std::make_shared<Listener>(s);
     }
 
-    std::shared_ptr<Listener> listen(std::string host, int port) {
+    std::shared_ptr<Listener> listen(const std::string& host, int port) {
         return listen(Address(host, port));
     }
 
@@ -579,7 +579,7 @@ namespace net {
         return std::make_shared<Socket>(s);
     }
 
-    std::shared_ptr<Socket> connect(std::string host, int port) {
+    std::shared_ptr<Socket> connect(const std::string& host, int port) {
         return connect(Address(host, port));
     }
 
@@ -618,15 +618,15 @@ namespace net {
         return std::make_shared<Socket>(s, &raddr);
     }
 
-    std::shared_ptr<Socket> openudp(std::string rhost, int rport, const Address& laddr, bool allowBroadcast) {
+    std::shared_ptr<Socket> openudp(const std::string& rhost, int rport, const Address& laddr, bool allowBroadcast) {
         return openudp(Address(rhost, rport), laddr, allowBroadcast);
     }
 
-    std::shared_ptr<Socket> openudp(const Address& raddr, std::string lhost, int lport, bool allowBroadcast) {
+    std::shared_ptr<Socket> openudp(const Address& raddr, const std::string& lhost, int lport, bool allowBroadcast) {
         return openudp(raddr, Address(lhost, lport), allowBroadcast);
     }
 
-    std::shared_ptr<Socket> openudp(std::string rhost, int rport, std::string lhost, int lport, bool allowBroadcast) {
+    std::shared_ptr<Socket> openudp(const std::string& rhost, int rport, const std::string& lhost, int lport, bool allowBroadcast) {
         return openudp(Address(rhost, rport), Address(lhost, lport), allowBroadcast);
     }
 }

@@ -26,9 +26,9 @@ public:
         PANADAPTER
     };
 
-    void registerSource(std::string name, SourceHandler* handler);
-    void unregisterSource(std::string name);
-    void selectSource(std::string name);
+    void registerSource(const std::string& name, SourceHandler* handler);
+    void unregisterSource(const std::string& name);
+    void selectSource(const std::string& name);
     void showSelectedMenu();
     void start();
     void stop();
@@ -39,9 +39,9 @@ public:
 
     std::vector<std::string> getSourceNames();
 
-    Event<std::string> onSourceRegistered;
-    Event<std::string> onSourceUnregister;
-    Event<std::string> onSourceUnregistered;
+    Event<const std::string&> onSourceRegistered;
+    Event<const std::string&> onSourceUnregister;
+    Event<const std::string&> onSourceUnregistered;
     Event<double> onRetune;
 
 private:

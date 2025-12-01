@@ -31,7 +31,7 @@ ConfigManager config;
 
 class SigctlServerModule : public ModuleManager::Instance {
 public:
-    SigctlServerModule(std::string name) {
+    SigctlServerModule(const std::string& name) {
         this->name = name;
 
         config.acquire();
@@ -233,7 +233,7 @@ private:
         }
     }
 
-    void selectVfoByName(std::string _name, bool lock = true) {
+    void selectVfoByName(const std::string& _name, bool lock = true) {
         if (vfoNames.empty()) {
             if (lock) { std::lock_guard lck(vfoMtx); }
             selectedVfo.clear();
@@ -255,7 +255,7 @@ private:
         }
     }
 
-    void selectRecorderByName(std::string _name, bool lock = true) {
+    void selectRecorderByName(const std::string& _name, bool lock = true) {
         if (recorderNames.empty()) {
             if (lock) { std::lock_guard lck(recorderMtx); }
             selectedRecorder.clear();
@@ -292,13 +292,13 @@ private:
         _this->selectVfoByName(_this->selectedVfo);
     }
 
-    static void _vfoDeletedHandler(std::string _name, void* ctx) {
+    static void _vfoDeletedHandler(const std::string& _name, void* ctx) {
         SigctlServerModule* _this = (SigctlServerModule*)ctx;
         _this->refreshModules();
         _this->selectVfoByName(_this->selectedVfo);
     }
 
-    static void _modChangeHandler(std::string _name, void* ctx) {
+    static void _modChangeHandler(const std::string& _name, void* ctx) {
         SigctlServerModule* _this = (SigctlServerModule*)ctx;
         _this->refreshModules();
         _this->selectRecorderByName(_this->selectedRecorder);
@@ -347,7 +347,7 @@ private:
         { RADIO_IFACE_MODE_RAW, "RAW" }
     };
 
-    void commandHandler(std::string cmd) {
+    void commandHandler(const std::string& cmd) {
         std::string corr = "";
         std::vector<std::string> parts;
         bool lastWasSpace = false;
@@ -715,11 +715,11 @@ MOD_EXPORT void _INIT_() {
     config.enableAutoSave();
 }
 
-MOD_EXPORT ModuleManager::Instance* _CREATE_INSTANCE_(std::string name) {
+MOD_EXPORT ModuleManager::Instance* _CREATE_INSTANCE_(const std::string& name) {
     return new SigctlServerModule(name);
 }
 
-MOD_EXPORT void _DELETE_INSTANCE_(void* instance) {
+MOD_EXPORT void _DELETE_INSTANCE_(ModuleManager::Instance* const instance) {
     delete (SigctlServerModule*)instance;
 }
 

@@ -37,7 +37,7 @@ SDRPP_MOD_INFO{/* Name:            */ "atv_decoder",
 
 class ATVDecoderModule : public ModuleManager::Instance {
   public:
-    ATVDecoderModule(std::string name) : img(768, 576) {
+    ATVDecoderModule(const std::string& name) : img(768, 576) {
         this->name = name;
 
         vfo = sigpath::vfoManager.createVFO(name, ImGui::WaterfallVFO::REF_CENTER, 0, 7000000.0f, SAMPLE_RATE, SAMPLE_RATE, SAMPLE_RATE, true);
@@ -309,7 +309,7 @@ class ATVDecoderModule : public ModuleManager::Instance {
 
 MOD_EXPORT void _INIT_() {}
 
-MOD_EXPORT ModuleManager::Instance *_CREATE_INSTANCE_(std::string name) { return new ATVDecoderModule(name); }
+MOD_EXPORT ModuleManager::Instance *_CREATE_INSTANCE_(const std::string& name) { return new ATVDecoderModule(name); }
 
 MOD_EXPORT void _DELETE_INSTANCE_(void *instance) { delete (ATVDecoderModule *)instance; }
 

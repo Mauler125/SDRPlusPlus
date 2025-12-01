@@ -15,7 +15,7 @@ namespace riff {
         close();
     }
 
-    bool Writer::open(std::string path, const char form[4]) {
+    bool Writer::open(const std::string& path, const char form[4]) {
         std::lock_guard<std::recursive_mutex> lck(mtx);
 
         // Open file

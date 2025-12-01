@@ -73,7 +73,7 @@ namespace bandplan {
         ct.transColorValue = IM_COL32(r, g, b, 100);
     }
 
-    void loadBandPlan(std::string path) {
+    void loadBandPlan(const std::string& path) {
         std::ifstream file(path.c_str());
         json data;
         file >> data;
@@ -89,7 +89,7 @@ namespace bandplan {
         generateTxt();
     }
 
-    void loadFromDir(std::string path) {
+    void loadFromDir(const std::string& path) {
         if (!std::filesystem::exists(path)) {
             flog::error("Band Plan directory does not exist");
             return;
@@ -108,7 +108,7 @@ namespace bandplan {
         }
     }
 
-    void loadColorTable(json table) {
+    void loadColorTable(const json& table) {
         colorTable = table.get<std::map<std::string, BandPlanColor_t>>();
     }
 };

@@ -24,7 +24,7 @@ ConfigManager config;
 
 class SpectranHTTPSourceModule : public ModuleManager::Instance {
 public:
-    SpectranHTTPSourceModule(std::string name) {
+    SpectranHTTPSourceModule(const std::string& name) {
         this->name = name;
 
         strcpy(hostname, "localhost");
@@ -218,11 +218,11 @@ MOD_EXPORT void _INIT_() {
     config.enableAutoSave();
 }
 
-MOD_EXPORT ModuleManager::Instance* _CREATE_INSTANCE_(std::string name) {
+MOD_EXPORT ModuleManager::Instance* _CREATE_INSTANCE_(const std::string& name) {
     return new SpectranHTTPSourceModule(name);
 }
 
-MOD_EXPORT void _DELETE_INSTANCE_(ModuleManager::Instance* instance) {
+MOD_EXPORT void _DELETE_INSTANCE_(ModuleManager::Instance* const instance) {
     delete (SpectranHTTPSourceModule*)instance;
 }
 

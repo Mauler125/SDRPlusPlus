@@ -85,7 +85,7 @@ void SinkManager::Stream::setSampleRate(float sampleRate) {
     srChange.emit(sampleRate);
 }
 
-void SinkManager::registerSinkProvider(std::string name, SinkProvider provider) {
+void SinkManager::registerSinkProvider(const std::string& name, const SinkProvider& provider) {
     if (providers.find(name) != providers.end()) {
         flog::error("Cannot register sink provider '{0}', this name is already taken", name);
         return;
@@ -106,7 +106,7 @@ void SinkManager::registerSinkProvider(std::string name, SinkProvider provider) 
     onSinkProviderRegistered.emit(name);
 }
 
-void SinkManager::unregisterSinkProvider(std::string name) {
+void SinkManager::unregisterSinkProvider(const std::string& name) {
     if (providers.find(name) == providers.end()) {
         flog::error("Cannot unregister sink provider '{0}', no such provider exists.", name);
         return;
@@ -135,7 +135,7 @@ void SinkManager::unregisterSinkProvider(std::string name) {
     onSinkProviderUnregistered.emit(name);
 }
 
-void SinkManager::registerStream(std::string name, SinkManager::Stream* stream) {
+void SinkManager::registerStream(const std::string& name, SinkManager::Stream* stream) {
     if (streams.find(name) != streams.end()) {
         flog::error("Cannot register stream '{0}', this name is already taken", name);
         return;
@@ -161,7 +161,7 @@ void SinkManager::registerStream(std::string name, SinkManager::Stream* stream) 
     onStreamRegistered.emit(name);
 }
 
-void SinkManager::unregisterStream(std::string name) {
+void SinkManager::unregisterStream(const std::string& name) {
     if (streams.find(name) == streams.end()) {
         flog::error("Cannot unregister stream '{0}', this stream doesn't exist", name);
         return;
@@ -175,7 +175,7 @@ void SinkManager::unregisterStream(std::string name) {
     onStreamUnregistered.emit(name);
 }
 
-void SinkManager::startStream(std::string name) {
+void SinkManager::startStream(const std::string& name) {
     if (streams.find(name) == streams.end()) {
         flog::error("Cannot start stream '{0}', this stream doesn't exist", name);
         return;
@@ -183,7 +183,7 @@ void SinkManager::startStream(std::string name) {
     streams[name]->start();
 }
 
-void SinkManager::stopStream(std::string name) {
+void SinkManager::stopStream(const std::string& name) {
     if (streams.find(name) == streams.end()) {
         flog::error("Cannot stop stream '{0}', this stream doesn't exist", name);
         return;
@@ -191,7 +191,7 @@ void SinkManager::stopStream(std::string name) {
     streams[name]->stop();
 }
 
-float SinkManager::getStreamSampleRate(std::string name) {
+float SinkManager::getStreamSampleRate(const std::string& name) {
     if (streams.find(name) == streams.end()) {
         flog::error("Cannot get sample rate of stream '{0}', this stream doesn't exist", name);
         return -1.0f;
@@ -199,7 +199,7 @@ float SinkManager::getStreamSampleRate(std::string name) {
     return streams[name]->getSampleRate();
 }
 
-dsp::stream<dsp::stereo_t>* SinkManager::bindStream(std::string name) {
+dsp::stream<dsp::stereo_t>* SinkManager::bindStream(const std::string& name) {
     if (streams.find(name) == streams.end()) {
         flog::error("Cannot bind to stream '{0}'. Stream doesn't exist", name);
         return NULL;
@@ -207,7 +207,7 @@ dsp::stream<dsp::stereo_t>* SinkManager::bindStream(std::string name) {
     return streams[name]->bindStream();
 }
 
-void SinkManager::unbindStream(std::string name, dsp::stream<dsp::stereo_t>* stream) {
+void SinkManager::unbindStream(const std::string& name, dsp::stream<dsp::stereo_t>* stream) {
     if (streams.find(name) == streams.end()) {
         flog::error("Cannot unbind from stream '{0}'. Stream doesn't exist", name);
         return;
@@ -215,7 +215,7 @@ void SinkManager::unbindStream(std::string name, dsp::stream<dsp::stereo_t>* str
     streams[name]->unbindStream(stream);
 }
 
-void SinkManager::setStreamSink(std::string name, std::string providerName) {
+void SinkManager::setStreamSink(const std::string& name, const std::string& providerName) {
     if (streams.find(name) == streams.end()) {
         flog::error("Cannot set sink for stream '{0}'. Stream doesn't exist", name);
         return;
@@ -239,7 +239,7 @@ void SinkManager::setStreamSink(std::string name, std::string providerName) {
     }
 }
 
-void SinkManager::showVolumeSlider(std::string name, std::string prefix, float width, float btnHeight, float btnBorder, bool sameLine) {
+void SinkManager::showVolumeSlider(const std::string& name, const std::string& prefix, float width, float btnHeight, float btnBorder, bool sameLine) {
     // TODO: Replace map with some hashmap for it to be faster
     float height = ImGui::GetTextLineHeightWithSpacing() + 2;
     float sliderHeight = height;
@@ -301,7 +301,7 @@ void SinkManager::showVolumeSlider(std::string name, std::string prefix, float w
     //ImGui::SetCursorPosY(ypos);
 }
 
-void SinkManager::loadStreamConfig(std::string name) {
+void SinkManager::loadStreamConfig(const std::string& name) {
     json conf = core::configManager.conf["streams"][name];
     SinkManager::Stream* stream = streams[name];
     std::string provName = conf["sink"];
@@ -323,7 +323,7 @@ void SinkManager::loadStreamConfig(std::string name) {
     stream->volumeAjust.setMuted(conf["muted"]);
 }
 
-void SinkManager::saveStreamConfig(std::string name) {
+void SinkManager::saveStreamConfig(const std::string& name) {
     SinkManager::Stream* stream = streams[name];
     json conf;
     conf["sink"] = providerNames[stream->providerId];

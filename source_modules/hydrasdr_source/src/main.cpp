@@ -28,7 +28,7 @@ ConfigManager config;
 
 class HydraSDRSourceModule : public ModuleManager::Instance {
 public:
-    HydraSDRSourceModule(std::string name) {
+    HydraSDRSourceModule(const std::string& name) {
         this->name = name;
 
         // Define the ports
@@ -110,7 +110,7 @@ public:
         }
     }
 
-    void selectByString(std::string serial) {
+    void selectByString(const std::string& serial) {
         if (devices.keyExists(serial)) {
             selectBySerial(devices.value(devices.keyId(serial)));
             return;
@@ -625,11 +625,11 @@ MOD_EXPORT void _INIT_() {
     config.enableAutoSave();
 }
 
-MOD_EXPORT ModuleManager::Instance* _CREATE_INSTANCE_(std::string name) {
+MOD_EXPORT ModuleManager::Instance* _CREATE_INSTANCE_(const std::string& name) {
     return new HydraSDRSourceModule(name);
 }
 
-MOD_EXPORT void _DELETE_INSTANCE_(ModuleManager::Instance* instance) {
+MOD_EXPORT void _DELETE_INSTANCE_(ModuleManager::Instance* const instance) {
     delete (HydraSDRSourceModule*)instance;
 }
 

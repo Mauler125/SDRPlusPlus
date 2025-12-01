@@ -32,7 +32,7 @@ SDRPP_MOD_INFO{
 
 class RyFiDecoderModule : public ModuleManager::Instance {
 public:
-    RyFiDecoderModule(std::string name) {
+    RyFiDecoderModule(const std::string& name) {
         this->name = name;
 
         vfo = sigpath::vfoManager.createVFO(name, ImGui::WaterfallVFO::REF_CENTER, 0, INPUT_BANDWIDTH, INPUT_SAMPLE_RATE, INPUT_BANDWIDTH, INPUT_BANDWIDTH, true);
@@ -126,11 +126,11 @@ MOD_EXPORT void _INIT_() {
 
 }
 
-MOD_EXPORT ModuleManager::Instance* _CREATE_INSTANCE_(std::string name) {
+MOD_EXPORT ModuleManager::Instance* _CREATE_INSTANCE_(const std::string& name) {
     return new RyFiDecoderModule(name);
 }
 
-MOD_EXPORT void _DELETE_INSTANCE_(void* instance) {
+MOD_EXPORT void _DELETE_INSTANCE_(ModuleManager::Instance* const instance) {
     delete (RyFiDecoderModule*)instance;
 }
 

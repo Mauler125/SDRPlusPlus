@@ -30,7 +30,7 @@ ConfigManager config;
 
 class SpectranSourceModule : public ModuleManager::Instance {
 public:
-    SpectranSourceModule(std::string name) {
+    SpectranSourceModule(const std::string& name) {
         this->name = name;
 
         AARTSAAPI_Result res;
@@ -120,7 +120,7 @@ public:
         }
     }
 
-    void selectSerial(std::string serial) {
+    void selectSerial(const std::string& serial) {
         // If no serial is available, deselect
         if (!devList.size()) {
             selectedSerial.clear();
@@ -547,11 +547,11 @@ MOD_EXPORT void _INIT_() {
     config.enableAutoSave();
 }
 
-MOD_EXPORT ModuleManager::Instance* _CREATE_INSTANCE_(std::string name) {
+MOD_EXPORT ModuleManager::Instance* _CREATE_INSTANCE_(const std::string& name) {
     return new SpectranSourceModule(name);
 }
 
-MOD_EXPORT void _DELETE_INSTANCE_(ModuleManager::Instance* instance) {
+MOD_EXPORT void _DELETE_INSTANCE_(ModuleManager::Instance* const instance) {
     delete (SpectranSourceModule*)instance;
 }
 

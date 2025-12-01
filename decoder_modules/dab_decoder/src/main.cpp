@@ -32,7 +32,7 @@ ConfigManager config;
 
 class M17DecoderModule : public ModuleManager::Instance {
 public:
-    M17DecoderModule(std::string name)  {
+    M17DecoderModule(const std::string& name)  {
         this->name = name;
 
         file = std::ofstream("sync4.f32", std::ios::out | std::ios::binary);
@@ -149,11 +149,11 @@ MOD_EXPORT void _INIT_() {
     config.enableAutoSave();
 }
 
-MOD_EXPORT ModuleManager::Instance* _CREATE_INSTANCE_(std::string name) {
+MOD_EXPORT ModuleManager::Instance* _CREATE_INSTANCE_(const std::string& name) {
     return new M17DecoderModule(name);
 }
 
-MOD_EXPORT void _DELETE_INSTANCE_(void* instance) {
+MOD_EXPORT void _DELETE_INSTANCE_(ModuleManager::Instance* const instance) {
     delete (M17DecoderModule*)instance;
 }
 

@@ -38,7 +38,7 @@ namespace SmGui {
     }
     
     // Rec/Play functions
-    void setDiff(std::string id, SmGui::DrawListElem value) {
+    void setDiff(const std::string& id, SmGui::DrawListElem value) {
         diffId = id;
         diffValue = value;
     }
@@ -232,7 +232,7 @@ namespace SmGui {
         elements.push_back(elem);
     }
     
-    void DrawList::pushString(std::string str) {
+    void DrawList::pushString(const std::string& str) {
         DrawListElem elem;
         elem.type = DRAW_LIST_ELEM_TYPE_STRING;
         elem.str = str;

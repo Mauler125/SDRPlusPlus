@@ -64,7 +64,7 @@ namespace backend {
         }
     }
 
-    int init(std::string resDir) {
+    int init(const std::string& resDir) {
         // Load config
         core::configManager.acquire();
         winWidth = core::configManager.conf["windowSize"]["w"];

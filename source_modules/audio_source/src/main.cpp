@@ -32,7 +32,7 @@ struct DeviceInfo {
 
 class AudioSourceModule : public ModuleManager::Instance {
 public:
-    AudioSourceModule(std::string name) {
+    AudioSourceModule(const std::string& name) {
         this->name = name;
 
 #if RTAUDIO_VERSION_MAJOR >= 6
@@ -113,7 +113,7 @@ public:
         }
     }
 
-    void select(std::string name) {
+    void select(const std::string& name) {
         if (devices.empty()) {
             selectedDevice.clear();
             return;
@@ -310,11 +310,11 @@ MOD_EXPORT void _INIT_() {
     config.enableAutoSave();
 }
 
-MOD_EXPORT ModuleManager::Instance* _CREATE_INSTANCE_(std::string name) {
+MOD_EXPORT ModuleManager::Instance* _CREATE_INSTANCE_(const std::string& name) {
     return new AudioSourceModule(name);
 }
 
-MOD_EXPORT void _DELETE_INSTANCE_(ModuleManager::Instance* instance) {
+MOD_EXPORT void _DELETE_INSTANCE_(ModuleManager::Instance* const instance) {
     delete (AudioSourceModule*)instance;
 }
 

@@ -57,8 +57,8 @@ public:
 #endif
         ModuleManager::ModuleInfo_t* info;
         void (*init)();
-        ModuleManager::Instance* (*createInstance)(std::string name);
-        void (*deleteInstance)(ModuleManager::Instance* instance);
+        ModuleManager::Instance* (*createInstance)(const std::string& name);
+        void (*deleteInstance)(ModuleManager::Instance* const instance);
         void (*end)();
 
         friend bool operator==(const Module_t& a, const Module_t& b) {
@@ -77,19 +77,19 @@ public:
         ModuleManager::Instance* instance;
     };
 
-    ModuleManager::Module_t loadModule(std::string path);
+    ModuleManager::Module_t loadModule(const std::string& path);
 
-    int createInstance(std::string name, std::string module);
-    int deleteInstance(std::string name);
+    int createInstance(const std::string& name, const std::string& module);
+    int deleteInstance(const std::string& name);
     int deleteInstance(ModuleManager::Instance* instance);
 
-    int enableInstance(std::string name);
-    int disableInstance(std::string name);
-    bool instanceEnabled(std::string name);
-    void postInit(std::string name);
-    std::string getInstanceModuleName(std::string name);
+    int enableInstance(const std::string& name);
+    int disableInstance(const std::string& name);
+    bool instanceEnabled(const std::string& name);
+    void postInit(const std::string& name);
+    std::string getInstanceModuleName(const std::string& name);
 
-    int countModuleInstances(std::string module);
+    int countModuleInstances(const std::string& module);
 
     void doPostInitAll();
 

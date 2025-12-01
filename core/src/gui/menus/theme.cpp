@@ -8,7 +8,7 @@ namespace thememenu {
     std::vector<std::string> themeNames;
     std::string themeNamesTxt;
 
-    void init(std::string resDir) {
+    void init(const std::string& resDir) {
         // TODO: Not hardcode theme directory
         gui::themeManager.loadThemesFromDir(resDir + "/themes/");
         core::configManager.acquire();

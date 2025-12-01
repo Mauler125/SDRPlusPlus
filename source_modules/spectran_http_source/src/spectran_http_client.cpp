@@ -2,7 +2,7 @@
 #include <utils/flog.h>
 #include <inttypes.h>
 
-SpectranHTTPClient::SpectranHTTPClient(std::string host, int port, dsp::stream<dsp::complex_t>* stream) {
+SpectranHTTPClient::SpectranHTTPClient(const std::string& host, int port, dsp::stream<dsp::complex_t>* stream) {
     this->stream = stream;
 
     // Connect to server

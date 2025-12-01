@@ -28,19 +28,19 @@ SDRPP_MOD_INFO{
 
 ConfigManager config;
 
-std::string genFileName(std::string prefix, std::string suffix) {
+static std::string genFileName(const std::string& prefix, const std::string& suffix) {
     time_t now = time(0);
     tm* ltm = localtime(&now);
     char buf[1024];
-    sprintf(buf, "%s_%02d-%02d-%02d_%02d-%02d-%02d%s", prefix.c_str(), ltm->tm_hour, ltm->tm_min, ltm->tm_sec, ltm->tm_mday, ltm->tm_mon + 1, ltm->tm_year + 1900, suffix.c_str());
-    return buf;
+    const int ret = snprintf(buf, sizeof(buf), "%s_%02d-%02d-%02d_%02d-%02d-%02d%s", prefix.c_str(), ltm->tm_hour, ltm->tm_min, ltm->tm_sec, ltm->tm_mday, ltm->tm_mon + 1, ltm->tm_year + 1900, suffix.c_str());
+    return std::string(buf, std::clamp(ret, 0, sizeof(buf));
 }
 
 #define INPUT_SAMPLE_RATE 150000
 
 class MeteorDemodulatorModule : public ModuleManager::Instance {
 public:
-    MeteorDemodulatorModule(std::string name) : folderSelect("%ROOT%/recordings") {
+    MeteorDemodulatorModule(const std::string& name) : folderSelect("%ROOT%/recordings") {
         this->name = name;
 
         writeBuffer = new int8_t[STREAM_BUFFER_SIZE];
@@ -275,11 +275,11 @@ MOD_EXPORT void _INIT_() {
     config.enableAutoSave();
 }
 
-MOD_EXPORT ModuleManager::Instance* _CREATE_INSTANCE_(std::string name) {
+MOD_EXPORT ModuleManager::Instance* _CREATE_INSTANCE_(const std::string& name) {
     return new MeteorDemodulatorModule(name);
 }
 
-MOD_EXPORT void _DELETE_INSTANCE_(void* instance) {
+MOD_EXPORT void _DELETE_INSTANCE_(ModuleManager::Instance* const instance) {
     delete (MeteorDemodulatorModule*)instance;
 }
 

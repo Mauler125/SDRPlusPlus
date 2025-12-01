@@ -11,11 +11,11 @@ struct ModuleComInterface {
 
 class ModuleComManager {
 public:
-    bool registerInterface(std::string moduleName, std::string name, void (*handler)(int code, void* in, void* out, void* ctx), void* ctx);
-    bool unregisterInterface(std::string name);
-    bool interfaceExists(std::string name);
-    std::string getModuleName(std::string name);
-    bool callInterface(std::string name, int code, void* in, void* out);
+    bool registerInterface(const std::string& moduleName, const std::string& name, void (*handler)(int code, void* in, void* out, void* ctx), void* ctx);
+    bool unregisterInterface(const std::string& name);
+    bool interfaceExists(const std::string& name);
+    std::string getModuleName(const std::string& name);
+    bool callInterface(const std::string& name, int code, void* in, void* out);
 
 private:
     std::recursive_mutex mtx;

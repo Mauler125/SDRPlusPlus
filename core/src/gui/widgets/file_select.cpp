@@ -4,13 +4,13 @@
 #include <gui/file_dialogs.h>
 #include <core.h>
 
-FileSelect::FileSelect(std::string defaultPath, std::vector<std::string> filter) {
+FileSelect::FileSelect(const std::string& defaultPath, std::vector<std::string> filter) {
     _filter = filter;
     root = (std::string)core::args["root"];
     setPath(defaultPath);
 }
 
-bool FileSelect::render(std::string id) {
+bool FileSelect::render(const std::string& id) {
     bool _pathChanged = false;
     float menuColumnWidth = ImGui::GetContentRegionAvail().x;
 
@@ -46,7 +46,7 @@ bool FileSelect::render(std::string id) {
     return _pathChanged;
 }
 
-void FileSelect::setPath(std::string path, bool markChanged) {
+void FileSelect::setPath(const std::string& path, bool markChanged) {
     this->path = path;
     std::string expandedPath = expandString(path);
     pathValid = std::filesystem::is_regular_file(expandedPath);
@@ -54,9 +54,9 @@ void FileSelect::setPath(std::string path, bool markChanged) {
     strcpy(strPath, path.c_str());
 }
 
-std::string FileSelect::expandString(std::string input) {
-    input = std::regex_replace(input, std::regex("%ROOT%"), root);
-    return std::regex_replace(input, std::regex("//"), "/");
+std::string FileSelect::expandString(const std::string& input) const {
+    std::string stack = std::regex_replace(input, std::regex("%ROOT%"), root);
+    return std::regex_replace(stack, std::regex("//"), "/");
 }
 
 bool FileSelect::pathIsValid() {

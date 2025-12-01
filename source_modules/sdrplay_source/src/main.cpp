@@ -82,7 +82,7 @@ const char* rspduo_antennaPortsTxt = "Tuner 1 (50Ohm)\0Tuner 1 (Hi-Z)\0Tuner 2 (
 
 class SDRPlaySourceModule : public ModuleManager::Instance {
 public:
-    SDRPlaySourceModule(std::string name) {
+    SDRPlaySourceModule(const std::string& name) {
         this->name = name;
 
         // Init callbacks
@@ -92,7 +92,7 @@ public:
 
         sdrplay_api_ErrT err = sdrplay_api_Open();
         if (err != sdrplay_api_Success) {
-            flog::error("Could not intiatialized the SDRplay API. Make sure that the service is running.");
+            flog::error("Could not initialize the SDRplay API. Make sure that the service is running.");
             return;
         }
 
@@ -211,7 +211,7 @@ public:
         selectDev(devList[0], 0);
     }
 
-    void selectByName(std::string name) {
+    void selectByName(const std::string& name) {
         for (int i = 0; i < devNameList.size(); i++) {
             if (devNameList[i] == name) {
                 selectDev(devList[i], i);
@@ -1198,11 +1198,11 @@ MOD_EXPORT void _INIT_() {
     config.enableAutoSave();
 }
 
-MOD_EXPORT ModuleManager::Instance* _CREATE_INSTANCE_(std::string name) {
+MOD_EXPORT ModuleManager::Instance* _CREATE_INSTANCE_(const std::string& name) {
     return new SDRPlaySourceModule(name);
 }
 
-MOD_EXPORT void _DELETE_INSTANCE_(ModuleManager::Instance* instance) {
+MOD_EXPORT void _DELETE_INSTANCE_(ModuleManager::Instance* const instance) {
     delete (SDRPlaySourceModule*)instance;
 }
 

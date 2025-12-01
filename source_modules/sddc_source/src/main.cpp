@@ -23,7 +23,7 @@ ConfigManager config;
 
 class SDDCSourceModule : public ModuleManager::Instance {
 public:
-    SDDCSourceModule(std::string name) {
+    SDDCSourceModule(const std::string& name) {
         this->name = name;
 
         // Set firmware image path for debugging
@@ -498,11 +498,11 @@ MOD_EXPORT void _INIT_() {
     config.enableAutoSave();
 }
 
-MOD_EXPORT ModuleManager::Instance* _CREATE_INSTANCE_(std::string name) {
+MOD_EXPORT ModuleManager::Instance* _CREATE_INSTANCE_(const std::string& name) {
     return new SDDCSourceModule(name);
 }
 
-MOD_EXPORT void _DELETE_INSTANCE_(void* instance) {
+MOD_EXPORT void _DELETE_INSTANCE_(ModuleManager::Instance* const instance) {
     delete (SDDCSourceModule*)instance;
 }
 

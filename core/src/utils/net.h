@@ -224,7 +224,7 @@ namespace net {
      * @param port Port to listen on.
      * @return Listener instance on success, Throws runtime_error otherwise.
      */
-    std::shared_ptr<Listener> listen(std::string host, int port);
+    std::shared_ptr<Listener> listen(const std::string& host, int port);
 
     /**
      * Create TCP connection.
@@ -239,7 +239,7 @@ namespace net {
      * @param port Remote port.
      * @return Socket instance on success, Throws runtime_error otherwise.
      */
-    std::shared_ptr<Socket> connect(std::string host, int port);  
+    std::shared_ptr<Socket> connect(const std::string& host, int port);  
 
     /**
      * Create UDP socket.
@@ -256,7 +256,7 @@ namespace net {
      * @param laddr Local address to bind the socket to.
      * @return Socket instance on success, Throws runtime_error otherwise.
      */
-    std::shared_ptr<Socket> openudp(std::string rhost, int rport, const Address& laddr, bool allowBroadcast = false);
+    std::shared_ptr<Socket> openudp(const std::string& rhost, int rport, const Address& laddr, bool allowBroadcast = false);
 
     /**
      * Create UDP socket.
@@ -265,7 +265,7 @@ namespace net {
      * @param lpost Local port used to bind the socket to (optional, 0 to allocate automatically).
      * @return Socket instance on success, Throws runtime_error otherwise.
      */
-    std::shared_ptr<Socket> openudp(const Address& raddr, std::string lhost = "0.0.0.0", int lport = 0, bool allowBroadcast = false);
+    std::shared_ptr<Socket> openudp(const Address& raddr, const std::string& lhost = "0.0.0.0", int lport = 0, bool allowBroadcast = false);
 
     /**
      * Create UDP socket.
@@ -275,5 +275,5 @@ namespace net {
      * @param lpost Local port used to bind the socket to (optional, 0 to allocate automatically).
      * @return Socket instance on success, Throws runtime_error otherwise.
      */
-    std::shared_ptr<Socket> openudp(std::string rhost, int rport, std::string lhost = "0.0.0.0", int lport = 0, bool allowBroadcast = false);  
+    std::shared_ptr<Socket> openudp(const std::string& rhost, int rport, const std::string& lhost = "0.0.0.0", int lport = 0, bool allowBroadcast = false);
 }

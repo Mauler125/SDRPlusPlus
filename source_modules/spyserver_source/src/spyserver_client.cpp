@@ -75,7 +75,7 @@ namespace spyserver {
         client->write(sizeof(SpyServerCommandHeader) + len, writeBuf);
     }
 
-    void SpyServerClientClass::sendHandshake(std::string appName) {
+    void SpyServerClientClass::sendHandshake(const std::string& appName) {
         int totSize = sizeof(SpyServerClientHandshake) + appName.size();
         uint8_t* buf = new uint8_t[totSize];
 
@@ -166,7 +166,7 @@ namespace spyserver {
     void SpyServerClientClass::disconnectHandler(int err, void* ctx) {
     }
 
-    SpyServerClient connect(std::string host, uint16_t port, dsp::stream<dsp::complex_t>* out) {
+    SpyServerClient connect(const std::string& host, uint16_t port, dsp::stream<dsp::complex_t>* out) {
         net::Conn conn = net::connect(host, port);
         if (!conn) {
             return NULL;

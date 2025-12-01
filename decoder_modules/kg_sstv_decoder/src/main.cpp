@@ -36,7 +36,7 @@ ConfigManager config;
 
 class M17DecoderModule : public ModuleManager::Instance {
 public:
-    M17DecoderModule(std::string name) : diag(0.8, 480) {
+    M17DecoderModule(const std::string& name) : diag(0.8, 480) {
         this->name = name;
 
         // Load config
@@ -179,11 +179,11 @@ MOD_EXPORT void _INIT_() {
     config.enableAutoSave();
 }
 
-MOD_EXPORT ModuleManager::Instance* _CREATE_INSTANCE_(std::string name) {
+MOD_EXPORT ModuleManager::Instance* _CREATE_INSTANCE_(const std::string& name) {
     return new M17DecoderModule(name);
 }
 
-MOD_EXPORT void _DELETE_INSTANCE_(void* instance) {
+MOD_EXPORT void _DELETE_INSTANCE_(ModuleManager::Instance* const instance) {
     delete (M17DecoderModule*)instance;
 }
 

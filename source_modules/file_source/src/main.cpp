@@ -27,7 +27,7 @@ ConfigManager config;
 
 class FileSourceModule : public ModuleManager::Instance {
 public:
-    FileSourceModule(std::string name) : fileSelect("", { "Wav IQ Files (*.wav)", "*.wav", "All Files", "*" }) {
+    FileSourceModule(const std::string& name) : fileSelect("", { "Wav IQ Files (*.wav)", "*.wav", "All Files", "*" }) {
         this->name = name;
 
         if (core::args["server"].b()) { return; }
@@ -180,7 +180,7 @@ private:
         delete[] inBuf;
     }
 
-    double getFrequency(std::string filename) {
+    double getFrequency(const std::string& filename) {
         std::regex expr("[0-9]+Hz");
         std::smatch matches;
         std::regex_search(filename, matches, expr);
@@ -212,11 +212,11 @@ MOD_EXPORT void _INIT_() {
     config.enableAutoSave();
 }
 
-MOD_EXPORT void* _CREATE_INSTANCE_(std::string name) {
+MOD_EXPORT void* _CREATE_INSTANCE_(const std::string& name) {
     return new FileSourceModule(name);
 }
 
-MOD_EXPORT void _DELETE_INSTANCE_(void* instance) {
+MOD_EXPORT void _DELETE_INSTANCE_(ModuleManager::Instance* const instance) {
     delete (FileSourceModule*)instance;
 }
 

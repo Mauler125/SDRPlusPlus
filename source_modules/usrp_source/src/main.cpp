@@ -27,7 +27,7 @@ ConfigManager config;
 
 class USRPSourceModule : public ModuleManager::Instance {
 public:
-    USRPSourceModule(std::string name) {
+    USRPSourceModule(const std::string& name) {
         this->name = name;
 
         sampleRate = 8000000.0;
@@ -87,7 +87,7 @@ public:
         }
     }
 
-    void select(std::string serial) {
+    void select(const std::string& serial) {
         // If no device, give up
         if (!devices.size()) {
             selectedSer.clear();
@@ -498,11 +498,11 @@ MOD_EXPORT void _INIT_() {
     config.enableAutoSave();
 }
 
-MOD_EXPORT ModuleManager::Instance* _CREATE_INSTANCE_(std::string name) {
+MOD_EXPORT ModuleManager::Instance* _CREATE_INSTANCE_(const std::string& name) {
     return new USRPSourceModule(name);
 }
 
-MOD_EXPORT void _DELETE_INSTANCE_(ModuleManager::Instance* instance) {
+MOD_EXPORT void _DELETE_INSTANCE_(ModuleManager::Instance* const instance) {
     delete (USRPSourceModule*)instance;
 }
 

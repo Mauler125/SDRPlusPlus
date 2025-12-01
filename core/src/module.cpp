@@ -2,7 +2,7 @@
 #include <filesystem>
 #include <utils/flog.h>
 
-ModuleManager::Module_t ModuleManager::loadModule(std::string path) {
+ModuleManager::Module_t ModuleManager::loadModule(const std::string& path) {
     Module_t mod;
 
     // On android, the path has to be relative, don't make it absolute
@@ -27,8 +27,8 @@ ModuleManager::Module_t ModuleManager::loadModule(std::string path) {
     }
     mod.info = (ModuleInfo_t*)GetProcAddress(mod.handle, "_INFO_");
     mod.init = (void (*)())GetProcAddress(mod.handle, "_INIT_");
-    mod.createInstance = (Instance * (*)(std::string)) GetProcAddress(mod.handle, "_CREATE_INSTANCE_");
-    mod.deleteInstance = (void (*)(Instance*))GetProcAddress(mod.handle, "_DELETE_INSTANCE_");
+    mod.createInstance = (Instance * (*)(const std::string&)) GetProcAddress(mod.handle, "_CREATE_INSTANCE_");
+    mod.deleteInstance = (void (*)(Instance* const))GetProcAddress(mod.handle, "_DELETE_INSTANCE_");
     mod.end = (void (*)())GetProcAddress(mod.handle, "_END_");
 #else
     mod.handle = dlopen(path.c_str(), RTLD_LAZY | RTLD_LOCAL);
@@ -39,8 +39,8 @@ ModuleManager::Module_t ModuleManager::loadModule(std::string path) {
     }
     mod.info = (ModuleInfo_t*)dlsym(mod.handle, "_INFO_");
     mod.init = (void (*)())dlsym(mod.handle, "_INIT_");
-    mod.createInstance = (Instance * (*)(std::string)) dlsym(mod.handle, "_CREATE_INSTANCE_");
-    mod.deleteInstance = (void (*)(Instance*))dlsym(mod.handle, "_DELETE_INSTANCE_");
+    mod.createInstance = (Instance * (*)(const std::string&)) dlsym(mod.handle, "_CREATE_INSTANCE_");
+    mod.deleteInstance = (void (*)(Instance* const))dlsym(mod.handle, "_DELETE_INSTANCE_");
     mod.end = (void (*)())dlsym(mod.handle, "_END_");
 #endif
     if (mod.info == NULL) {
@@ -83,7 +83,7 @@ ModuleManager::Module_t ModuleManager::loadModule(std::string path) {
     return mod;
 }
 
-int ModuleManager::createInstance(std::string name, std::string module) {
+int ModuleManager::createInstance(const std::string& name, const std::string& module) {
     if (modules.find(module) == modules.end()) {
         flog::error("Module '{0}' doesn't exist", module);
         return -1;
@@ -105,7 +105,7 @@ int ModuleManager::createInstance(std::string name, std::string module) {
     return 0;
 }
 
-int ModuleManager::deleteInstance(std::string name) {
+int ModuleManager::deleteInstance(const std::string& name) {
     if (instances.find(name) == instances.end()) {
         flog::error("Tried to remove non-existent instance '{0}'", name);
         return -1;
@@ -123,7 +123,7 @@ int ModuleManager::deleteInstance(ModuleManager::Instance* instance) {
     return -1;
 }
 
-int ModuleManager::enableInstance(std::string name) {
+int ModuleManager::enableInstance(const std::string& name) {
     if (instances.find(name) == instances.end()) {
         flog::error("Cannot enable '{0}', instance doesn't exist", name);
         return -1;
@@ -132,7 +132,7 @@ int ModuleManager::enableInstance(std::string name) {
     return 0;
 }
 
-int ModuleManager::disableInstance(std::string name) {
+int ModuleManager::disableInstance(const std::string& name) {
     if (instances.find(name) == instances.end()) {
         flog::error("Cannot disable '{0}', instance doesn't exist", name);
         return -1;
@@ -141,7 +141,7 @@ int ModuleManager::disableInstance(std::string name) {
     return 0;
 }
 
-bool ModuleManager::instanceEnabled(std::string name) {
+bool ModuleManager::instanceEnabled(const std::string& name) {
     if (instances.find(name) == instances.end()) {
         flog::error("Cannot check if '{0}' is enabled, instance doesn't exist", name);
         return false;
@@ -149,7 +149,7 @@ bool ModuleManager::instanceEnabled(std::string name) {
     return instances[name].instance->isEnabled();
 }
 
-void ModuleManager::postInit(std::string name) {
+void ModuleManager::postInit(const std::string& name) {
     if (instances.find(name) == instances.end()) {
         flog::error("Cannot post-init '{0}', instance doesn't exist", name);
         return;
@@ -157,7 +157,7 @@ void ModuleManager::postInit(std::string name) {
     instances[name].instance->postInit();
 }
 
-std::string ModuleManager::getInstanceModuleName(std::string name) {
+std::string ModuleManager::getInstanceModuleName(const std::string& name) {
     if (instances.find(name) == instances.end()) {
         flog::error("Cannot get module name of '{0}', instance doesn't exist", name);
         return "";
@@ -165,7 +165,7 @@ std::string ModuleManager::getInstanceModuleName(std::string name) {
     return std::string(instances[name].module.info->name);
 }
 
-int ModuleManager::countModuleInstances(std::string module) {
+int ModuleManager::countModuleInstances(const std::string& module) {
     if (modules.find(module) == modules.end()) {
         flog::error("Cannot count instances of '{0}', Module doesn't exist", module);
         return -1;

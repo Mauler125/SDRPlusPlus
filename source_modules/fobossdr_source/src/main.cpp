@@ -28,7 +28,7 @@ ConfigManager config;
 
 class FobosSDRSourceModule : public ModuleManager::Instance {
 public:
-    FobosSDRSourceModule(std::string name) {
+    FobosSDRSourceModule(const std::string& name) {
         this->name = name;
 
         sampleRate = 50000000.0;
@@ -546,11 +546,11 @@ MOD_EXPORT void _INIT_() {
     config.enableAutoSave();
 }
 
-MOD_EXPORT ModuleManager::Instance* _CREATE_INSTANCE_(std::string name) {
+MOD_EXPORT ModuleManager::Instance* _CREATE_INSTANCE_(const std::string& name) {
     return new FobosSDRSourceModule(name);
 }
 
-MOD_EXPORT void _DELETE_INSTANCE_(void* instance) {
+MOD_EXPORT void _DELETE_INSTANCE_(ModuleManager::Instance* const instance) {
     delete (FobosSDRSourceModule*)instance;
 }
 

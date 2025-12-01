@@ -36,7 +36,7 @@ std::map<IFNRPreset, double> ifnrTaps = {
 
 class RadioModule : public ModuleManager::Instance {
 public:
-    RadioModule(std::string name) {
+    RadioModule(const std::string& name) {
         this->name = name;
 
         // Initialize option lists

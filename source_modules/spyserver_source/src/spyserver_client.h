@@ -26,7 +26,7 @@ namespace spyserver {
 
     private:
         void sendCommand(uint32_t command, void* data, int len);
-        void sendHandshake(std::string appName);
+        void sendHandshake(const std::string& appName);
 
         int readSize(int count, uint8_t* buffer);
 
@@ -49,6 +49,6 @@ namespace spyserver {
 
     typedef std::unique_ptr<SpyServerClientClass> SpyServerClient;
 
-    SpyServerClient connect(std::string host, uint16_t port, dsp::stream<dsp::complex_t>* out);
+    SpyServerClient connect(const std::string& host, uint16_t port, dsp::stream<dsp::complex_t>* out);
 
 }

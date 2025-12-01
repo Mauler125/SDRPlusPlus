@@ -144,7 +144,7 @@ public:
     int parse(int argc, char* argv[]);
     void showHelp();
 
-    const CLIArg& operator[](std::string name) const {
+    const CLIArg& operator[](const std::string& name) const {
         return args.at(name);
     }
 

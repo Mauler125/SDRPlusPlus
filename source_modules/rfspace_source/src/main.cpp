@@ -25,7 +25,7 @@ ConfigManager config;
 
 class RFSpaceSourceModule : public ModuleManager::Instance {
 public:
-    RFSpaceSourceModule(std::string name) {
+    RFSpaceSourceModule(const std::string& name) {
         this->name = name;
 
         handler.ctx = this;
@@ -339,11 +339,11 @@ MOD_EXPORT void _INIT_() {
     config.release(corrected);
 }
 
-MOD_EXPORT ModuleManager::Instance* _CREATE_INSTANCE_(std::string name) {
+MOD_EXPORT ModuleManager::Instance* _CREATE_INSTANCE_(const std::string& name) {
     return new RFSpaceSourceModule(name);
 }
 
-MOD_EXPORT void _DELETE_INSTANCE_(ModuleManager::Instance* instance) {
+MOD_EXPORT void _DELETE_INSTANCE_(ModuleManager::Instance* const instance) {
     delete (RFSpaceSourceModule*)instance;
 }
 

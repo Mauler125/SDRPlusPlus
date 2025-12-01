@@ -135,7 +135,7 @@ private:
 
 class AudioSinkModule : public ModuleManager::Instance {
 public:
-    AudioSinkModule(std::string name) {
+    AudioSinkModule(const std::string& name) {
         this->name = name;
         provider.create = create_sink;
         provider.ctx = this;
@@ -179,12 +179,12 @@ MOD_EXPORT void _INIT_() {
     config.enableAutoSave();
 }
 
-MOD_EXPORT void* _CREATE_INSTANCE_(std::string name) {
+MOD_EXPORT void* _CREATE_INSTANCE_(const std::string& name) {
     AudioSinkModule* instance = new AudioSinkModule(name);
     return instance;
 }
 
-MOD_EXPORT void _DELETE_INSTANCE_(void* instance) {
+MOD_EXPORT void _DELETE_INSTANCE_(ModuleManager::Instance* const instance) {
     delete (AudioSinkModule*)instance;
 }
 

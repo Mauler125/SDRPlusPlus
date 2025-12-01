@@ -6,7 +6,7 @@
 #include <filesystem>
 #include <fstream>
 
-bool ThemeManager::loadThemesFromDir(std::string path) {
+bool ThemeManager::loadThemesFromDir(const std::string& path) {
     // // TEST JUST TO DUMP THE ORIGINAL THEME
     //printf("ImGui theme:\n\n");
     //auto& imguiStyle = ImGui::GetStyle();
@@ -47,7 +47,7 @@ bool ThemeManager::loadThemesFromDir(std::string path) {
     return true;
 }
 
-bool ThemeManager::loadTheme(std::string path) {
+bool ThemeManager::loadTheme(const std::string& path) {
     if (!std::filesystem::is_regular_file(path)) {
         flog::error("Theme file doesn't exist: {0}", path);
         return false;
@@ -126,7 +126,7 @@ bool ThemeManager::loadTheme(std::string path) {
     return true;
 }
 
-bool ThemeManager::applyTheme(std::string name) {
+bool ThemeManager::applyTheme(const std::string& name) {
     if (m_loadedThemes.find(name) == m_loadedThemes.end()) {
         flog::error("Unknown theme: {0}", name);
         return false;
@@ -192,7 +192,7 @@ bool ThemeManager::applyTheme(std::string name) {
     return true;
 }
 
-bool ThemeManager::decodeRGBA(std::string str, uint8_t out[4]) {
+bool ThemeManager::decodeRGBA(const std::string& str, uint8_t out[4]) {
     if (str[0] != '#' || !std::all_of(str.begin() + 1, str.end(), ::isxdigit) || str.length() != 9) {
         return false;
     }

@@ -283,7 +283,7 @@ namespace hermes {
         return devices;
     }
 
-    std::shared_ptr<Client> open(std::string host, int port) {
+    std::shared_ptr<Client> open(const std::string& host, int port) {
         return open(net::Address(host, port));
     }
 

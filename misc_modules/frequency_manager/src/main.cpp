@@ -61,7 +61,7 @@ const char* bookmarkDisplayModesTxt = "Off\0Top\0Bottom\0";
 
 class FrequencyManagerModule : public ModuleManager::Instance {
 public:
-    FrequencyManagerModule(std::string name) {
+    FrequencyManagerModule(const std::string& name) {
         this->name = name;
 
         config.acquire();
@@ -312,7 +312,7 @@ private:
         selectedListId = 0;
     }
 
-    void loadByName(std::string listName) {
+    void loadByName(const std::string& listName) {
         bookmarks.clear();
         if (std::find(listNames.begin(), listNames.end(), listName) == listNames.end()) {
             selectedListName = "";
@@ -334,7 +334,7 @@ private:
         config.release();
     }
 
-    void saveByName(std::string listName) {
+    void saveByName(const std::string& listName) {
         config.acquire();
         config.conf["lists"][listName]["bookmarks"] = json::object();
         for (auto [bmName, bm] : bookmarks) {
@@ -752,7 +752,7 @@ private:
     pfd::open_file* importDialog;
     pfd::save_file* exportDialog;
 
-    void importBookmarks(std::string path) {
+    void importBookmarks(const std::string& path) {
         std::ifstream fs(path);
         json importBookmarks;
         fs >> importBookmarks;
@@ -785,7 +785,7 @@ private:
         fs.close();
     }
 
-    void exportBookmarks(std::string path) {
+    void exportBookmarks(const std::string& path) {
         std::ofstream fs(path);
         fs << exportedBookmarks;
         fs.close();
@@ -851,11 +851,11 @@ MOD_EXPORT void _INIT_() {
     config.release(true);
 }
 
-MOD_EXPORT ModuleManager::Instance* _CREATE_INSTANCE_(std::string name) {
+MOD_EXPORT ModuleManager::Instance* _CREATE_INSTANCE_(const std::string& name) {
     return new FrequencyManagerModule(name);
 }
 
-MOD_EXPORT void _DELETE_INSTANCE_(void* instance) {
+MOD_EXPORT void _DELETE_INSTANCE_(ModuleManager::Instance* const instance) {
     delete (FrequencyManagerModule*)instance;
 }
 

@@ -15,7 +15,7 @@ SDRPP_MOD_INFO{
 
 class ScannerModule : public ModuleManager::Instance {
 public:
-    ScannerModule(std::string name) {
+    ScannerModule(const std::string& name) {
         this->name = name;
         gui::menu.registerEntry(name, menuHandler, this, NULL);
     }
@@ -294,11 +294,11 @@ MOD_EXPORT void _INIT_() {
     // Nothing here
 }
 
-MOD_EXPORT ModuleManager::Instance* _CREATE_INSTANCE_(std::string name) {
+MOD_EXPORT ModuleManager::Instance* _CREATE_INSTANCE_(const std::string& name) {
     return new ScannerModule(name);
 }
 
-MOD_EXPORT void _DELETE_INSTANCE_(void* instance) {
+MOD_EXPORT void _DELETE_INSTANCE_(ModuleManager::Instance* const instance) {
     delete (ScannerModule*)instance;
 }
 

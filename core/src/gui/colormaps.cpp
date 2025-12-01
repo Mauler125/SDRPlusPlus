@@ -9,7 +9,7 @@ using nlohmann::json;
 namespace colormaps {
     std::map<std::string, Map> maps;
 
-    void loadMap(std::string path) {
+    void loadMap(const std::string& path) {
         if (!std::filesystem::is_regular_file(path)) {
             flog::error("Could not load {0}, file doesn't exist", path);
             return;

@@ -267,12 +267,12 @@ namespace net::rigctl {
     private:
         int recvStatus();
 
-        int getInt(std::string cmd);
-        int setInt(std::string cmd, int value);
-        double getFloat(std::string cmd);
-        int setFloat(std::string cmd, double value);
-        //std::string getString(std::string cmd);
-        //int setString(std::string cmd, std::string value);
+        int getInt(const std::string& cmd);
+        int setInt(const std::string& cmd, int value);
+        double getFloat(const std::string& cmd);
+        int setFloat(const std::string& cmd, double value);
+        //std::string getString(const std::string& cmd);
+        //int setString(const std::string& cmd, const std::string& value);
 
         std::shared_ptr<Socket> sock;
 
@@ -323,6 +323,6 @@ namespace net::rigctl {
         std::vector<std::shared_ptr<net::Socket>> sockets;
     };
 
-    std::shared_ptr<Client> connect(std::string host, int port = 4532);
-    std::shared_ptr<Server> listen(std::string host, int port = 4532);
+    std::shared_ptr<Client> connect(const std::string& host, int port = 4532);
+    std::shared_ptr<Server> listen(const std::string& host, int port = 4532);
 }

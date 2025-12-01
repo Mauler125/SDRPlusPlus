@@ -24,7 +24,7 @@ namespace riff {
         // Writer(const Writer&& b);
         ~Writer();
 
-        bool open(std::string path, const char form[4]);
+        bool open(const std::string& path, const char form[4]);
         bool isOpen();
         void close();
 
@@ -51,7 +51,7 @@ namespace riff {
     //     Reader(const Reader&& b);
     //     ~Reader();
 
-    //     bool open(std::string path);
+    //     bool open(const std::string& path);
     //     bool isOpen();
     //     void close();
 

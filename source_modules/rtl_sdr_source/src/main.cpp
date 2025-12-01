@@ -56,7 +56,7 @@ const char* directSamplingModesTxt = "Disabled\0I branch\0Q branch\0";
 
 class RTLSDRSourceModule : public ModuleManager::Instance {
 public:
-    RTLSDRSourceModule(std::string name) {
+    RTLSDRSourceModule(const std::string& name) {
         this->name = name;
 
         serverMode = (bool)core::args["server"];
@@ -164,7 +164,7 @@ public:
         }
     }
 
-    void selectByName(std::string name) {
+    void selectByName(const std::string& name) {
         for (int i = 0; i < devCount; i++) {
             if (name == devNames[i]) {
                 selectById(i);
@@ -593,11 +593,11 @@ MOD_EXPORT void _INIT_() {
     config.enableAutoSave();
 }
 
-MOD_EXPORT ModuleManager::Instance* _CREATE_INSTANCE_(std::string name) {
+MOD_EXPORT ModuleManager::Instance* _CREATE_INSTANCE_(const std::string& name) {
     return new RTLSDRSourceModule(name);
 }
 
-MOD_EXPORT void _DELETE_INSTANCE_(ModuleManager::Instance* instance) {
+MOD_EXPORT void _DELETE_INSTANCE_(ModuleManager::Instance* const instance) {
     delete (RTLSDRSourceModule*)instance;
 }
 

@@ -33,7 +33,7 @@ namespace wav {
 
     Writer::~Writer() { close(); }
 
-    bool Writer::open(std::string path) {
+    bool Writer::open(const std::string& path) {
         std::lock_guard<std::recursive_mutex> lck(mtx);
         // Close previous file
         if (rw.isOpen()) { close(); }

@@ -16,9 +16,9 @@ struct Theme {
 
 class ThemeManager {
 public:
-    bool loadThemesFromDir(std::string path);
-    bool loadTheme(std::string path);
-    bool applyTheme(std::string name);
+    bool loadThemesFromDir(const std::string& path);
+    bool loadTheme(const std::string& path);
+    bool applyTheme(const std::string& name);
 
     std::vector<std::string> getThemeNames();
 
@@ -28,7 +28,7 @@ public:
     ImVec4 crosshairColor = ImVec4(0.86f, 0.86f, 0.0f, 1.0f);
 
 private:
-    static bool decodeRGBA(std::string str, uint8_t out[4]);
+    static bool decodeRGBA(const std::string& str, uint8_t out[4]);
 
     static const std::unordered_map<std::string_view, int> sm_imguiColorStringToCodeTable;
     static const std::unordered_map<std::string_view, int> sm_implotColorStringToCodeTable;

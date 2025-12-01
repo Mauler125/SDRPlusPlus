@@ -70,9 +70,9 @@ namespace ImGui {
         newData = true;
     }
 
-    void LinePushImage::save(std::string path) {
-        // TODO: Implement
-    }
+    //void LinePushImage::save(const std::string& path) {
+    //    // TODO: Implement
+    //}
 
     int LinePushImage::getLineCount() {
         return _lineCount;

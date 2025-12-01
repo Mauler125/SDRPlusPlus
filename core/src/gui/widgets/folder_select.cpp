@@ -4,12 +4,12 @@
 #include <gui/file_dialogs.h>
 #include <core.h>
 
-FolderSelect::FolderSelect(std::string defaultPath) {
+FolderSelect::FolderSelect(const std::string& defaultPath) {
     root = (std::string)core::args["root"];
     setPath(defaultPath);
 }
 
-bool FolderSelect::render(std::string id) {
+bool FolderSelect::render(const std::string& id) {
     bool _pathChanged = false;
     float menuColumnWidth = ImGui::GetContentRegionAvail().x;
 
@@ -45,7 +45,7 @@ bool FolderSelect::render(std::string id) {
     return _pathChanged;
 }
 
-void FolderSelect::setPath(std::string path, bool markChanged) {
+void FolderSelect::setPath(const std::string& path, bool markChanged) {
     this->path = path;
     std::string expandedPath = expandString(path);
     pathValid = std::filesystem::is_directory(expandedPath);
@@ -53,9 +53,9 @@ void FolderSelect::setPath(std::string path, bool markChanged) {
     strcpy(strPath, path.c_str());
 }
 
-std::string FolderSelect::expandString(std::string input) {
-    input = std::regex_replace(input, std::regex("%ROOT%"), root);
-    return std::regex_replace(input, std::regex("//"), "/");
+std::string FolderSelect::expandString(const std::string& input) const {
+    std::string stack = std::regex_replace(input, std::regex("%ROOT%"), root);
+    return std::regex_replace(stack, std::regex("//"), "/");
 }
 
 bool FolderSelect::pathIsValid() {

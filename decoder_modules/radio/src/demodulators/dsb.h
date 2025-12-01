@@ -7,7 +7,7 @@ namespace demod {
     public:
         DSB() {}
 
-        DSB(std::string name, ConfigManager* config, dsp::stream<dsp::complex_t>* input, double bandwidth, double audioSR) {
+        DSB(const std::string& name, ConfigManager* config, dsp::stream<dsp::complex_t>* input, double bandwidth, double audioSR) {
             init(name, config, input, bandwidth, audioSR);
         }
 
@@ -15,7 +15,7 @@ namespace demod {
             stop();
         }
 
-        void init(std::string name, ConfigManager* config, dsp::stream<dsp::complex_t>* input, double bandwidth, double audioSR) {
+        void init(const std::string& name, ConfigManager* config, dsp::stream<dsp::complex_t>* input, double bandwidth, double audioSR) {
             this->name = name;
             _config = config;
 

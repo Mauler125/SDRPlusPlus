@@ -83,7 +83,7 @@ namespace SmGui {
         void pushBool(bool b);
         void pushInt(int i);
         void pushFloat(float f);
-        void pushString(std::string str);
+        void pushString(const std::string& str);
 
         void draw(std::string& diffId, DrawListElem& diffValue, bool& syncRequired);
         
@@ -102,7 +102,7 @@ namespace SmGui {
     // Rec/Play functions
     // TODO: Maybe move verification to the load function instead of checking in drawFrame
     void init(bool server);
-    void setDiff(std::string id, SmGui::DrawListElem value);
+    void setDiff(const std::string& id, SmGui::DrawListElem value);
     void startRecord(DrawList* dl);
     void stopRecord();
 

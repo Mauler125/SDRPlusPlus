@@ -10,8 +10,8 @@
 
 namespace sourcemenu {
     int sourceId = 0;
-    EventHandler<std::string> sourcesChangedHandler;
-    EventHandler<std::string> sourceUnregisterHandler;
+    EventHandler<const std::string&> sourcesChangedHandler;
+    EventHandler<const std::string&> sourceUnregisterHandler;
     OptionList<std::string, std::string> sources;
     std::string selectedSource;
 
@@ -91,7 +91,7 @@ namespace sourcemenu {
         }
     }
 
-    void selectSource(std::string name) {
+    void selectSource(const std::string& name) {
         // If there is no source, give up
         if (sources.empty()) {
             sourceId = 0;
@@ -113,7 +113,7 @@ namespace sourcemenu {
         sigpath::sourceManager.selectSource(name);
     }
 
-    void onSourcesChanged(std::string name, void* ctx) {
+    void onSourcesChanged(const std::string& name, void* ctx) {
         // Update the source list
         refreshSources();
 
@@ -121,7 +121,7 @@ namespace sourcemenu {
         selectSource(selectedSource);
     }
 
-    void onSourceUnregister(std::string name, void* ctx) {
+    void onSourceUnregister(const std::string& name, void* ctx) {
         if (name != selectedSource) { return; }
 
         // TODO: Stop everything

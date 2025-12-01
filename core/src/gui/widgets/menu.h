@@ -21,8 +21,8 @@ public:
         ModuleManager::Instance* inst;
     };
 
-    void registerEntry(std::string name, void (*drawHandler)(void* ctx), void* ctx = NULL, ModuleManager::Instance* inst = NULL);
-    void removeEntry(std::string name);
+    void registerEntry(const std::string& name, void (*drawHandler)(void* ctx), void* ctx = NULL, ModuleManager::Instance* inst = NULL);
+    void removeEntry(const std::string& name);
     bool draw(bool updateStates);
 
     std::vector<MenuOption_t> order;
@@ -36,7 +36,7 @@ public:
     bool canDragMenuItems = true;
 
 private:
-    bool isInOrderList(std::string name);
+    bool isInOrderList(const std::string& name);
 
     
     bool menuClicked = false;

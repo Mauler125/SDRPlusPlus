@@ -34,8 +34,8 @@ public:
     void bindIQStream(dsp::stream<dsp::complex_t>* stream);
     void unbindIQStream(dsp::stream<dsp::complex_t>* stream);
 
-    dsp::channel::RxVFO* addVFO(std::string name, double sampleRate, double bandwidth, double offset);
-    void removeVFO(std::string name);
+    dsp::channel::RxVFO* addVFO(const std::string& name, double sampleRate, double bandwidth, double offset);
+    void removeVFO(const std::string& name);
 
     void setFFTSize(int size);
     void setFFTRate(double rate);

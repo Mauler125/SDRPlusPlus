@@ -306,7 +306,7 @@ private:
 
 class NetworkSinkModule : public ModuleManager::Instance {
 public:
-    NetworkSinkModule(std::string name) {
+    NetworkSinkModule(const std::string& name) {
         this->name = name;
         provider.create = create_sink;
         provider.ctx = this;
@@ -350,12 +350,12 @@ MOD_EXPORT void _INIT_() {
     config.enableAutoSave();
 }
 
-MOD_EXPORT void* _CREATE_INSTANCE_(std::string name) {
+MOD_EXPORT void* _CREATE_INSTANCE_(const std::string& name) {
     NetworkSinkModule* instance = new NetworkSinkModule(name);
     return instance;
 }
 
-MOD_EXPORT void _DELETE_INSTANCE_(void* instance) {
+MOD_EXPORT void _DELETE_INSTANCE_(ModuleManager::Instance* const instance) {
     delete (NetworkSinkModule*)instance;
 }
 

@@ -28,7 +28,7 @@ ConfigManager config;
 
 class VORReceiverModule : public ModuleManager::Instance {
 public:
-    VORReceiverModule(std::string name) {
+    VORReceiverModule(const std::string& name) {
         this->name = name;
 
         // Load config
@@ -113,11 +113,11 @@ MOD_EXPORT void _INIT_() {
     config.enableAutoSave();
 }
 
-MOD_EXPORT ModuleManager::Instance* _CREATE_INSTANCE_(std::string name) {
+MOD_EXPORT ModuleManager::Instance* _CREATE_INSTANCE_(const std::string& name) {
     return new VORReceiverModule(name);
 }
 
-MOD_EXPORT void _DELETE_INSTANCE_(void* instance) {
+MOD_EXPORT void _DELETE_INSTANCE_(ModuleManager::Instance* const instance) {
     delete (VORReceiverModule*)instance;
 }
 

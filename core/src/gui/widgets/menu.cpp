@@ -6,7 +6,7 @@
 Menu::Menu() {
 }
 
-void Menu::registerEntry(std::string name, void (*drawHandler)(void* ctx), void* ctx, ModuleManager::Instance* inst) {
+void Menu::registerEntry(const std::string& name, void (*drawHandler)(void* ctx), void* ctx, ModuleManager::Instance* inst) {
     MenuItem_t item;
     item.drawHandler = drawHandler;
     item.ctx = ctx;
@@ -20,7 +20,7 @@ void Menu::registerEntry(std::string name, void (*drawHandler)(void* ctx), void*
     }
 }
 
-void Menu::removeEntry(std::string name) {
+void Menu::removeEntry(const std::string& name) {
     items.erase(name);
 }
 
@@ -215,7 +215,7 @@ bool Menu::draw(bool updateStates) {
     return changed;
 }
 
-bool Menu::isInOrderList(std::string name) {
+bool Menu::isInOrderList(const std::string& name) {
     for (MenuOption_t opt : order) {
         if (opt.name == name) {
             return true;

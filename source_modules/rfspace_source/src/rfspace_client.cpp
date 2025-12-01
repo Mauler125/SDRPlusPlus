@@ -265,7 +265,7 @@ namespace rfspace {
         }
     }
 
-    std::shared_ptr<Client> connect(std::string host, uint16_t port, dsp::stream<dsp::complex_t>* out) {
+    std::shared_ptr<Client> connect(const std::string& host, uint16_t port, dsp::stream<dsp::complex_t>* out) {
         auto tcp = net::connect(host, port);
         auto udp = net::openudp(host, port, "0.0.0.0", port);
         return std::make_shared<Client>(tcp, udp, out);

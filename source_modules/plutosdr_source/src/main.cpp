@@ -31,7 +31,7 @@ const std::vector<const char*> deviceWhiteList = {
 
 class PlutoSDRSourceModule : public ModuleManager::Instance {
 public:
-    PlutoSDRSourceModule(std::string name) {
+    PlutoSDRSourceModule(const std::string& name) {
         this->name = name;
 
         // Define valid samplerates
@@ -541,11 +541,11 @@ MOD_EXPORT void _INIT_() {
     }
 }
 
-MOD_EXPORT ModuleManager::Instance* _CREATE_INSTANCE_(std::string name) {
+MOD_EXPORT ModuleManager::Instance* _CREATE_INSTANCE_(const std::string& name) {
     return new PlutoSDRSourceModule(name);
 }
 
-MOD_EXPORT void _DELETE_INSTANCE_(ModuleManager::Instance* instance) {
+MOD_EXPORT void _DELETE_INSTANCE_(ModuleManager::Instance* const instance) {
     delete (PlutoSDRSourceModule*)instance;
 }
 

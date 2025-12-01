@@ -29,7 +29,7 @@ const char* AGG_MODES_STR = "Off\0Low\0High\0";
 
 class AirspyHFSourceModule : public ModuleManager::Instance {
 public:
-    AirspyHFSourceModule(std::string name) {
+    AirspyHFSourceModule(const std::string& name) {
         this->name = name;
 
         sampleRate = 768000.0;
@@ -113,7 +113,7 @@ public:
         }
     }
 
-    void selectByString(std::string serial) {
+    void selectByString(const std::string& serial) {
         char buf[1024];
         for (int i = 0; i < devList.size(); i++) {
             sprintf(buf, "%016" PRIX64, devList[i]);
@@ -413,11 +413,11 @@ MOD_EXPORT void _INIT_() {
     config.enableAutoSave();
 }
 
-MOD_EXPORT ModuleManager::Instance* _CREATE_INSTANCE_(std::string name) {
+MOD_EXPORT ModuleManager::Instance* _CREATE_INSTANCE_(const std::string& name) {
     return new AirspyHFSourceModule(name);
 }
 
-MOD_EXPORT void _DELETE_INSTANCE_(ModuleManager::Instance* instance) {
+MOD_EXPORT void _DELETE_INSTANCE_(ModuleManager::Instance* const instance) {
     delete (AirspyHFSourceModule*)instance;
 }
 

@@ -25,7 +25,7 @@ ConfigManager config;
 
 class SDRPPServerSourceModule : public ModuleManager::Instance {
 public:
-    SDRPPServerSourceModule(std::string name) {
+    SDRPPServerSourceModule(const std::string& name) {
         this->name = name;
 
         // Yeah no server-ception, sorry...
@@ -298,11 +298,11 @@ MOD_EXPORT void _INIT_() {
     config.enableAutoSave();
 }
 
-MOD_EXPORT ModuleManager::Instance* _CREATE_INSTANCE_(std::string name) {
+MOD_EXPORT ModuleManager::Instance* _CREATE_INSTANCE_(const std::string& name) {
     return new SDRPPServerSourceModule(name);
 }
 
-MOD_EXPORT void _DELETE_INSTANCE_(ModuleManager::Instance* instance) {
+MOD_EXPORT void _DELETE_INSTANCE_(ModuleManager::Instance* const instance) {
     delete (SDRPPServerSourceModule*)instance;
 }
 

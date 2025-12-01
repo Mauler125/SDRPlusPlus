@@ -27,7 +27,7 @@ ConfigManager config;
 
 class AirspySourceModule : public ModuleManager::Instance {
 public:
-    AirspySourceModule(std::string name) {
+    AirspySourceModule(const std::string& name) {
         this->name = name;
 
         airspy_init();
@@ -112,7 +112,7 @@ public:
         }
     }
 
-    void selectByString(std::string serial) {
+    void selectByString(const std::string& serial) {
         char buf[1024];
         for (int i = 0; i < devList.size(); i++) {
             sprintf(buf, "%016" PRIX64, devList[i]);
@@ -614,11 +614,11 @@ MOD_EXPORT void _INIT_() {
     config.enableAutoSave();
 }
 
-MOD_EXPORT ModuleManager::Instance* _CREATE_INSTANCE_(std::string name) {
+MOD_EXPORT ModuleManager::Instance* _CREATE_INSTANCE_(const std::string& name) {
     return new AirspySourceModule(name);
 }
 
-MOD_EXPORT void _DELETE_INSTANCE_(ModuleManager::Instance* instance) {
+MOD_EXPORT void _DELETE_INSTANCE_(ModuleManager::Instance* const instance) {
     delete (AirspySourceModule*)instance;
 }
 

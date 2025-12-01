@@ -14,5 +14,5 @@ namespace gui {
     SDRPP_EXPORT ThemeManager themeManager;
     SDRPP_EXPORT MainWindow mainWindow;
 
-    void selectSource(std::string name);
+    void selectSource(const std::string& name);
 };

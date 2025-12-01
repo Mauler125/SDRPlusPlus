@@ -197,7 +197,7 @@ public:
         return false;
     }
 
-    // bool startRecording(std::string recPath) {
+    // bool startRecording(const std::string& recPath) {
 
     // };
 

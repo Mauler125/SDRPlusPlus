@@ -13,7 +13,7 @@
 
 class WavReader {
 public:
-    WavReader(std::string path) {
+    WavReader(const std::string& path) {
         file = std::ifstream(path.c_str(), std::ios::binary);
         file.read((char*)&hdr, sizeof(WavHeader_t));
         valid = false;

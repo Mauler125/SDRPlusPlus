@@ -280,7 +280,7 @@ namespace server {
         _this->output->swap(count);
     }
 
-    std::shared_ptr<Client> connect(std::string host, uint16_t port, dsp::stream<dsp::complex_t>* out) {
+    std::shared_ptr<Client> connect(const std::string& host, uint16_t port, dsp::stream<dsp::complex_t>* out) {
         return std::make_shared<Client>(net::connect(host, port), out);
     }
 }

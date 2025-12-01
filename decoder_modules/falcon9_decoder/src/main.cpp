@@ -38,7 +38,7 @@ std::ofstream file("output.ts");
 
 class Falcon9DecoderModule : public ModuleManager::Instance {
 public:
-    Falcon9DecoderModule(std::string name) {
+    Falcon9DecoderModule(const std::string& name) {
         this->name = name;
 
         vfo = sigpath::vfoManager.createVFO(name, ImGui::WaterfallVFO::REF_CENTER, 0, 4000000, INPUT_SAMPLE_RATE, 4000000, 4000000, true);
@@ -246,11 +246,11 @@ MOD_EXPORT void _INIT_() {
     // Nothing
 }
 
-MOD_EXPORT ModuleManager::Instance* _CREATE_INSTANCE_(std::string name) {
+MOD_EXPORT ModuleManager::Instance* _CREATE_INSTANCE_(const std::string& name) {
     return new Falcon9DecoderModule(name);
 }
 
-MOD_EXPORT void _DELETE_INSTANCE_(void* instance) {
+MOD_EXPORT void _DELETE_INSTANCE_(ModuleManager::Instance* const instance) {
     delete (Falcon9DecoderModule*)instance;
 }
 

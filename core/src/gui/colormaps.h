@@ -12,7 +12,7 @@ namespace colormaps {
         int entryCount;
     };
 
-    void loadMap(std::string path);
+    void loadMap(const std::string& path);
 
     SDRPP_EXPORT std::map<std::string, Map> maps;
 }

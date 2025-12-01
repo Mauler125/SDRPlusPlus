@@ -17,7 +17,7 @@ namespace icons {
     ImTextureID NORMAL_TUNING;
     ImTextureID CENTER_TUNING;
 
-    GLuint loadTexture(std::string path) {
+    GLuint loadTexture(const std::string& path) {
         int w, h, n;
         stbi_uc* data = stbi_load(path.c_str(), &w, &h, &n, 0);
         GLuint texId;
@@ -31,7 +31,7 @@ namespace icons {
         return texId;
     }
 
-    bool load(std::string resDir) {
+    bool load(const std::string& resDir) {
         if (!std::filesystem::is_directory(resDir)) {
             flog::error("Invalid resource directory: {0}", resDir);
             return false;

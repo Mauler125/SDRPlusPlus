@@ -39,7 +39,7 @@ ConfigManager config;
 
 class RecorderModule : public ModuleManager::Instance {
 public:
-    RecorderModule(std::string name) : folderSelect("%ROOT%/recordings") {
+    RecorderModule(const std::string& name) : folderSelect("%ROOT%/recordings") {
         this->name = name;
         root = (std::string)core::args["root"];
         strcpy(nameTemplate, "$t_$f_$h-$m-$s_$d-$M-$y");
@@ -169,8 +169,7 @@ public:
 
         // Open file
         std::string vfoName = (recMode == RECORDER_MODE_AUDIO) ? selectedStreamName : "";
-        std::string extension = ".wav";
-        std::string expandedPath = expandString(folderSelect.path + "/" + genFileName(nameTemplate, recMode, vfoName) + extension);
+        std::string expandedPath = expandString(folderSelect.path + "/" + genFileName(nameTemplate, recMode, vfoName) + ".wav");
         if (!writer.open(expandedPath)) {
             flog::error("Failed to open file for recording: {0}", expandedPath);
             return;
@@ -352,7 +351,7 @@ private:
         }
     }
 
-    void selectStream(std::string name) {
+    void selectStream(const std::string& name) {
         std::lock_guard<std::recursive_mutex> lck(recMtx);
         deselectStream();
 
@@ -398,7 +397,7 @@ private:
         meter.stop();
     }
 
-    static void streamRegisteredHandler(std::string name, void* ctx) {
+    static void streamRegisteredHandler(const std::string& name, void* ctx) {
         RecorderModule* _this = (RecorderModule*)ctx;
 
         // Add new stream to the list
@@ -413,7 +412,7 @@ private:
         }
     }
 
-    static void streamUnregisterHandler(std::string name, void* ctx) {
+    static void streamUnregisterHandler(const std::string& name, void* ctx) {
         RecorderModule* _this = (RecorderModule*)ctx;
 
         // Remove stream from list
@@ -451,7 +450,7 @@ private:
         { RADIO_IFACE_MODE_RAW, "RAW" }
     };
 
-    std::string genFileName(std::string templ, int mode, std::string name) {
+    std::string genFileName(const std::string& templ, int mode, const std::string& name) {
         // Get data
         time_t now = time(0);
         tm* ltm = localtime(&now);
@@ -499,7 +498,7 @@ private:
         return templ;
     }
 
-    std::string expandString(std::string input) {
+    std::string expandString(const std::string& input) {
         input = std::regex_replace(input, std::regex("%ROOT%"), root);
         return std::regex_replace(input, std::regex("//"), "/");
     }
@@ -618,11 +617,11 @@ MOD_EXPORT void _INIT_() {
     config.enableAutoSave();
 }
 
-MOD_EXPORT ModuleManager::Instance* _CREATE_INSTANCE_(std::string name) {
+MOD_EXPORT ModuleManager::Instance* _CREATE_INSTANCE_(const std::string& name) {
     return new RecorderModule(name);
 }
 
-MOD_EXPORT void _DELETE_INSTANCE_(ModuleManager::Instance* inst) {
+MOD_EXPORT void _DELETE_INSTANCE_(ModuleManager::Instance* const inst) {
     delete (RecorderModule*)inst;
 }
 

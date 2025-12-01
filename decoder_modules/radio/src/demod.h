@@ -24,7 +24,7 @@ namespace demod {
     class Demodulator {
     public:
         virtual ~Demodulator() {}
-        virtual void init(std::string name, ConfigManager* config, dsp::stream<dsp::complex_t>* input, double bandwidth, double audioSR) = 0;
+        virtual void init(const std::string& name, ConfigManager* config, dsp::stream<dsp::complex_t>* input, double bandwidth, double audioSR) = 0;
         virtual void start() = 0;
         virtual void stop() = 0;
         virtual void showMenu() = 0;

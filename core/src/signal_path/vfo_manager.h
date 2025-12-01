@@ -9,7 +9,7 @@ public:
 
     class VFO {
     public:
-        VFO(std::string name, int reference, double offset, double bandwidth, double sampleRate, double minBandwidth, double maxBandwidth, bool bandwidthLocked);
+        VFO(const std::string& name, int reference, double offset, double bandwidth, double sampleRate, double minBandwidth, double maxBandwidth, bool bandwidthLocked);
         ~VFO();
 
         void setOffset(double offset);
@@ -39,22 +39,22 @@ public:
 
     };
 
-    VFOManager::VFO* createVFO(std::string name, int reference, double offset, double bandwidth, double sampleRate, double minBandwidth, double maxBandwidth, bool bandwidthLocked);
+    VFOManager::VFO* createVFO(const std::string& name, int reference, double offset, double bandwidth, double sampleRate, double minBandwidth, double maxBandwidth, bool bandwidthLocked);
     void deleteVFO(VFOManager::VFO* vfo);
 
-    void setOffset(std::string name, double offset);
-    double getOffset(std::string name);
-    void setCenterOffset(std::string name, double offset);
-    void setBandwidth(std::string name, double bandwidth, bool updateWaterfall = true);
-    void setSampleRate(std::string name, double sampleRate, double bandwidth);
-    void setReference(std::string name, int ref);
-    void setBandwidthLimits(std::string name, double minBandwidth, double maxBandwidth, bool bandwidthLocked);
-    bool getBandwidthChanged(std::string name, bool erase = true);
-    double getBandwidth(std::string name);
-    void setColor(std::string name, ImU32 color);
+    void setOffset(const std::string& name, double offset);
+    double getOffset(const std::string& name);
+    void setCenterOffset(const std::string& name, double offset);
+    void setBandwidth(const std::string& name, double bandwidth, bool updateWaterfall = true);
+    void setSampleRate(const std::string& name, double sampleRate, double bandwidth);
+    void setReference(const std::string& name, int ref);
+    void setBandwidthLimits(const std::string& name, double minBandwidth, double maxBandwidth, bool bandwidthLocked);
+    bool getBandwidthChanged(const std::string& name, bool erase = true);
+    double getBandwidth(const std::string& name);
+    void setColor(const std::string& name, ImU32 color);
     std::string getName();
-    int getReference(std::string name);
-    bool vfoExists(std::string name);
+    int getReference(const std::string& name);
+    bool vfoExists(const std::string& name);
 
     void updateFromWaterfall(ImGui::WaterFall* wtf);
 

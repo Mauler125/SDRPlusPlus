@@ -19,7 +19,7 @@ namespace style {
     float uiScale = 3.0f;
 #endif
 
-    bool loadFonts(std::string resDir) {
+    bool loadFonts(const std::string& resDir) {
         ImFontAtlas* fonts = ImGui::GetIO().Fonts;
         if (!std::filesystem::is_directory(resDir)) {
             flog::error("Invalid resource directory: {0}", resDir);

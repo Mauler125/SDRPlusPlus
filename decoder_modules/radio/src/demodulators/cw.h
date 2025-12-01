@@ -7,7 +7,7 @@ namespace demod {
     public:
         CW() {}
 
-        CW(std::string name, ConfigManager* config, dsp::stream<dsp::complex_t>* input, double bandwidth, double audioSR) {
+        CW(const std::string& name, ConfigManager* config, dsp::stream<dsp::complex_t>* input, double bandwidth, double audioSR) {
             init(name, config, input, bandwidth, audioSR);
         }
 
@@ -15,7 +15,7 @@ namespace demod {
             stop();
         }
 
-        void init(std::string name, ConfigManager* config, dsp::stream<dsp::complex_t>* input, double bandwidth, double audioSR) {
+        void init(const std::string& name, ConfigManager* config, dsp::stream<dsp::complex_t>* input, double bandwidth, double audioSR) {
             this->name = name;
             this->_config = config;
             this->afbwChangeHandler = afbwChangeHandler;
