@@ -31,13 +31,13 @@ namespace net {
 
     Address::Address(const IP_t& ip, int port) {
         clear();
-        addr.sin6_family = AF_INET6;
         addr.sin6_addr = ip.addr;
         addr.sin6_port = htons(port);
     }
 
     void Address::clear() {
         memset(&addr, 0, sizeof(addr));
+        addr.sin6_family = AF_INET6;
     }
 
     bool Address::setFromStr(const std::string& inStr, const bool useDNS) {
