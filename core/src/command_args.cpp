@@ -1,5 +1,6 @@
 #include "command_args.h"
 #include <filesystem>
+#include <server_protocol.h>
 
 void CommandArgsParser::defineAll() {
 #if defined(_WIN32)
@@ -15,11 +16,12 @@ void CommandArgsParser::defineAll() {
 
         define('a', "address", "Server mode address", "::0");
         define('h', "help", "Show help");
-        define('p', "port", "Server mode port", 5259);
         const std::string absRoot = std::filesystem::absolute(".").string();
         define('r', "root", "Root directory", absRoot);
         define('c', "config", "Config directory", absRoot + "/configs");
         define('s', "server", "Run in server mode");
+        define('p', "port", "Server mode port", 5259);
+        define('k', "key", "Server mode encryption key", SERVER_DEFAULT_NET_KEY);
         define('\0', "autostart", "Automatically start the SDR after loading");
 }
 

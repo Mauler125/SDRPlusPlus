@@ -3,13 +3,25 @@
 #include <cstring>
 #include <utils/flog.h>
 #include <core.h>
+#include <utils/chacha20.h>
+#include <utils/crc32.h>
+#include <utils/crypto.h>
+#include "utils/str_tools.h"
 
 using namespace std::chrono_literals;
 
 namespace server {
-    Client::Client(std::shared_ptr<net::Socket> sock, dsp::stream<dsp::complex_t>* out) : decompIn(false) {
+    Client::Client(std::shared_ptr<net::Socket> sock, dsp::stream<dsp::complex_t>* out, const uint8_t* key) : decompIn(false) {
         this->sock = sock;
         output = out;
+
+        if (key) {
+            memcpy(netKey, key, CHACHA20_KEY_LEN);
+            useEncryption = true;
+        }
+
+        sendCryptoCtx.counter = 0;
+        recvCryptoCtx.counter = 0;
 
         // Allocate buffers
         rbuffer = new uint8_t[SERVER_MAX_PACKET_SIZE];
@@ -52,6 +64,8 @@ namespace server {
                 throw std::runtime_error("Timed out");
             case CONN_ERR_BUSY:
                 throw std::runtime_error("Server busy");
+            case CONN_ERR_OVERFLOW:
+                throw std::runtime_error("Buffer overflow");
             default:
                 throw std::runtime_error("Unknown error");
             }
@@ -60,7 +74,12 @@ namespace server {
 
     Client::~Client() {
         close();
+
+        link.shutdown();
+        decomp.shutdown();
+
         ZSTD_freeDCtx(dctx);
+
         delete[] rbuffer;
         delete[] sbuffer;
     }
@@ -129,8 +148,14 @@ namespace server {
 
     void Client::setCompression(bool enabled) {
         if (!isOpen()) { return; }
-         s_cmd_data[0] = enabled;
+        s_cmd_data[0] = enabled;
         sendCommand(COMMAND_SET_COMPRESSION, 1);
+    }
+
+    void Client::setEncryption(bool enabled) {
+        // NOTE: disabling encryption is local only, server
+        // needs to be restarted with it disabled!
+        useEncryption = enabled;
     }
 
     void Client::start() {
@@ -153,18 +178,56 @@ namespace server {
         decompIn.clearWriteStop();
 
         // Stop DSP
-        decomp.stop();
         link.stop();
+        decomp.stop();
     }
 
     bool Client::isOpen() {
         return sock && sock->isOpen();
     }
 
+    void Client::stopWaiters() {
+        serverBusy = true;
+
+        // Cancel waiters
+        std::vector<PacketWaiter*> toBeRemoved;
+        for (auto& [waiter, cmd] : commandAckWaiters) {
+            waiter->cancel();
+            toBeRemoved.push_back(waiter);
+        }
+
+        // Remove handled waiters
+        for (auto& waiter : toBeRemoved) {
+            commandAckWaiters.erase(waiter);
+            delete waiter;
+        }
+    }
+
     void Client::worker() {
         while (true) {
             // Receive header
             if (sock->recv(rbuffer, sizeof(PacketHeader), true) <= 0) {
+                stopWaiters();
+                break;
+            }
+
+            // Check Magic
+            if (r_pkt_hdr->magic != SERVER_PACKET_WIRE_MAGIC) {
+                flog::error("Invalid packet magic: {0:X} != {1:X}", r_pkt_hdr->magic, SERVER_PACKET_WIRE_MAGIC);
+                stopWaiters();
+                break;
+            }
+
+            // Check Version
+            if (r_pkt_hdr->version != SERVER_PROTOCOL_VERSION) {
+                flog::error("Protocol version mismatch; server({0}) != client({1})", r_pkt_hdr->version, SERVER_PROTOCOL_VERSION);
+                stopWaiters();
+                break;
+            }
+
+            if (r_pkt_hdr->size > SERVER_MAX_PACKET_SIZE) {
+                flog::error("Packet is too large; {0} > {1}", r_pkt_hdr->size, SERVER_MAX_PACKET_SIZE);
+                stopWaiters();
                 break;
             }
 
@@ -176,29 +239,33 @@ namespace server {
             // Increment data counter
             bytes += r_pkt_hdr->size;
 
+            int payloadLen = r_pkt_hdr->size - sizeof(PacketHeader);
+
+            // Decrypt
+            if (useEncryption && (r_pkt_hdr->flags & PACKET_FLAGS_ENCRYPTED)) {
+                ChaCha20_Init(&recvCryptoCtx, netKey, r_pkt_hdr->nonce, recvCryptoCtx.counter);
+                ChaCha20_Xor(&recvCryptoCtx, r_pkt_data, payloadLen);
+
+                recvCryptoCtx.counter++;
+            }
+
+            const uint32_t realChecksum = Crc32_Compute(r_pkt_data, payloadLen);
+
+            if (r_pkt_hdr->checksum != realChecksum) {
+                flog::error("Received corrupt packet (hdr->checksum({0}) != realChecksum({1})); disconnecting server.", r_pkt_hdr->checksum, realChecksum);
+                stopWaiters();
+            }
+
             // Decode packet
             if (r_pkt_hdr->type == PACKET_TYPE_COMMAND) {
                 // TODO: Move to command handler
-                if (r_cmd_hdr->cmd == COMMAND_SET_SAMPLERATE && r_pkt_hdr->size == sizeof(PacketHeader) + sizeof(CommandHeader) + sizeof(double)) {
+                if (r_cmd_hdr->cmd == COMMAND_SET_SAMPLERATE && payloadLen == sizeof(CommandHeader) + sizeof(double)) {
                     currentSampleRate = *(double*)r_cmd_data;
                     core::setInputSampleRate(currentSampleRate);
                 }
                 else if (r_cmd_hdr->cmd == COMMAND_DISCONNECT) {
-                    flog::error("Asked to disconnect by the server");
-                    serverBusy = true;
-
-                    // Cancel waiters
-                    std::vector<PacketWaiter*> toBeRemoved;
-                    for (auto& [waiter, cmd] : commandAckWaiters) {
-                        waiter->cancel();
-                        toBeRemoved.push_back(waiter);
-                    }
-
-                    // Remove handled waiters
-                    for (auto& waiter : toBeRemoved) {
-                        commandAckWaiters.erase(waiter);
-                        delete waiter;
-                    }
+                    flog::warn("Asked to disconnect by the server");
+                    stopWaiters();
                 }
             }
             else if (r_pkt_hdr->type == PACKET_TYPE_COMMAND_ACK) {
@@ -217,17 +284,23 @@ namespace server {
                 }
             }
             else if (r_pkt_hdr->type == PACKET_TYPE_BASEBAND) {
-                memcpy(decompIn.writeBuf, &rbuffer[sizeof(PacketHeader)], r_pkt_hdr->size - sizeof(PacketHeader));
-                if (!decompIn.swap(r_pkt_hdr->size - sizeof(PacketHeader))) { break; }
-            }
-            else if (r_pkt_hdr->type == PACKET_TYPE_BASEBAND_COMPRESSED) {
-                size_t outCount = ZSTD_decompressDCtx(dctx, decompIn.writeBuf, STREAM_BUFFER_SIZE*sizeof(dsp::complex_t)+8, r_pkt_data, r_pkt_hdr->size - sizeof(PacketHeader));
-                if (outCount) {
-                    if (!decompIn.swap(outCount)) { break; }
-                };
+                if (r_pkt_hdr->flags & PACKET_FLAGS_COMPRESSED) {
+                    size_t outCount = ZSTD_decompressDCtx(dctx, decompIn.writeBuf, STREAM_BUFFER_SIZE * sizeof(dsp::complex_t) + 8, r_pkt_data, payloadLen);
+                    if (ZSTD_isError(outCount)) {
+                        flog::error("Error decompressing baseband packet: {0}", ZSTD_getErrorName(outCount));
+                    }
+                    else if (outCount) {
+                        if (!decompIn.swap(outCount)) { break; }
+                    };
+                }
+                else {
+                    memcpy(decompIn.writeBuf, r_pkt_data, payloadLen);
+                    if (!decompIn.swap(payloadLen)) { break; }
+                }
             }
             else if (r_pkt_hdr->type == PACKET_TYPE_ERROR) {
-                flog::error("SDR++ Server Error: {0}", rbuffer[sizeof(PacketHeader)]);
+                r_pkt_data[4095] = '\0';
+                flog::error("SDR++ Server Error: {0}", r_pkt_data[0]);
             }
             else {
                 flog::error("Invalid packet type: {0}", r_pkt_hdr->type);
@@ -241,6 +314,12 @@ namespace server {
         sendCommand(COMMAND_GET_UI, 0);
         if (waiter->await(PROTOCOL_TIMEOUT_MS)) {
             std::lock_guard lck(dlMtx);
+
+            if (r_pkt_hdr->size > SERVER_MAX_PACKET_SIZE) {
+                flog::error("Packet is too large; {0} > {1}", r_pkt_hdr->size, SERVER_MAX_PACKET_SIZE);
+                return CONN_ERR_OVERFLOW;
+            }
+
             dl.load(r_cmd_data, r_pkt_hdr->size - sizeof(PacketHeader) - sizeof(CommandHeader));
         }
         else {
@@ -253,7 +332,22 @@ namespace server {
     }
 
     void Client::sendPacket(PacketType type, int len) {
+        s_pkt_hdr->magic = SERVER_PACKET_WIRE_MAGIC;
+        s_pkt_hdr->version = SERVER_PROTOCOL_VERSION;
         s_pkt_hdr->type = type;
+        s_pkt_hdr->flags = 0;
+        s_pkt_hdr->checksum = Crc32_Compute(s_pkt_data, len);
+
+        if (useEncryption) {
+            Crypto_GenerateRandom(s_pkt_hdr->nonce, CHACHA20_IV_LEN);
+
+            ChaCha20_Init(&sendCryptoCtx, netKey, s_pkt_hdr->nonce, sendCryptoCtx.counter);
+            ChaCha20_Xor(&sendCryptoCtx, s_pkt_data, len);
+
+            sendCryptoCtx.counter++;
+            s_pkt_hdr->flags |= PACKET_FLAGS_ENCRYPTED;
+        }
+
         s_pkt_hdr->size = sizeof(PacketHeader) + len;
         sock->send(sbuffer, s_pkt_hdr->size);
     }
@@ -280,7 +374,7 @@ namespace server {
         _this->output->swap(count);
     }
 
-    std::shared_ptr<Client> connect(const std::string& host, uint16_t port, dsp::stream<dsp::complex_t>* out) {
-        return std::make_shared<Client>(net::connect(host, port), out);
+    std::shared_ptr<Client> connect(const std::string& host, uint16_t port, dsp::stream<dsp::complex_t>* out, const uint8_t* key) {
+        return std::make_shared<Client>(net::connect(host, port), out, key);
     }
 }

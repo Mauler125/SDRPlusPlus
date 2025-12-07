@@ -9,6 +9,8 @@ namespace net {
         _udp = udp;
         remoteAddr = raddr;
         connectionOpen = true;
+        sendCryptoCtx.counter = 0;
+        recvCryptoCtx.counter = 0;
         readWorkerThread = std::thread(&ConnClass::readWorker, this);
         writeWorkerThread = std::thread(&ConnClass::writeWorker, this);
     }
@@ -39,6 +41,9 @@ namespace net {
         if (writeWorkerThread.joinable()) { writeWorkerThread.join(); }
 
         connectionOpenCnd.notify_all();
+
+        sendCryptoCtx.counter = 0;
+        recvCryptoCtx.counter = 0;
     }
 
     bool ConnClass::isOpen() {

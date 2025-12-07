@@ -13,6 +13,7 @@
 #include <dsp/routing/stream_link.h>
 #include <zstd.h>
 #include <chrono>
+#include <utils/chacha20.h>
 
 #define PROTOCOL_TIMEOUT_MS             10000
 
@@ -74,12 +75,13 @@ namespace server {
 
     enum ConnectionError {
         CONN_ERR_TIMEOUT    = -1,
-        CONN_ERR_BUSY       = -2
+        CONN_ERR_BUSY       = -2,
+        CONN_ERR_OVERFLOW   = -3
     };
 
     class Client {
     public:
-        Client(std::shared_ptr<net::Socket> sock, dsp::stream<dsp::complex_t>* out);
+        Client(std::shared_ptr<net::Socket> sock, dsp::stream<dsp::complex_t>* out, const uint8_t* key);
         ~Client();
 
         void showMenu();
@@ -89,6 +91,7 @@ namespace server {
         
         void setSampleType(dsp::compression::PCMType type);
         void setCompression(bool enabled);
+        void setEncryption(bool enabled);
 
         void start();
         void stop();
@@ -101,6 +104,7 @@ namespace server {
 
     private:
         void worker();
+        void stopWaiters();
 
         int getUI();
 
@@ -138,11 +142,16 @@ namespace server {
         std::mutex dlMtx;
 
         ZSTD_DCtx* dctx;
+        ChaCha20_Ctx_s recvCryptoCtx;
+        ChaCha20_Ctx_s sendCryptoCtx;
+
+        bool useEncryption = true;
+        uint8_t netKey[CHACHA20_KEY_LEN];
 
         std::thread workerThread;
 
         double currentSampleRate = 1000000.0;
     };
 
-    std::shared_ptr<Client> connect(const std::string& host, uint16_t port, dsp::stream<dsp::complex_t>* out);
+    std::shared_ptr<Client> connect(const std::string& host, uint16_t port, dsp::stream<dsp::complex_t>* out, const uint8_t* key);
 }

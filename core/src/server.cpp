@@ -4,6 +4,7 @@
 #include <version.h>
 #include <config.h>
 #include <filesystem>
+#include <csignal>
 #include <dsp/types.h>
 #include <signal_path/signal_path.h>
 #include <gui/smgui.h>
@@ -11,13 +12,18 @@
 #include "dsp/compression/sample_stream_compressor.h"
 #include "dsp/sink/handler_sink.h"
 #include <zstd.h>
+#include <utils/chacha20.h>
+#include <utils/crc32.h>
+#include <utils/str_tools.h>
+#include <utils/crypto.h>
+#include <dsp/math/bitop.h>
 
 namespace server {
     dsp::stream<dsp::complex_t> dummyInput;
     dsp::compression::SampleStreamCompressor comp;
     dsp::sink::Handler<uint8_t> hnd;
     net::Conn client;
-    std::mutex clientMtx;
+    std::recursive_mutex clientMtx;
     uint8_t* rbuf = NULL;
     uint8_t* sbuf = NULL;
     uint8_t* bbuf = NULL;
@@ -37,20 +43,41 @@ namespace server {
 
     SmGui::DrawListElem dummyElem;
 
-    ZSTD_CCtx* cctx;
+    ZSTD_CCtx* cctx = NULL;
 
     net::Listener listener;
 
     OptionList<std::string, std::string> sourceList;
     int sourceId = 0;
     bool running = false;
-    bool compression = false;
+    bool canUseCompression = false;
+    bool compression = true;
+    bool useEncryption = false;
+    bool doShutdown = false;
+    uint8_t netKey[CHACHA20_KEY_LEN];
+
     double sampleRate = 1000000.0;
 
-    int main() {
-        flog::info("=====| SERVER MODE |=====");
+    static void initCompressor() {
+        cctx = ZSTD_createCCtx();
+        canUseCompression = cctx != NULL;
 
-        // Init DSP
+        if (!cctx) {
+            flog::warn("ZStd failed to initialize; {0}!", "compression will be disabled");
+        }
+    }
+
+    static void shutdownCompressor() {
+        const size_t ret = ZSTD_freeCCtx(cctx);
+        if (ZSTD_isError(ret)) {
+            flog::error("ZStd failed to shutdown; {0}!", ZSTD_getErrorName(ret));
+        }
+        cctx = NULL;
+        canUseCompression = false;
+    }
+
+    static void initDSP() {
+        // Initialize DSP
         comp.init(&dummyInput, dsp::compression::PCM_TYPE_I8);
         hnd.init(&comp.out, _testServerHandler, NULL);
         rbuf = new uint8_t[SERVER_MAX_PACKET_SIZE];
@@ -72,9 +99,85 @@ namespace server {
 
         bb_pkt_hdr = (PacketHeader*)bbuf;
         bb_pkt_data = &bbuf[sizeof(PacketHeader)];
+    }
 
-        // Initialize compressor
-        cctx = ZSTD_createCCtx();
+    static void shutdownDSP() {
+        // Shutdown DSP
+        hnd.stop();
+        comp.stop();
+        delete[] bbuf;
+        delete[] sbuf;
+        delete[] rbuf;
+        hnd.shutdown();
+        comp.shutdown();
+
+        // Shutdown headers
+        bb_pkt_hdr = NULL;
+        bb_pkt_data = NULL;
+
+        s_pkt_hdr = NULL;
+        s_pkt_data = NULL;
+        s_cmd_hdr = NULL;
+        s_cmd_data = NULL;
+
+        r_pkt_hdr = NULL;
+        r_pkt_data = NULL;
+        r_cmd_hdr = NULL;
+        r_cmd_data = NULL;
+    }
+
+    static void initCrypto() {
+        const std::string& keyB64 = core::args["key"];
+
+        if (keyB64.empty()) {
+            return; // Disabled.
+        }
+
+        std::string keyB64_Trimmed;
+
+        if (!utils::isValidBase64(keyB64, &keyB64_Trimmed)) {
+            flog::error("Net key {0} is not a valid base64 string; encryption will be disabled!", keyB64);
+            return;
+        }
+
+        std::string decodedKey;
+
+        if (!utils::decodeBase64(keyB64_Trimmed, decodedKey)) {
+            flog::error("Net key {0} failed to decode; encryption will be disabled!", keyB64);
+            return;
+        }
+
+        if (decodedKey.length() != CHACHA20_KEY_LEN) {
+            flog::error("Net key {0} decoded to size {1}, but {2} was expected; encryption will be disabled!", keyB64, decodedKey.length(), CHACHA20_KEY_LEN);
+            return;
+        }
+
+        memcpy(netKey, decodedKey.data(), CHACHA20_KEY_LEN);
+        useEncryption = true;
+    }
+
+    static void shutdownCrypto() {
+        memset(&netKey, 0, CHACHA20_KEY_LEN);
+        useEncryption = false;
+    }
+
+    static void signalHandler(int signum) {
+        flog::info("Received signal #{0}, shutting down...", signum);
+        doShutdown = true;
+    }
+
+    int main() {
+        flog::info("=====| SERVER MODE |=====");
+
+        if (Crypto_InitRandom() != 0) {
+            return 1;
+        }
+
+        std::signal(SIGINT, signalHandler);  // Ctrl+C
+        std::signal(SIGTERM, signalHandler); // Termination
+
+        initDSP();
+        initCompressor();
 
         // Load config
         core::configManager.acquire();
@@ -83,6 +186,8 @@ namespace server {
         auto modList = core::configManager.conf["moduleInstances"].items();
         std::string sourceName = core::configManager.conf["source"];
         core::configManager.release();
+
+        initCrypto();
         modulesDir = std::filesystem::absolute(modulesDir).string();
 
         // Initialize SmGui in server mode
@@ -146,7 +251,7 @@ namespace server {
 
         // Load sourceId from config
         sourceId = 0;
-        if (sourceList.keyExists(sourceName)) { 
+        if (sourceList.keyExists(sourceName)) {
             sourceId = sourceList.keyId(sourceName);
         }
 
@@ -158,15 +263,37 @@ namespace server {
         }
 
         // TODO: Use command line option
-        std::string host = (std::string)core::args["address"];
-        int port = (int)core::args["port"];
+        const std::string& host = core::args["address"];
+        const int port = (int)core::args["port"];
         listener = net::listen(host, port);
         listener->acceptAsync(_clientHandler, NULL);
 
-        flog::info("Ready, listening on [{0}]:{1}", host, port);
-        while(1) { std::this_thread::sleep_for(std::chrono::milliseconds(100)); }
+        std::string keyStr;
+        if (useEncryption) {
+            utils::encodeBase64(std::string_view((char*)netKey, std::size(netKey)), keyStr);
+        }
+
+        flog::info("Ready, listening on [{0}]:{1} with key '{2}'", host, port, keyStr.c_str());
+        while (!doShutdown) { std::this_thread::sleep_for(std::chrono::milliseconds(100)); }
+
+        shutdownCrypto();
+        shutdownCompressor();
+        shutdownDSP();
+        Crypto_ShutdownRandom();
 
         return 0;
+    }
+
+    void _disconnectHandler(int err, void* ctx) {
+        std::lock_guard<std::recursive_mutex> lk(clientMtx);
+        if (client) {
+            char ipStr[INET6_ADDRSTRLEN];
+            const size_t ipStrSz = client->toString(ipStr, sizeof(ipStr));
+            const std::string_view ipStrView(ipStr, ipStrSz);
+            flog::info("Client {0} disconnected with code {1}.", ipStrView, err);
+
+            client->setDisconnectFlag();
+        }
     }
 
     void _clientHandler(net::Conn conn, void* ctx) {
@@ -179,7 +306,7 @@ namespace server {
 
         // Reject if someone else is already connected
         {
-            std::lock_guard<std::mutex> lk(clientMtx);
+            std::lock_guard<std::recursive_mutex> lk(clientMtx);
             if (client && client->isOpen()) {
                 flog::info("Rejected connection from {0}; another client is already connected", ipStrView);
 
@@ -187,8 +314,12 @@ namespace server {
                 uint8_t buf[sizeof(PacketHeader) + sizeof(CommandHeader)];
                 PacketHeader* tmp_phdr = (PacketHeader*)buf;
                 CommandHeader* tmp_chdr = (CommandHeader*)&buf[sizeof(PacketHeader)];
+                tmp_phdr->magic = SERVER_PACKET_WIRE_MAGIC;
+                tmp_phdr->version = SERVER_PROTOCOL_VERSION;
                 tmp_phdr->size = sizeof(PacketHeader) + sizeof(CommandHeader);
                 tmp_phdr->type = PACKET_TYPE_COMMAND;
+                tmp_phdr->flags = 0; // No encryption on initial reject
+                tmp_phdr->checksum = 0;
                 tmp_chdr->cmd = COMMAND_DISCONNECT;
                 conn->write(tmp_phdr->size, buf);
 
@@ -201,18 +332,8 @@ namespace server {
         }
 
         {
-            std::lock_guard<std::mutex> lk(clientMtx);
+            std::lock_guard<std::recursive_mutex> lk(clientMtx);
             client = std::move(conn);
-
-#if defined(_WIN32) || defined(_WIN64)
-            DWORD timeout = 5000;
-            setsockopt(client->getSocketHandle(), SOL_SOCKET, SO_RCVTIMEO, (const char*)&timeout, sizeof(timeout));
-#else
-            struct timeval timeout;
-            timeout.tv_sec = 5;
-            timeout.tv_usec = 0;
-            setsockopt(client->getSocketHandle(), SOL_SOCKET, SO_RCVTIMEO, &timeout, sizeof(timeout));
-#endif
             flog::info("Accepted connection from {0}", ipStrView);
             client->readAsync(sizeof(PacketHeader), rbuf, _packetHandler, _disconnectHandler, NULL);
         }
@@ -221,19 +342,31 @@ namespace server {
         sigpath::sourceManager.stop();
         comp.setPCMType(dsp::compression::PCM_TYPE_I16);
         compression = false;
-
-        sendSampleRate(sampleRate);
     }
 
     void _packetHandler(int count, uint8_t* buf, void* ctx) {
-        assert(count > 0);
+        assert(count > 0); // code bug in readAsync
         PacketHeader* hdr = (PacketHeader*)buf;
 
-        if (hdr->size > SERVER_MAX_PACKET_SIZE || hdr->size < sizeof(PacketHeader)) {
-            flog::warn("Received packet with invalid size ({0}); disconnecting client.", hdr->size);
+        if (hdr->magic != SERVER_PACKET_WIRE_MAGIC) {
+            flog::error("Received packet with unexpected magic (expected {0}, got {1}); disconnecting client...", SERVER_PACKET_WIRE_MAGIC, hdr->magic);
             _disconnectHandler(-1, ctx);
             return;
         }
+
+        if (hdr->version != SERVER_PROTOCOL_VERSION) {
+            flog::error("Received packet with unsupported version (expected {0}, got {1}); disconnecting client...", SERVER_PROTOCOL_VERSION, hdr->version);
+            _disconnectHandler(-1, ctx);
+            return;
+        }
+
+        if (hdr->size > SERVER_MAX_PACKET_SIZE || hdr->size < sizeof(PacketHeader)) {
+            flog::error("Received packet with invalid size (expected [{0},{1}], got {2}); disconnecting client...", sizeof(PacketHeader), SERVER_MAX_PACKET_SIZE, hdr->size);
+            _disconnectHandler(-1, ctx);
+            return;
+        }
+
+        std::lock_guard<std::recursive_mutex> lk(clientMtx);
 
         // Read the rest of the data
         int len = 0;
@@ -249,10 +382,28 @@ namespace server {
             len += read;
         }
 
+        const int payloadLen = hdr->size - sizeof(PacketHeader);
+
+        if (useEncryption && (hdr->flags & PACKET_FLAGS_ENCRYPTED)) {
+            ChaCha20_Init(&client->recvCryptoCtx, netKey, hdr->nonce, client->recvCryptoCtx.counter);
+            ChaCha20_Xor(&client->recvCryptoCtx, &buf[sizeof(PacketHeader)], payloadLen);
+
+            client->recvCryptoCtx.counter++;
+        }
+
+        const uint32_t realChecksum = Crc32_Compute(&buf[sizeof(PacketHeader)], payloadLen);
+
+        if (hdr->checksum != realChecksum) {
+            flog::error("Received packet with mismatching checksum (expected {0}, got {1}); disconnecting client.", hdr->checksum, realChecksum);
+            _disconnectHandler(-1, ctx);
+
+            return;
+        }
+
         // Parse and process
-        if (hdr->type == PACKET_TYPE_COMMAND && hdr->size >= sizeof(PacketHeader) + sizeof(CommandHeader)) {
+        if (hdr->type == PACKET_TYPE_COMMAND && payloadLen >= sizeof(CommandHeader)) {
             CommandHeader* chdr = (CommandHeader*)&buf[sizeof(PacketHeader)];
-            commandHandler((Command)chdr->cmd, &buf[sizeof(PacketHeader) + sizeof(CommandHeader)], hdr->size - sizeof(PacketHeader) - sizeof(CommandHeader));
+            commandHandler((Command)chdr->cmd, &buf[sizeof(PacketHeader) + sizeof(CommandHeader)], payloadLen - sizeof(CommandHeader));
         }
         else {
             sendError(ERROR_INVALID_PACKET);
@@ -264,32 +415,66 @@ namespace server {
         }
     }
 
-    void _disconnectHandler(int err, void* ctx) {
-        {
-            std::lock_guard<std::mutex> lk(clientMtx);
-            if (client) {
-                char ipStr[INET6_ADDRSTRLEN];
-                const size_t ipStrSz = client->toString(ipStr, sizeof(ipStr));
-                const std::string_view ipStrView(ipStr, ipStrSz);
-                flog::info("Client {0} disconnected with code {1}.", ipStrView, err);
+    void _testServerHandler(uint8_t* data, int count, void* ctx) {
+        std::lock_guard<std::recursive_mutex> lk(clientMtx);
+        if (!client || !client->isOpen()) {
+            return;
+        }
+
+        const int maxPayload = SERVER_MAX_PACKET_SIZE - sizeof(PacketHeader);
+        if (count > maxPayload) {
+            flog::error("Baseband buffer overflow (payload is too large): {0} > {1}; dropping packet...", count, maxPayload);
+            return;
+        }
+
+        // Initialize header
+        bb_pkt_hdr->magic = SERVER_PACKET_WIRE_MAGIC;
+        bb_pkt_hdr->version = SERVER_PROTOCOL_VERSION;
+        bb_pkt_hdr->type = PACKET_TYPE_BASEBAND;
+        bb_pkt_hdr->flags = 0;
+
+        // Compress data if needed and fill out header fields
+        bool didCompress = false;
+        int payloadSize = 0;
+
+        if (compression) {
+            const size_t compRet = ZSTD_compressCCtx(cctx, &bbuf[sizeof(PacketHeader)], maxPayload, data, count, 6);
+
+            if (ZSTD_isError(compRet)) {
+                flog::error("Error compressing baseband packet: {0}; sending uncompressed...", ZSTD_getErrorName(compRet));
+            }
+            else if (compRet >= count) {
+                flog::error("Baseband packed expanded during compression: {0} >= {1}; sending uncompressed...", compRet, count);
+            }
+            else {
+                payloadSize = (int)compRet;
+                didCompress = true;
+
+                bb_pkt_hdr->flags |= PACKET_FLAGS_COMPRESSED;
             }
         }
-    }
 
-    void _testServerHandler(uint8_t* data, int count, void* ctx) {
-        // Compress data if needed and fill out header fields
-        if (compression) {
-            bb_pkt_hdr->type = PACKET_TYPE_BASEBAND_COMPRESSED;
-            bb_pkt_hdr->size = sizeof(PacketHeader) + (uint32_t)ZSTD_compressCCtx(cctx, &bbuf[sizeof(PacketHeader)], SERVER_MAX_PACKET_SIZE-sizeof(PacketHeader), data, count, 1);
-        }
-        else {
-            bb_pkt_hdr->type = PACKET_TYPE_BASEBAND;
-            bb_pkt_hdr->size = sizeof(PacketHeader) + count;
+        if (!didCompress) {
+            payloadSize = count;
             memcpy(&bbuf[sizeof(PacketHeader)], data, count);
         }
 
+        bb_pkt_hdr->checksum = Crc32_Compute(&bbuf[sizeof(PacketHeader)], payloadSize);
+
+        if (useEncryption && client) {
+            Crypto_GenerateRandom(bb_pkt_hdr->nonce, CHACHA20_IV_LEN);
+
+            ChaCha20_Init(&client->sendCryptoCtx, netKey, bb_pkt_hdr->nonce, client->sendCryptoCtx.counter);
+            ChaCha20_Xor(&client->sendCryptoCtx, &bbuf[sizeof(PacketHeader)], payloadSize);
+
+            client->sendCryptoCtx.counter++;
+            bb_pkt_hdr->flags |= PACKET_FLAGS_ENCRYPTED;
+        }
+
+        bb_pkt_hdr->size = sizeof(PacketHeader) + payloadSize;
+
         // Write to network
-        if (client && client->isOpen()) { client->write(bb_pkt_hdr->size, bbuf); }
+        client->write(bb_pkt_hdr->size, bbuf);
     }
 
     void setInput(dsp::stream<dsp::complex_t>* stream) {
@@ -305,12 +490,12 @@ namespace server {
             int i = 0;
             bool sendback = data[i++];
             len--;
-            
+
             // Load id
             SmGui::DrawListElem diffId;
             int count = SmGui::DrawList::loadItem(diffId, &data[i], len);
             if (count < 0) { sendError(ERROR_INVALID_ARGUMENT); return; }
-            if (diffId.type != SmGui::DRAW_LIST_ELEM_TYPE_STRING) { sendError(ERROR_INVALID_ARGUMENT); return; } 
+            if (diffId.type != SmGui::DRAW_LIST_ELEM_TYPE_STRING) { sendError(ERROR_INVALID_ARGUMENT); return; }
             i += count;
             len -= count;
 
@@ -341,12 +526,17 @@ namespace server {
             sigpath::sourceManager.tune(*(double*)data);
             sendCommandAck(COMMAND_SET_FREQUENCY, 0);
         }
+        else if (cmd == COMMAND_GET_SAMPLERATE) {
+            sendSampleRate(sampleRate);
+        }
         else if (cmd == COMMAND_SET_SAMPLE_TYPE && len == 1) {
             dsp::compression::PCMType type = (dsp::compression::PCMType)*(uint8_t*)data;
             comp.setPCMType(type);
         }
         else if (cmd == COMMAND_SET_COMPRESSION && len == 1) {
-            compression = *(uint8_t*)data;
+            if (canUseCompression) {
+                compression = *(uint8_t*)data;
+            }
         }
         else {
             flog::error("Invalid Command: {0} (len = {1})", (int)cmd, len);
@@ -415,16 +605,38 @@ namespace server {
 
     bool setInputSampleRate(double samplerate) {
         sampleRate = samplerate;
-        if (!client || !client->isOpen()) { return false; }
         return sendSampleRate(sampleRate);
     }
 
     bool sendPacket(PacketType type, int len) {
+        std::lock_guard<std::recursive_mutex> lk(clientMtx);
+
         if (!client || !client->isOpen()) {
             return false;
         }
 
+        const int maxPayload = SERVER_MAX_PACKET_SIZE - sizeof(PacketHeader);
+        if (len > maxPayload) {
+            flog::error("Send buffer overflow (payload is too large): {0} > {1}; dropping packet...", len, maxPayload);
+            return false;
+        }
+
+        s_pkt_hdr->magic = SERVER_PACKET_WIRE_MAGIC;
+        s_pkt_hdr->version = SERVER_PROTOCOL_VERSION;
         s_pkt_hdr->type = type;
+        s_pkt_hdr->flags = 0;
+        s_pkt_hdr->checksum = Crc32_Compute(&sbuf[sizeof(PacketHeader)], len);
+
+        if (useEncryption) {
+            Crypto_GenerateRandom(s_pkt_hdr->nonce, CHACHA20_IV_LEN);
+
+            ChaCha20_Init(&client->sendCryptoCtx, netKey, s_pkt_hdr->nonce, client->sendCryptoCtx.counter);
+            ChaCha20_Xor(&client->sendCryptoCtx, &sbuf[sizeof(PacketHeader)], len);
+
+            client->sendCryptoCtx.counter++;
+            s_pkt_hdr->flags |= PACKET_FLAGS_ENCRYPTED;
+        }
+
         s_pkt_hdr->size = sizeof(PacketHeader) + len;
         return client->write(s_pkt_hdr->size, sbuf) > 0;
     }

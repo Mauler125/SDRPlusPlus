@@ -7,6 +7,7 @@
 #include <gui/icons.h>
 #include <version.h>
 #include <utils/flog.h>
+#include <utils/crypto.h>
 #include <gui/widgets/bandplan.h>
 #include <stb_image.h>
 #include <config.h>
@@ -361,7 +362,6 @@ int sdrpp_main(int argc, char* argv[]) {
 
     // Load UI scaling
     style::uiScale = core::configManager.conf["uiScale"];
-
     core::configManager.release(true);
 
     if (serverMode) { return server::main(); }
@@ -381,6 +381,10 @@ int sdrpp_main(int argc, char* argv[]) {
     // Initialize backend
     int biRes = backend::init(resDir);
     if (biRes != 0) { return biRes; }
+
+    if (Crypto_InitRandom() != 0) {
+        return 1;
+    }
 
     // Initialize SmGui in normal mode
     SmGui::init(false);
@@ -425,6 +429,7 @@ int sdrpp_main(int argc, char* argv[]) {
 #endif
 
     gui::mainWindow.shutdown();
+    Crypto_ShutdownRandom();
 
     flog::info("Exiting successfully");
     return 0;

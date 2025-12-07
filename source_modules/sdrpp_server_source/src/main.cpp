@@ -10,6 +10,7 @@
 #include <gui/widgets/stepped_slider.h>
 #include <utils/optionlist.h>
 #include <gui/dialogs/dialog_box.h>
+#include <utils/str_tools.h>
 
 #define CONCAT(a, b) ((std::string(a) + b).c_str())
 
@@ -48,9 +49,11 @@ public:
 
         // Load config
         config.acquire();
-        std::string hostStr = config.conf["hostname"];
-        strcpy(hostname, hostStr.c_str());
+        const std::string& hostStr = config.conf["hostname"];
+        strncpy(hostname, hostStr.c_str(), std::min<size_t>(hostStr.length()+1, std::size(hostname)));
+        hostname[std::size(hostname) - 1] = '\0';
         port = config.conf["port"];
+        initCrypto();
         config.release();
 
         sigpath::sourceManager.registerSource("SDR++ Server", &handler);
@@ -72,10 +75,65 @@ public:
     }
 
     bool isEnabled() {
-        return enabled;
+       return enabled;
+    }
+
+    void applyKey(const std::string& keyB64) {
+        if (keyB64.empty()) {
+            setEncryption(false);
+            return; // Disabled.
+        }
+
+        std::string keyB64_Trimmed;
+
+        if (!utils::isValidBase64(keyB64, &keyB64_Trimmed)) {
+            flog::error("Net key {0} is not a valid base64 string; encryption will be disabled!", keyB64);
+            setEncryption(false);
+            return;
+        }
+
+        strncpy(base64Key, keyB64_Trimmed.c_str(), std::min<size_t>(keyB64_Trimmed.length() + 1, std::size(base64Key)));
+        std::string decodedKey;
+
+        if (!utils::decodeBase64(keyB64_Trimmed, decodedKey)) {
+            flog::error("Net key {0} failed to decode; encryption will be disabled!", keyB64);
+            setEncryption(false);
+            return;
+        }
+
+        if (decodedKey.length() != CHACHA20_KEY_LEN) {
+            flog::error("Net key {0} decodes with size {1}, but {2} was expected; encryption will be disabled!", keyB64, decodedKey.length(), CHACHA20_KEY_LEN);
+            setEncryption(false);
+            return;
+        }
+
+        memcpy(netKey, decodedKey.data(), CHACHA20_KEY_LEN);
+        setEncryption(true);
     }
 
 private:
+    void setEncryption(bool enabled) {
+        encryption = enabled;
+        if (client) {
+            client->setEncryption(enabled);
+        }
+
+        flog::info("Encryption is {0}", enabled ? "true" : "false");
+    }
+
+    void initCrypto() {
+        base64Key[0] = '\0';
+        const auto iter = config.conf.find("key");
+
+        if (iter == config.conf.end()) {
+            strncpy(base64Key, SERVER_DEFAULT_NET_KEY, std::size(base64Key));
+            setEncryption(true);
+            return; // Default key
+        }
+
+        applyKey(iter->get_ref<const std::string&>());
+    }
+
     std::string getBandwdithScaled(double bw) {
         char buf[1024];
         if (bw >= 1000000.0) {
@@ -154,7 +212,7 @@ private:
         });
 
         if (connected) { style::beginDisabled(); }
-        if (ImGui::InputText(CONCAT("##sdrpp_srv_srv_host_", _this->name), _this->hostname, 1023)) {
+        if (ImGui::InputText(CONCAT("##sdrpp_srv_srv_host_", _this->name), _this->hostname, std::size(_this->hostname))) {
             config.acquire();
             config.conf["hostname"] = _this->hostname;
             config.release(true);
@@ -166,6 +224,14 @@ private:
             config.conf["port"] = _this->port;
             config.release(true);
         }
+        if (ImGui::InputText(CONCAT("##sdrpp_srv_srv_key_", _this->name), _this->base64Key, std::size(_this->base64Key))) {
+            config.acquire();
+            config.conf["key"] = _this->base64Key;
+            config.release(true);
+            _this->applyKey(_this->base64Key);
+        }
+        ImGui::SameLine();
+        ImGui::Text("Cipher Key");
         if (connected) { style::endDisabled(); }
 
         if (_this->running) { style::beginDisabled(); }
@@ -234,7 +300,7 @@ private:
     void tryConnect() {
         try {
             if (client) { client.reset(); }
-            client = server::connect(hostname, port, &stream);
+            client = server::connect(hostname, port, &stream, encryption ? netKey : NULL);
             deviceInit();
         }
         catch (const std::exception& e) {
@@ -284,6 +350,9 @@ private:
     OptionList<std::string, dsp::compression::PCMType> sampleTypeList;
     int sampleTypeId;
     bool compression = false;
+    bool encryption = false;
+    uint8_t netKey[CHACHA20_KEY_LEN];
+    char base64Key[std::size(SERVER_DEFAULT_NET_KEY)];
 
     std::shared_ptr<server::Client> client;
 };
@@ -293,6 +362,7 @@ MOD_EXPORT void _INIT_() {
     def["hostname"] = "localhost";
     def["port"] = 5259;
     def["servers"] = json::object();
+    def["key"] = SERVER_DEFAULT_NET_KEY;
     config.setPath(core::args["config"].s() + "/sdrpp_server_source_config.json");
     config.load(def);
     config.enableAutoSave();

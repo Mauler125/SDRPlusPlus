@@ -1,5 +1,6 @@
 #pragma once
 #include "net_shared.h"
+#include <utils/chacha20.h>
 
 namespace net {
     struct ConnReadEntry {
@@ -41,7 +42,10 @@ namespace net {
 
         inline SockHandle_t getSocketHandle() { return _sock; }
         inline void forceStopWorkers() { stopWorkers = true; }
+        inline void setDisconnectFlag() { connectionOpen = false; }
 
+        ChaCha20_Ctx_s sendCryptoCtx;
+        ChaCha20_Ctx_s recvCryptoCtx;
     private:
         void readWorker();
         void writeWorker();

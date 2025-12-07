@@ -2,8 +2,13 @@
 #include <stdint.h>
 #include <gui/smgui.h>
 #include <dsp/types.h>
+#include <utils/chacha20.h>
+
+#define SERVER_PACKET_WIRE_MAGIC ('S' | ('D' << 8) | ('R' << 16))
+#define SERVER_PROTOCOL_VERSION 1
 
 #define SERVER_MAX_PACKET_SIZE  (STREAM_BUFFER_SIZE * sizeof(dsp::complex_t) * 2)
+#define SERVER_DEFAULT_NET_KEY "/+Ies6v6oi4FrWItKopQ6yoHvPhqjiuaLFeZLdLvmCE="
 
 namespace server {
     enum PacketType {
@@ -11,10 +16,14 @@ namespace server {
         PACKET_TYPE_COMMAND,
         PACKET_TYPE_COMMAND_ACK,
         PACKET_TYPE_BASEBAND,
-        PACKET_TYPE_BASEBAND_COMPRESSED,
         PACKET_TYPE_VFO,
         PACKET_TYPE_FFT,
         PACKET_TYPE_ERROR
+    };
+
+    enum PacketFlags {
+        PACKET_FLAGS_COMPRESSED = 1 << 0,
+        PACKET_FLAGS_ENCRYPTED = 1 << 1
     };
 
     enum Command {
@@ -42,8 +51,13 @@ namespace server {
     
 #pragma pack(push, 1)
     struct PacketHeader {
+        uint32_t magic : 24;
+        uint32_t version : 8;
         uint32_t type;
         uint32_t size;
+        uint32_t flags;
+        uint32_t checksum;
+        uint8_t nonce[CHACHA20_IV_LEN];
     };
 
     struct CommandHeader {
