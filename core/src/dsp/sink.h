@@ -9,12 +9,18 @@ namespace dsp {
 
         Sink(stream<T>* in) { init(in); }
 
-        virtual ~Sink() {}
+        virtual ~Sink() { assert(!_block_init); }
 
         virtual void init(stream<T>* in) {
             _in = in;
             registerInput(_in);
             _block_init = true;
+        }
+
+        virtual void shutdown() {
+            unregisterInput(_in);
+            _in = nullptr;
+            _block_init = false;
         }
 
         virtual void setInput(stream<T>* in) {

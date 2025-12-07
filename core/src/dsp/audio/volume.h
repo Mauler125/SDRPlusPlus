@@ -16,6 +16,10 @@ namespace dsp::audio {
             base_type::init(in);
         }
 
+        void shutdown() {
+            base_type::shutdown();
+        }
+
         void setVolume(double volume) {
             assert(base_type::_block_init);
             std::lock_guard<std::recursive_mutex> lck(base_type::ctrlMtx);

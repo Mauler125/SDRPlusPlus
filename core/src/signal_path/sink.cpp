@@ -28,6 +28,11 @@ void SinkManager::Stream::init(dsp::stream<dsp::stereo_t>* in, EventHandler<floa
     sinkOut = &volumeAjust.out;
 }
 
+void SinkManager::Stream::shutdown() {
+    volumeAjust.shutdown();
+    splitter.shutdown();
+}
+
 void SinkManager::Stream::start() {
     if (running) {
         return;

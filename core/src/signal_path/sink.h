@@ -28,6 +28,7 @@ public:
         Stream(dsp::stream<dsp::stereo_t>* in, EventHandler<float>* srChangeHandler, float sampleRate);
 
         void init(dsp::stream<dsp::stereo_t>* in, EventHandler<float>* srChangeHandler, float sampleRate);
+        void shutdown();
 
         void start();
         void stop();
@@ -74,6 +75,9 @@ public:
     public:
         NullSink(SinkManager::Stream* stream) {
             ns.init(stream->sinkOut);
+        }
+        virtual ~NullSink() {
+            ns.shutdown();
         }
         void start() { ns.start(); }
         void stop() { ns.stop(); }

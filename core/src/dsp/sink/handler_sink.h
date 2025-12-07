@@ -16,6 +16,12 @@ namespace dsp::sink {
             base_type::init(in);
         }
 
+        void shutdown() {
+            base_type::shutdown();
+            _ctx = nullptr;
+            _handler = nullptr;
+        }
+
         int run() {
             int count = base_type::_in->read();
             if (count < 0) { return -1; }
@@ -29,6 +35,5 @@ namespace dsp::sink {
     protected:
         void (*_handler)(T* data, int count, void* ctx);
         void* _ctx;
-
     };
 }

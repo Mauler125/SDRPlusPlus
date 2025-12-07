@@ -45,13 +45,20 @@ namespace dsp {
 
         Processor(stream<I>* in) : out(false) { init(in); }
 
-        virtual ~Processor() {}
+        virtual ~Processor() { assert(!_block_init); }
 
         virtual void init(stream<I>* in) {
             _in = in;
             registerInput(_in);
             registerOutput(&out);
             _block_init = true;
+        }
+
+        virtual void shutdown() {
+            unregisterInput(_in);
+            unregisterOutput(&out);
+            _in = nullptr;
+            _block_init = false;
         }
 
         virtual void setInput(stream<I>* in) {
