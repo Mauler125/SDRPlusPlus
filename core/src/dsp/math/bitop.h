@@ -18,4 +18,9 @@ namespace dsp::math {
         n++;
         return n;
     }
+
+    template <typename T>
+    inline T alignValue(T val, uintptr_t alignment) {
+        return (T)(((uintptr_t)val + alignment - 1) & ~(alignment - 1));
+    }
 }
