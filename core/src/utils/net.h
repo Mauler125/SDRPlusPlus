@@ -136,7 +136,7 @@ namespace net {
          * @param dest Destination address. NULL to use the default remote address.
          * @return Number of bytes sent.
          */
-        int send(const uint8_t* data, size_t len, const Address* dest = NULL);
+        int send(const uint8_t* data, int len, const Address* dest = NULL);
 
         /**
          * Send string on socket. Terminating NULL byte is not sent, include one in the string if you need it.
@@ -155,7 +155,7 @@ namespace net {
          * @param dest Destination address. If multiple packets, this will contain the address of the last one. NULL if not used.
          * @return Number of bytes read. 0 means timed out or closed. -1 means would block or error.
          */
-        int recv(uint8_t* data, size_t maxLen, bool forceLen = false, int timeout = NO_TIMEOUT, Address* dest = NULL);
+        int recv(uint8_t* data, int maxLen, bool forceLen = false, int timeout = NO_TIMEOUT, Address* dest = NULL);
 
         /**
          * Receive line from socket.

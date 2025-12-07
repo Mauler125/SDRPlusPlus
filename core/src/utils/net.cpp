@@ -233,72 +233,125 @@ namespace net {
         return raddr ? SOCKET_TYPE_UDP : SOCKET_TYPE_TCP;
     }
 
-    int Socket::send(const uint8_t* data, size_t len, const Address* dest) {
-        sockaddr* const a = (sockaddr*)(dest ? &dest->addr : (raddr ? &raddr->addr : NULL));
-        if (!a) { return -1; }
-
-        // Send data
-        const int err = sendto(sock, (const char*)data, len, 0, (sockaddr*)a, sizeof(sockaddr_in6));
-
-        // On error, close socket
-        if (err <= 0 && !WOULD_BLOCK) {
-            close();
-            return err;
-        }
-
-        return err;
-    }
-
     int Socket::sendstr(const std::string& str, const Address* dest) {
         return send((const uint8_t*)str.c_str(), str.length(), dest);
     }
 
-    int Socket::recv(uint8_t* data, size_t maxLen, bool forceLen, int timeout, Address* dest) {
-        // Create FD set
-        fd_set set;
-        FD_ZERO(&set);
-        
-        int read = 0;
-        bool blocking = (timeout != NONBLOCKING);
+    int Socket::send(const uint8_t* data, int len, const Address* dest) {
+        if (!open || !data || len == 0) return -1;
+
+        const bool isUDP = (type() == SOCKET_TYPE_UDP);
+        int totalSent = 0;
+
+        if (isUDP) {
+            const Address* target = dest ? dest : raddr.get();
+            if (!target) return -1;
+
+            const int sent = ::sendto(sock, (const char*)data, len, 0,
+                                      (const sockaddr*)&target->addr, sizeof(target->addr));
+
+            if (sent < 0) {
+                if (WOULD_BLOCK) { return 0; }
+                return -1;
+            }
+            return sent;
+        }
+
+        while (totalSent < len) {
+            const int sent = ::send(sock, (const char*)data + totalSent, (len - totalSent), 0);
+
+            if (sent > 0) {
+                totalSent += sent;
+                continue;
+            }
+
+            if (sent == 0) {
+                return totalSent;
+            }
+
+            if (sent < 0) {
+                if (WOULD_BLOCK) {
+                    return totalSent;
+                }
+                return -1;
+            }
+        }
+
+        return totalSent;
+    }
+
+    int Socket::recv(uint8_t* data, int maxLen, bool forceLen, int timeout, Address* dest) {
+        if (!open || !data || maxLen == 0) return -1;
+
+        const bool blocking = (timeout != NONBLOCKING);
+        const bool isUDP = (type() == SOCKET_TYPE_UDP);
+        int totalRead = 0;
+
         do {
-            // Wait for data or error if 
             if (blocking) {
-                // Enable FD in set
-                FD_SET(sock, &set);
+                fd_set readSet;
+                FD_ZERO(&readSet);
+                FD_SET(sock, &readSet);
 
                 // Set timeout
-                timeval tv;
-                tv.tv_sec = timeout / 1000;
-                tv.tv_usec = (timeout - tv.tv_sec*1000) * 1000;
+                timeval tv{};
+                timeval* tvPtr = NULL;
+                if (timeout >= 0) {
+                    tv.tv_sec = timeout / 1000;
+                    tv.tv_usec = (timeout % 1000) * 1000;
+                    tvPtr = &tv;
+                }
 
                 // Wait for data
-                const int sel = select(sock + 1, &set, NULL, &set, (timeout >= 0) ? &tv : nullptr);
+                const int sel = select((int)sock + 1, &readSet, NULL, NULL, tvPtr);
+
                 if (sel < 0) {
-                    if (!WOULD_BLOCK) { close(); }
-                    return sel;
+                    if (totalRead > 0) { return totalRead; }
+                    return -1;
                 }
-                if (sel == 0) { return 0; }
+
+                // Timed out
+                if (sel == 0) {
+                    return (totalRead > 0) ? totalRead : -1;
+                }
             }
 
-            // Receive
-            int addrLen = sizeof(sockaddr_in6);
-            int err = ::recvfrom(sock, (char*)&data[read], maxLen - read, 0, (sockaddr*)(dest ? &dest->addr : NULL), (socklen_t*)(dest ? &addrLen : NULL));
+            sockaddr_storage addrStorage{};
+            sockaddr* addrPtr = nullptr;
+            socklen_t addrLen = 0;
 
-            // Peer has closed the connection
-            if (err == 0) {
-                close();
-                return read;
+            if (isUDP || dest) {
+                addrPtr = (sockaddr*)&addrStorage;
+                addrLen = sizeof(addrStorage);
             }
 
-            // Error
-            if (err < 0 && !WOULD_BLOCK) {
-                close();
-                return err;
+            const int readNow = (isUDP || dest)
+                                    ? ::recvfrom(sock, (char*)data + totalRead, (maxLen - totalRead), 0, addrPtr, &addrLen)
+                                    : ::recv(sock, (char*)data + totalRead, (maxLen - totalRead), 0);
+
+            if (readNow == 0) {
+                if (isUDP) { break; }
+                return totalRead;
             }
-            read += err;
-        }
-        while (blocking && forceLen && read < maxLen);
-        return read;
+
+            if (readNow < 0) {
+                if (WOULD_BLOCK) {
+                    if (!blocking) { return totalRead; }
+                    continue; // Spurious wakeup, retry
+                }
+                return (totalRead > 0) ? totalRead : -1;
+            }
+
+            if (dest && addrPtr) {
+                memcpy(&dest->addr, addrPtr, addrLen);
+            }
+
+            totalRead += readNow;
+            if (isUDP) { break; } // Loop only for TCP
+
+        } while (blocking && forceLen && totalRead < maxLen);
+
+        return totalRead;
     }
 
     int Socket::recvline(std::string& str, int maxLen, int timeout, Address* dest) {
