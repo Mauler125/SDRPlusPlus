@@ -1,5 +1,7 @@
 #pragma once
 #include <charconv>
+#include <string>
+#include <string_view>
 
 namespace utils {
     // this is locale-unaware and therefore faster version of standard isdigit()
@@ -102,4 +104,8 @@ namespace utils {
     inline bool strToNum(const std::string& str, V& num) {
         return strToNum<V>(str.c_str(), str.length(), num);
     }
+
+    bool isValidBase64(const std::string& input, std::string* const output);
+    bool encodeBase64(const std::string_view& input, std::string& output);
+    bool decodeBase64(const std::string_view& input, std::string& output);
 }
