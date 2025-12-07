@@ -636,7 +636,7 @@ namespace net {
         }
 
         // Connect to server
-        if (::connect(s, (sockaddr*)&addr.addr, sizeof(sockaddr_in6))) {
+        if (::connect(s, (sockaddr*)&addr.addr, sizeof(sockaddr_in6)) == -1) {
             closeSocket(s);
             throw std::runtime_error("Could not connect");
             return NULL;
