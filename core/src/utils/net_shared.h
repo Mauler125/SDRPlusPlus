@@ -30,12 +30,17 @@
 #endif
 
 #ifdef _WIN32
-#define NET_ERROR() WSAGetLastError()
-#define WOULD_BLOCK (NET_ERROR() == WSAEWOULDBLOCK)
+#include <winsock2.h>
+#define NET_ERROR()         WSAGetLastError()
+#define WOULD_BLOCK         (NET_ERROR() == WSAEWOULDBLOCK)
+#define SOCKET_FAILED(sock) ((sock) == INVALID_SOCKET)
 #else
 #include <arpa/inet.h>
-#define NET_ERROR() errno
-#define WOULD_BLOCK (NET_ERROR() == EWOULDBLOCK)
+#include <cerrno>
+#define NET_ERROR()         errno
+#define WOULD_BLOCK         (NET_ERROR() == EWOULDBLOCK)
+#define SOCKET_FAILED(sock) ((sock) < 0)
+#define SOCKET_ERROR_CODE   -1
 #endif
 
 namespace net {

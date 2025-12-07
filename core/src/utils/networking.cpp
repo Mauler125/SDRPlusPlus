@@ -323,7 +323,7 @@ namespace net {
 
     static SockHandle_t createSocket(const int sockType, const int protocol, const bool reuse) {
         const SockHandle_t sock = socket(AF_INET6, sockType, protocol);
-        if (sock < 0) {
+        if (SOCKET_FAILED(sock)) {
             throw std::runtime_error("Could not create socket");
             return sock;
         }

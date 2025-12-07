@@ -512,6 +512,11 @@ namespace net {
         SockHandle_t s = socket(AF_INET6, SOCK_STREAM, IPPROTO_TCP);
         // TODO: Support non-blockign mode
 
+        if (SOCKET_FAILED(s)) {
+            throw std::runtime_error("Could not create socket");
+            return NULL;
+        }
+
 #ifndef _WIN32
         // Allow port reusing if the app was killed or crashed
         // and the socket is stuck in TIME_WAIT state.
@@ -565,6 +570,18 @@ namespace net {
         // Create socket
         SockHandle_t s = socket(AF_INET6, SOCK_STREAM, IPPROTO_TCP);
 
+        if (SOCKET_FAILED(s)) {
+            throw std::runtime_error("Could not create socket");
+            return NULL;
+        }
+
+        int opt = 0; // Disable IPv6 only mode (support IPv4 as well)
+        if (setsockopt(s, IPPROTO_IPV6, IPV6_V6ONLY, (char*)&opt, sizeof(opt)) < 0) {
+            closeSocket(s);
+            throw std::runtime_error("Could not enable dual stack on socket");
+            return NULL;
+        }
+
         // Connect to server
         if (::connect(s, (sockaddr*)&addr.addr, sizeof(sockaddr_in6))) {
             closeSocket(s);
@@ -591,6 +608,11 @@ namespace net {
 
         // Create socket
         SockHandle_t s = socket(AF_INET6, SOCK_DGRAM, IPPROTO_UDP);
+
+        if (SOCKET_FAILED(s)) {
+            throw std::runtime_error("Could not create socket");
+            return NULL;
+        }
 
         int opt = 0; // Disable IPv6 only mode (support IPv4 as well)
         if (setsockopt(s, IPPROTO_IPV6, IPV6_V6ONLY, (char*)&opt, sizeof(opt)) < 0) {
