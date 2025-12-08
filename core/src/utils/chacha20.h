@@ -32,8 +32,8 @@ struct ChaCha20_Ctx_s
 	uint32_t state[16];
 };
 
-void ChaCha20_Init(struct ChaCha20_Ctx_s*ctx, ChaCha20_Key256_t key, ChaCha20_Nonce96_t nounc, uint64_t counter);
-void ChaCha20_Xor(struct ChaCha20_Ctx_s*ctx, uint8_t *bytes, size_t n_bytes);
+void ChaCha20_Init(struct ChaCha20_Ctx_s* ctx, const ChaCha20_Key256_t key, const ChaCha20_Nonce96_t nounc, const uint64_t counter);
+void ChaCha20_Xor(struct ChaCha20_Ctx_s* ctx, uint8_t *bytes, size_t n_bytes);
 
 #ifdef __cplusplus 
 }

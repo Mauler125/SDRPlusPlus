@@ -4,11 +4,6 @@
  *                                   SOURCE                                   *
  ******************************************************************************/
 
-static inline uint32_t ChaCha20_Rotl32(uint32_t x, int n) 
-{
-	return (x << n) | (x >> (32 - n));
-}
-
 static inline uint32_t ChaCha20_Pack4(const uint8_t *a)
 {
 	uint32_t res = 0;
@@ -19,7 +14,7 @@ static inline uint32_t ChaCha20_Pack4(const uint8_t *a)
 	return res;
 }
 
-static void ChaCha20_InitBlock(struct ChaCha20_Ctx_s*ctx, ChaCha20_Key256_t key, ChaCha20_Nonce96_t nonce)
+static void ChaCha20_InitBlock(struct ChaCha20_Ctx_s*ctx, const ChaCha20_Key256_t key, const ChaCha20_Nonce96_t nonce)
 {
 	memcpy(ctx->key, key, sizeof(ctx->key));
 	memcpy(ctx->nonce, nonce, sizeof(ctx->nonce));
@@ -47,13 +42,18 @@ static void ChaCha20_InitBlock(struct ChaCha20_Ctx_s*ctx, ChaCha20_Key256_t key,
 	memcpy(ctx->nonce, nonce, sizeof(ctx->nonce));
 }
 
-static void ChaCha20_Block_SetCounter(struct ChaCha20_Ctx_s*ctx, uint64_t counter)
+static void ChaCha20_Block_SetCounter(struct ChaCha20_Ctx_s*ctx, const uint64_t counter)
 {
 	ctx->state[12] = (uint32_t)counter;
 	ctx->state[13] = ChaCha20_Pack4(ctx->nonce + 0 * 4) + (uint32_t)(counter >> 32);
 }
 
-static void ChaCha20_Block_Next(struct ChaCha20_Ctx_s*ctx) {
+static inline uint32_t ChaCha20_Rotl32(const uint32_t x, const int n)
+{
+	return (x << n) | (x >> (32 - n));
+}
+
+static void ChaCha20_Block_Next(struct ChaCha20_Ctx_s* ctx) {
 	// This is where the crazy voodoo magic happens.
 	// Mix the bytes a lot and hope that nobody finds out how to undo it.
 	for (int i = 0; i < 16; i++)
@@ -100,7 +100,7 @@ static void ChaCha20_Block_Next(struct ChaCha20_Ctx_s*ctx) {
 	}
 }
 
-void ChaCha20_Init(struct ChaCha20_Ctx_s*ctx, ChaCha20_Key256_t key, ChaCha20_Nonce96_t nonce, uint64_t counter)
+void ChaCha20_Init(struct ChaCha20_Ctx_s* ctx, const ChaCha20_Key256_t key, const ChaCha20_Nonce96_t nonce, const uint64_t counter)
 {
 	memset(ctx, 0, sizeof(struct ChaCha20_Ctx_s));
 
