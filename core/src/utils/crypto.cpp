@@ -2,7 +2,8 @@
 #include <cstring>
 #include <cstdlib>
 #include "flog.h"
-#include <utils/chacha20.h>
+#include "chacha20.h"
+#include "poly1305.h"
 
 #if defined(_WIN32)
 #include <windows.h>
@@ -17,6 +18,7 @@
 #include <Security/Security.h>
 #endif
 #endif
+#include "crypto.h"
 
 #define CRYPTRAND_KEY_INTERVAL (4 * 1024)
 
@@ -129,4 +131,75 @@ void Crypto_GenerateRandom(uint8_t* buf, int32_t size) {
     else {
         s_randomEngineState.bytesLeft -= size;
     }
+}
+
+static void Crypto_IncrementalXor(ChaCha20_Ctx_s* ctx,
+                                  const ChaCha20_Key256_t key,
+                                  const ChaCha20_Nonce96_t nonce,
+                                  uint8_t* const input,
+                                  const size_t len) {
+    ChaCha20_Init(ctx, key, nonce, ctx->counter);
+    ChaCha20_Xor(ctx, input, len);
+
+    ctx->counter++;
+}
+
+static CryptoResult_e Crypto_DoCrypt(ChaCha20_Ctx_s* ctx,
+                                     const ChaCha20_Key256_t key,
+                                     const ChaCha20_Nonce96_t nonce,
+                                     Poly1305_Tag_t tag,
+                                     const uint8_t* ad,
+                                     const size_t adLen,
+                                     uint8_t* in,
+                                     const size_t inLen,
+                                     const bool encrypt) {
+    Poly1305_Key_t polyKey;
+    memset(polyKey, 0, sizeof(polyKey));
+
+    // Generate poly key
+    Crypto_IncrementalXor(ctx, key, nonce, polyKey, sizeof(polyKey));
+
+    if (encrypt) {
+        Crypto_IncrementalXor(ctx, key, nonce, in, inLen);
+
+        if (tag) {
+            Poly1305_GetTag(polyKey, ad, adLen, in, inLen, tag);
+        }
+
+        return CRYPTO_OK;
+    }
+
+    if (tag) {
+        Poly1305_Tag_t polyTag;
+        Poly1305_GetTag(polyKey, ad, adLen, in, inLen, polyTag);
+
+        if (memcmp(tag, polyTag, POLY1305_TAG_LEN) != 0) {
+            return CRYPTO_INVALID_MAC;
+        }
+    }
+
+    Crypto_IncrementalXor(ctx, key, nonce, in, inLen);
+    return CRYPTO_OK;
+}
+
+CryptoResult_e Crypto_Encrypt(ChaCha20_Ctx_s* ctx,
+                              const ChaCha20_Key256_t key,
+                              const ChaCha20_Nonce96_t nonce,
+                              Poly1305_Tag_t tag,
+                              const uint8_t* ad,
+                              const size_t adLen,
+                              uint8_t* in,
+                              const size_t inLen) {
+    return Crypto_DoCrypt(ctx, key, nonce, tag, ad, adLen, in, inLen, true);
+}
+
+CryptoResult_e Crypto_Decrypt(ChaCha20_Ctx_s* ctx,
+                              const ChaCha20_Key256_t key,
+                              const ChaCha20_Nonce96_t nonce,
+                              Poly1305_Tag_t tag,
+                              const uint8_t* ad,
+                              const size_t adLen,
+                              uint8_t* in,
+                              const size_t inLen) {
+    return Crypto_DoCrypt(ctx, key, nonce, tag, ad, adLen, in, inLen, false);
 }
