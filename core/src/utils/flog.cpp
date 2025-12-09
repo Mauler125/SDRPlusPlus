@@ -150,6 +150,7 @@ namespace flog {
         // Get time
         auto now = std::chrono::system_clock::now();
         auto nowt = std::chrono::system_clock::to_time_t(now);
+        auto ms = std::chrono::duration_cast<std::chrono::milliseconds>(now.time_since_epoch()).count() % 1000;
 
         // We used to use std::localtime, but this isn't thread safe.
         // This should cover all platforms we support (hopefully!).
@@ -170,7 +171,7 @@ namespace flog {
 
             // Print beginning of log line
             SetConsoleTextAttribute(conHndl, COLOR_WHITE);
-            fprintf(outStream, "[%02d/%02d/%02d %02d:%02d:%02d.%03d] [", nowc.tm_mday, nowc.tm_mon + 1, nowc.tm_year + 1900, nowc.tm_hour, nowc.tm_min, nowc.tm_sec, 0);
+            fprintf(outStream, "[%02d/%02d/%02d %02d:%02d:%02d.%03d] [", nowc.tm_mday, nowc.tm_mon + 1, nowc.tm_year + 1900, nowc.tm_hour, nowc.tm_min, nowc.tm_sec, (int)ms);
 
             // Switch color to the log color, print log type and 
             SetConsoleTextAttribute(conHndl, TYPE_COLORS[type]);
@@ -183,11 +184,11 @@ namespace flog {
 #elif defined(__ANDROID__)
             // Print format string
             __android_log_print(TYPE_PRIORITIES[type], FLOG_ANDROID_TAG, COLOR_WHITE "[%02d/%02d/%02d %02d:%02d:%02d.%03d] [%s%s" COLOR_WHITE "] %s\n",
-                    nowc.tm_mday, nowc.tm_mon + 1, nowc.tm_year + 1900, nowc.tm_hour, nowc.tm_min, nowc.tm_sec, 0, TYPE_COLORS[type], TYPE_STR[type], out.c_str());
+                    nowc.tm_mday, nowc.tm_mon + 1, nowc.tm_year + 1900, nowc.tm_hour, nowc.tm_min, nowc.tm_sec, (int)ms, TYPE_COLORS[type], TYPE_STR[type], out.c_str());
 #else
             // Print format string
             fprintf(outStream, COLOR_WHITE "[%02d/%02d/%02d %02d:%02d:%02d.%03d] [%s%s" COLOR_WHITE "] %s\n",
-                    nowc.tm_mday, nowc.tm_mon + 1, nowc.tm_year + 1900, nowc.tm_hour, nowc.tm_min, nowc.tm_sec, 0, TYPE_COLORS[type], TYPE_STR[type], out.c_str());
+                    nowc.tm_mday, nowc.tm_mon + 1, nowc.tm_year + 1900, nowc.tm_hour, nowc.tm_min, nowc.tm_sec, (int)ms, TYPE_COLORS[type], TYPE_STR[type], out.c_str());
 #endif
         }
     }
