@@ -33,7 +33,7 @@ namespace net {
         bool isOpen();
         void waitForEnd();
 
-        size_t toString(char* const buffer, const size_t bufferSize, const bool onlyBase = false) const;
+        size_t toString(char* const buffer, const size_t bufferSize, const bool baseOnly = false) const;
 
         int read(int count, uint8_t* buf, bool enforceSize = true);
         int write(int count, uint8_t* buf);

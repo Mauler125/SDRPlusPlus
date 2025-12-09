@@ -52,12 +52,12 @@ namespace net {
         connectionOpenCnd.wait(lck, [this]() { return !connectionOpen; });
     }
 
-    size_t ConnClass::toString(char* const buffer, const size_t bufferSize, const bool onlyBase) const {
+    size_t ConnClass::toString(char* const buffer, const size_t bufferSize, const bool baseOnly) const {
         assert(bufferSize > 0);
         char stringBuf[INET6_ADDRSTRLEN];
 
         if (inet_ntop(AF_INET6, &remoteAddr.sin6_addr, stringBuf, INET6_ADDRSTRLEN)) {
-            const int ret = onlyBase
+            const int ret = baseOnly
                                 ? snprintf(buffer, bufferSize, "%s", stringBuf)
                                 : snprintf(buffer, bufferSize, "[%s]:%hu", stringBuf, (uint16_t)ntohs(remoteAddr.sin6_port));
 
