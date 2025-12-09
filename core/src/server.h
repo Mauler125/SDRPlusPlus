@@ -14,9 +14,9 @@ namespace server {
     void _testServerHandler(uint8_t* data, int count, void* ctx);
 
     void drawMenu();
-
-    void commandHandler(Command cmd, uint8_t* data, int len);
     void renderUI(SmGui::DrawList* dl, std::string diffId, SmGui::DrawListElem diffValue);
+
+    bool commandHandler(Command cmd, uint8_t* data, int len);
     bool sendUI(Command originCmd, std::string diffId, SmGui::DrawListElem diffValue);
     bool sendError(Error err);
     bool sendSampleRate(double sampleRate);

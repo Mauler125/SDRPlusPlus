@@ -45,10 +45,15 @@ namespace net {
         inline void setDisconnectFlag() { connectionOpen = false; }
 
         ChaCha20_Ctx_s sendCryptoCtx;
+        uint64_t nextSendSeqNr;
+
         ChaCha20_Ctx_s recvCryptoCtx;
+        uint64_t lastRecvSeqNr;
     private:
         void readWorker();
         void writeWorker();
+
+        void resetCryptoCounters();
 
         std::atomic_bool stopWorkers = false;
         std::atomic_bool connectionOpen = false;

@@ -296,6 +296,10 @@ namespace server {
         }
     }
 
+    static uint64_t getTimeUs() {
+        return std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
+    }
+
     void _clientHandler(net::Conn conn, void* ctx) {
         char ipStr[INET6_ADDRSTRLEN];
         const size_t ipStrSz = conn->toString(ipStr, sizeof(ipStr));
@@ -318,15 +322,31 @@ namespace server {
                 tmp_phdr->version = SERVER_PROTOCOL_VERSION;
                 tmp_phdr->size = sizeof(PacketHeader) + sizeof(CommandHeader);
                 tmp_phdr->type = PACKET_TYPE_COMMAND;
-                tmp_phdr->flags = 0; // No encryption on initial reject
-                tmp_phdr->checksum = 0;
+                tmp_phdr->flags = 0; // No compression on initial reject
+                tmp_phdr->seqNr = conn->nextSendSeqNr++;
+                tmp_phdr->timeUs = getTimeUs();
                 tmp_chdr->cmd = COMMAND_DISCONNECT;
+
+                if (useEncryption) {
+                    tmp_phdr->flags |= PACKET_FLAGS_ENCRYPTED;
+
+                    Crypto_GenerateRandom(tmp_phdr->nonce, CHACHA20_IV_LEN);
+                    const CryptoResult_e crres = Crypto_Encrypt(&conn->sendCryptoCtx, netKey, tmp_phdr->nonce, tmp_phdr->mac, (uint8_t*)tmp_phdr, SERVER_CRYPT_HEADER_AAD_SIZE, &buf[sizeof(PacketHeader)], sizeof(CommandHeader));
+
+                    if (crres != CRYPTO_OK) {
+                        tmp_phdr->flags &= ~PACKET_FLAGS_ENCRYPTED;
+                    }
+                }
+                else {
+                    memset(tmp_phdr->nonce, 0, sizeof(tmp_phdr->nonce));
+                    memset(tmp_phdr->mac, 0, sizeof(tmp_phdr->mac));
+                }
+
                 conn->write(tmp_phdr->size, buf);
+                conn->close();
 
                 // TODO: Find something cleaner
                 std::this_thread::sleep_for(std::chrono::milliseconds(100));
-
-                conn->close();
                 return;
             }
         }
@@ -349,24 +369,50 @@ namespace server {
         PacketHeader* hdr = (PacketHeader*)buf;
 
         if (hdr->magic != SERVER_PACKET_WIRE_MAGIC) {
-            flog::error("Received packet with unexpected magic (expected {0}, got {1}); disconnecting client...", SERVER_PACKET_WIRE_MAGIC, hdr->magic);
+            flog::error("Packet has bad magic (expected {0}, got {1})", SERVER_PACKET_WIRE_MAGIC, hdr->magic);
             _disconnectHandler(-1, ctx);
             return;
         }
 
         if (hdr->version != SERVER_PROTOCOL_VERSION) {
-            flog::error("Received packet with unsupported version (expected {0}, got {1}); disconnecting client...", SERVER_PROTOCOL_VERSION, hdr->version);
+            flog::error("Packet has unsupported protocol version (expected {0}, got {1})", SERVER_PROTOCOL_VERSION, hdr->version);
             _disconnectHandler(-1, ctx);
             return;
         }
 
-        if (hdr->size > SERVER_MAX_PACKET_SIZE || hdr->size < sizeof(PacketHeader)) {
-            flog::error("Received packet with invalid size (expected [{0},{1}], got {2}); disconnecting client...", sizeof(PacketHeader), SERVER_MAX_PACKET_SIZE, hdr->size);
+        if (hdr->size < sizeof(PacketHeader)) {
+            flog::error("Packet appears truncated (expected [{0},{1}], got {2})", sizeof(PacketHeader)+1, SERVER_MAX_PACKET_SIZE, hdr->size);
+            _disconnectHandler(-1, ctx);
+            return;
+        }
+
+        if (hdr->size == sizeof(PacketHeader)) {
+            flog::error("Packet has no payload");
+            _disconnectHandler(-1, ctx);
+            return;
+        }
+
+        if (hdr->size > SERVER_MAX_PACKET_SIZE) {
+            flog::error("Packet is too large (expected [{0},{1}], got {2})", sizeof(PacketHeader)+1, SERVER_MAX_PACKET_SIZE, hdr->size);
+            _disconnectHandler(-1, ctx);
+            return;
+        }
+
+        if (useEncryption && !(hdr->flags & PACKET_FLAGS_ENCRYPTED)) {
+            flog::error("Got unencrypted packet while encryption is required");
             _disconnectHandler(-1, ctx);
             return;
         }
 
         std::lock_guard<std::recursive_mutex> lk(clientMtx);
+
+        if (hdr->seqNr <= client->lastRecvSeqNr) {
+            flog::error("Replay detected: expected seq >=#{0}, got #{1}", client->lastRecvSeqNr + 1, hdr->seqNr);
+            _disconnectHandler(-1, ctx);
+            return;
+        }
+
+        client->lastRecvSeqNr = hdr->seqNr;
 
         // Read the rest of the data
         int len = 0;
@@ -385,25 +431,25 @@ namespace server {
         const int payloadLen = hdr->size - sizeof(PacketHeader);
 
         if (useEncryption && (hdr->flags & PACKET_FLAGS_ENCRYPTED)) {
-            ChaCha20_Init(&client->recvCryptoCtx, netKey, hdr->nonce, client->recvCryptoCtx.counter);
-            ChaCha20_Xor(&client->recvCryptoCtx, &buf[sizeof(PacketHeader)], payloadLen);
+            const CryptoResult_e crres = Crypto_Decrypt(&client->recvCryptoCtx, netKey, hdr->nonce, hdr->mac, (uint8_t*)hdr, SERVER_CRYPT_HEADER_AAD_SIZE, &buf[sizeof(PacketHeader)], payloadLen);
 
-            client->recvCryptoCtx.counter++;
-        }
+            if (crres != CRYPTO_OK) {
+                flog::error("Failed to decrypt {0} packet from client; error code: {1}", packetTypeToString(hdr->type), (int)crres);
+                _disconnectHandler(-1, ctx);
 
-        const uint32_t realChecksum = Crc32_Compute(&buf[sizeof(PacketHeader)], payloadLen);
-
-        if (hdr->checksum != realChecksum) {
-            flog::error("Received packet with mismatching checksum (expected {0}, got {1}); disconnecting client.", hdr->checksum, realChecksum);
-            _disconnectHandler(-1, ctx);
-
-            return;
+                return;
+            }
         }
 
         // Parse and process
         if (hdr->type == PACKET_TYPE_COMMAND && payloadLen >= sizeof(CommandHeader)) {
             CommandHeader* chdr = (CommandHeader*)&buf[sizeof(PacketHeader)];
-            commandHandler((Command)chdr->cmd, &buf[sizeof(PacketHeader) + sizeof(CommandHeader)], payloadLen - sizeof(CommandHeader));
+            if (!commandHandler((Command)chdr->cmd, &buf[sizeof(PacketHeader) + sizeof(CommandHeader)], payloadLen - sizeof(CommandHeader))) {
+                flog::error("Failed to handle command {0} from client", commandTypeToString(chdr->cmd));
+                _disconnectHandler(-1, ctx);
+
+                return;
+            }
         }
         else {
             sendError(ERROR_INVALID_PACKET);
@@ -423,7 +469,7 @@ namespace server {
 
         const int maxPayload = SERVER_MAX_PACKET_SIZE - sizeof(PacketHeader);
         if (count > maxPayload) {
-            flog::error("Baseband buffer overflow (payload is too large): {0} > {1}; dropping packet...", count, maxPayload);
+            flog::error("Baseband buffer overflow: {0} > {1}; dropping packet...", count, maxPayload);
             return;
         }
 
@@ -443,8 +489,11 @@ namespace server {
             if (ZSTD_isError(compRet)) {
                 flog::error("Error compressing baseband packet: {0}; sending uncompressed...", ZSTD_getErrorName(compRet));
             }
-            else if (compRet >= count) {
-                flog::error("Baseband packed expanded during compression: {0} >= {1}; sending uncompressed...", compRet, count);
+            else if (compRet == count) {
+                flog::error("Baseband packet compression provided no size reduction; sending uncompressed...");
+            }
+            else if (compRet > count) {
+                flog::error("Baseband packet expanded during compression: {0} >= {1}; sending uncompressed...", compRet, count);
             }
             else {
                 payloadSize = (int)compRet;
@@ -459,31 +508,44 @@ namespace server {
             memcpy(&bbuf[sizeof(PacketHeader)], data, count);
         }
 
-        bb_pkt_hdr->checksum = Crc32_Compute(&bbuf[sizeof(PacketHeader)], payloadSize);
+        bb_pkt_hdr->size = sizeof(PacketHeader) + payloadSize;
+        bb_pkt_hdr->timeUs = getTimeUs();
+        bb_pkt_hdr->seqNr = client->nextSendSeqNr++;
 
-        if (useEncryption && client) {
-            Crypto_GenerateRandom(bb_pkt_hdr->nonce, CHACHA20_IV_LEN);
-
-            ChaCha20_Init(&client->sendCryptoCtx, netKey, bb_pkt_hdr->nonce, client->sendCryptoCtx.counter);
-            ChaCha20_Xor(&client->sendCryptoCtx, &bbuf[sizeof(PacketHeader)], payloadSize);
-
-            client->sendCryptoCtx.counter++;
+        if (useEncryption) {
             bb_pkt_hdr->flags |= PACKET_FLAGS_ENCRYPTED;
+
+            Crypto_GenerateRandom(bb_pkt_hdr->nonce, CHACHA20_IV_LEN);
+            const CryptoResult_e crres = Crypto_Encrypt(&client->sendCryptoCtx, netKey, bb_pkt_hdr->nonce, bb_pkt_hdr->mac, (uint8_t*)bb_pkt_hdr, SERVER_CRYPT_HEADER_AAD_SIZE, &bbuf[sizeof(PacketHeader)], payloadSize);
+
+            if (crres != CRYPTO_OK) {
+                flog::error("Failed to encrypt {0} packet for client; error code: {1}", packetTypeToString(bb_pkt_hdr->type), (int)crres);
+                _disconnectHandler(-1, ctx);
+                return;
+            }
+        }
+        else {
+            memset(bb_pkt_hdr->nonce, 0, sizeof(bb_pkt_hdr->nonce));
+            memset(bb_pkt_hdr->mac, 0, sizeof(bb_pkt_hdr->mac));
         }
 
-        bb_pkt_hdr->size = sizeof(PacketHeader) + payloadSize;
-
         // Write to network
-        client->write(bb_pkt_hdr->size, bbuf);
+        const int lenSend = client->write(bb_pkt_hdr->size, bbuf);
+
+        if (lenSend < bb_pkt_hdr->size) {
+            flog::error("Partial baseband payload sent: {0} < {1}", lenSend, bb_pkt_hdr->size);
+            _disconnectHandler(-1, ctx);
+            return;
+        }
     }
 
     void setInput(dsp::stream<dsp::complex_t>* stream) {
         comp.setInput(stream);
     }
 
-    void commandHandler(Command cmd, uint8_t* data, int len) {
+    bool commandHandler(Command cmd, uint8_t* data, int len) {
         if (cmd == COMMAND_GET_UI) {
-            sendUI(COMMAND_GET_UI, "", dummyElem);
+            return sendUI(COMMAND_GET_UI, "", dummyElem);
         }
         else if (cmd == COMMAND_UI_ACTION && len >= 3) {
             // Check if sending back data is needed
@@ -494,21 +556,21 @@ namespace server {
             // Load id
             SmGui::DrawListElem diffId;
             int count = SmGui::DrawList::loadItem(diffId, &data[i], len);
-            if (count < 0) { sendError(ERROR_INVALID_ARGUMENT); return; }
-            if (diffId.type != SmGui::DRAW_LIST_ELEM_TYPE_STRING) { sendError(ERROR_INVALID_ARGUMENT); return; }
+            if (count < 0) { return sendError(ERROR_INVALID_ARGUMENT); }
+            if (diffId.type != SmGui::DRAW_LIST_ELEM_TYPE_STRING) { return sendError(ERROR_INVALID_ARGUMENT); }
             i += count;
             len -= count;
 
             // Load value
             SmGui::DrawListElem diffValue;
             count = SmGui::DrawList::loadItem(diffValue, &data[i], len);
-            if (count < 0) { sendError(ERROR_INVALID_ARGUMENT); return; }
+            if (count < 0) { return sendError(ERROR_INVALID_ARGUMENT); }
             i += count;
             len -= count;
 
             // Render and send back
             if (sendback) {
-                sendUI(COMMAND_UI_ACTION, diffId.str, diffValue);
+                return sendUI(COMMAND_UI_ACTION, diffId.str, diffValue);
             }
             else {
                 renderUI(NULL, diffId.str, diffValue);
@@ -524,10 +586,10 @@ namespace server {
         }
         else if (cmd == COMMAND_SET_FREQUENCY && len == 8) {
             sigpath::sourceManager.tune(*(double*)data);
-            sendCommandAck(COMMAND_SET_FREQUENCY, 0);
+            return sendCommandAck(COMMAND_SET_FREQUENCY, 0);
         }
-        else if (cmd == COMMAND_GET_SAMPLERATE) {
-            sendSampleRate(sampleRate);
+        else if (cmd == COMMAND_GET_SAMPLE_RATE) {
+            return sendSampleRate(sampleRate);
         }
         else if (cmd == COMMAND_SET_SAMPLE_TYPE && len == 1) {
             dsp::compression::PCMType type = (dsp::compression::PCMType)*(uint8_t*)data;
@@ -539,9 +601,11 @@ namespace server {
             }
         }
         else {
-            flog::error("Invalid Command: {0} (len = {1})", (int)cmd, len);
-            sendError(ERROR_INVALID_COMMAND);
+            flog::error("Invalid command: {0} (len = {1})", (int)cmd, len);
+            return sendError(ERROR_INVALID_COMMAND);
         }
+
+        return true;
     }
 
     void drawMenu() {
@@ -600,7 +664,7 @@ namespace server {
 
     bool sendSampleRate(double sampleRate) {
         *(double*)s_cmd_data = sampleRate;
-        return sendCommand(COMMAND_SET_SAMPLERATE, sizeof(double));
+        return sendCommand(COMMAND_SET_SAMPLE_RATE, sizeof(double));
     }
 
     bool setInputSampleRate(double samplerate) {
@@ -617,28 +681,35 @@ namespace server {
 
         const int maxPayload = SERVER_MAX_PACKET_SIZE - sizeof(PacketHeader);
         if (len > maxPayload) {
-            flog::error("Send buffer overflow (payload is too large): {0} > {1}; dropping packet...", len, maxPayload);
+            flog::error("Send buffer overflow: {0} > {1}; dropping packet...", len, maxPayload);
             return false;
         }
 
         s_pkt_hdr->magic = SERVER_PACKET_WIRE_MAGIC;
         s_pkt_hdr->version = SERVER_PROTOCOL_VERSION;
         s_pkt_hdr->type = type;
+        s_pkt_hdr->size = sizeof(PacketHeader) + len;
         s_pkt_hdr->flags = 0;
-        s_pkt_hdr->checksum = Crc32_Compute(&sbuf[sizeof(PacketHeader)], len);
+        s_pkt_hdr->timeUs = getTimeUs();
+        s_pkt_hdr->seqNr = client->nextSendSeqNr++;
 
         if (useEncryption) {
-            Crypto_GenerateRandom(s_pkt_hdr->nonce, CHACHA20_IV_LEN);
-
-            ChaCha20_Init(&client->sendCryptoCtx, netKey, s_pkt_hdr->nonce, client->sendCryptoCtx.counter);
-            ChaCha20_Xor(&client->sendCryptoCtx, &sbuf[sizeof(PacketHeader)], len);
-
-            client->sendCryptoCtx.counter++;
             s_pkt_hdr->flags |= PACKET_FLAGS_ENCRYPTED;
+
+            Crypto_GenerateRandom(s_pkt_hdr->nonce, CHACHA20_IV_LEN);
+            const CryptoResult_e crres = Crypto_Encrypt(&client->sendCryptoCtx, netKey, s_pkt_hdr->nonce, s_pkt_hdr->mac, (uint8_t*)s_pkt_hdr, SERVER_CRYPT_HEADER_AAD_SIZE, &sbuf[sizeof(PacketHeader)], len);
+
+            if (crres != CRYPTO_OK) {
+                flog::error("Failed to encrypt {0} packet for client; error code: {1}", packetTypeToString(s_pkt_hdr->type), (int)crres);
+                return false;
+            }
+        }
+        else {
+            memset(s_pkt_hdr->nonce, 0, sizeof(s_pkt_hdr->nonce));
+            memset(s_pkt_hdr->mac, 0, sizeof(s_pkt_hdr->mac));
         }
 
-        s_pkt_hdr->size = sizeof(PacketHeader) + len;
-        return client->write(s_pkt_hdr->size, sbuf) > 0;
+        return client->write(s_pkt_hdr->size, sbuf) == s_pkt_hdr->size;
     }
 
     bool sendCommand(Command cmd, int len) {

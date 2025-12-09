@@ -76,7 +76,8 @@ namespace server {
     enum ConnectionError {
         CONN_ERR_TIMEOUT    = -1,
         CONN_ERR_BUSY       = -2,
-        CONN_ERR_OVERFLOW   = -3
+        CONN_ERR_OVERFLOW   = -3,
+        CONN_ERR_SEND_FAIL  = -4
     };
 
     class Client {
@@ -86,15 +87,15 @@ namespace server {
 
         void showMenu();
 
-        void setFrequency(double freq);
+        bool setFrequency(double freq);
         double getSampleRate();
         
-        void setSampleType(dsp::compression::PCMType type);
-        void setCompression(bool enabled);
+        bool setSampleType(dsp::compression::PCMType type);
+        bool setCompression(bool enabled);
         void setEncryption(bool enabled);
 
-        void start();
-        void stop();
+        bool start();
+        bool stop();
 
         void close();
         bool isOpen();
@@ -106,11 +107,13 @@ namespace server {
         void worker();
         void stopWaiters();
 
+        void resetCryptoCounters();
+
         int getUI();
 
-        void sendPacket(PacketType type, int len);
-        void sendCommand(Command cmd, int len);
-        void sendCommandAck(Command cmd, int len);
+        bool sendPacket(PacketType type, int len);
+        bool sendCommand(Command cmd, int len);
+        bool sendCommandAck(Command cmd, int len);
 
         PacketWaiter* awaitCommandAck(Command cmd);
         void commandAckHandled(PacketWaiter* waiter);
@@ -142,8 +145,10 @@ namespace server {
         std::mutex dlMtx;
 
         ZSTD_DCtx* dctx;
-        ChaCha20_Ctx_s recvCryptoCtx;
         ChaCha20_Ctx_s sendCryptoCtx;
+        uint64_t nextSendSeqNr;
+        ChaCha20_Ctx_s recvCryptoCtx;
+        uint64_t lastRecvSeqNr;
 
         bool useEncryption = true;
         uint8_t netKey[CHACHA20_KEY_LEN];

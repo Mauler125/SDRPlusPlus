@@ -9,8 +9,7 @@ namespace net {
         _udp = udp;
         remoteAddr = raddr;
         connectionOpen = true;
-        sendCryptoCtx.counter = 0;
-        recvCryptoCtx.counter = 0;
+        resetCryptoCounters();
         readWorkerThread = std::thread(&ConnClass::readWorker, this);
         writeWorkerThread = std::thread(&ConnClass::writeWorker, this);
     }
@@ -41,9 +40,7 @@ namespace net {
         if (writeWorkerThread.joinable()) { writeWorkerThread.join(); }
 
         connectionOpenCnd.notify_all();
-
-        sendCryptoCtx.counter = 0;
-        recvCryptoCtx.counter = 0;
+        resetCryptoCounters();
     }
 
     bool ConnClass::isOpen() {
@@ -231,6 +228,12 @@ namespace net {
         }
     }
 
+    void ConnClass::resetCryptoCounters() {
+        sendCryptoCtx.counter = 0;
+        nextSendSeqNr = 1;
+        recvCryptoCtx.counter = 0;
+        lastRecvSeqNr = 0;
+    }
 
     ListenerClass::ListenerClass(SockHandle_t listenSock) {
         sock = listenSock;
