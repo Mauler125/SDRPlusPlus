@@ -172,7 +172,7 @@ namespace net {
         const char* const ret = inet_ntop(AF_INET6, &addr.sin6_addr, buf, sizeof(buf));
 
         if (!ret) {
-            throw std::runtime_error("Address deserialization failed");
+            throw std::runtime_error("Address serialization failed");
             return std::string("-<[ErRoR]>-");
         }
 
