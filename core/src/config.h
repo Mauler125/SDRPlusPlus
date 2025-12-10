@@ -15,6 +15,7 @@ public:
     void setPath(const std::string& file);
     void load(const json& def, bool lock = true);
     void save(bool lock = true);
+    void clear();
     void enableAutoSave();
     void disableAutoSave();
     void acquire();
@@ -25,7 +26,7 @@ public:
 private:
     void autoSaveWorker();
 
-    std::string path = "";
+    std::string path;
     std::thread autoSaveThread;
     std::mutex mtx;
 

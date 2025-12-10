@@ -184,3 +184,17 @@ void ModuleManager::doPostInitAll() {
         inst.instance->postInit();
     }
 }
+
+void ModuleManager::doShutdownAll() {
+    onInstanceDeleted.unbindAll();
+    onInstanceDelete.unbindAll();
+    onInstanceCreated.unbindAll();
+
+    // Shut down all modules
+    for (auto& [name, mod] : modules) {
+        mod.end();
+    }
+
+    modules.clear();
+    instances.clear();
+}

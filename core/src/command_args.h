@@ -133,7 +133,8 @@ public:
         aliases[shortName] = name;
     }
 
-    void defineAll();   
+    void defineAll();
+    void undefineAll();
 
     template<class T>
     void define(char shortName, std::string name, std::string desc, T defValue) {

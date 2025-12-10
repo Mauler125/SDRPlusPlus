@@ -202,6 +202,16 @@ namespace sourcemenu {
         sigpath::sourceManager.onSourceUnregistered.bindHandler(&sourcesChangedHandler);
     }
 
+    void shutdown() {
+        decimations.clear();
+        sources.clear();
+        selectedSource.clear();
+        selectedOffset.clear();
+        offsets.clear();
+        namedOffsets.clear();
+        delOffsetName.clear();
+    }
+
     void addOffset(const std::string& name, double offset) {
         // Acquire the config file
         core::configManager.acquire();

@@ -9,6 +9,10 @@ namespace sinkmenu {
         core::configManager.release();
     }
 
+    void shutdown() {
+        sigpath::sinkManager.shutdown();
+    }
+
     void draw(void* ctx) {
         sigpath::sinkManager.showMenu();
     }

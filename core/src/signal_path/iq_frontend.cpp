@@ -8,10 +8,7 @@
 IQFrontEnd::~IQFrontEnd() {
     if (!_init) { return; }
     stop();
-    dsp::buffer::free(fftWindowBuf);
-    fftwf_destroy_plan(fftwPlan);
-    fftwf_free(fftInBuf);
-    fftwf_free(fftOutBuf);
+    shutdown();
 }
 
 void IQFrontEnd::init(dsp::stream<dsp::complex_t>* in, double sampleRate, bool buffering, int decimRatio, bool dcBlocking, int fftSize, double fftRate, FFTWindow fftWindow, float* (*acquireFFTBuffer)(void* ctx), void (*releaseFFTBuffer)(void* ctx), void* fftCtx) {
@@ -68,6 +65,33 @@ void IQFrontEnd::init(dsp::stream<dsp::complex_t>* in, double sampleRate, bool b
     split.bindStream(&fftIn);
 
     _init = true;
+}
+
+void IQFrontEnd::shutdown() {
+    _init = false;
+
+    fftwf_destroy_plan(fftwPlan);
+    fftwPlan = NULL;
+
+    fftwf_free(fftOutBuf);
+    fftOutBuf = NULL;
+
+    fftwf_free(fftInBuf);
+    fftInBuf = NULL;
+
+    dsp::buffer::free(fftWindowBuf);
+    fftWindowBuf = NULL;
+
+    fftSink.shutdown();
+    reshape.shutdown();
+    split.shutdown();
+    conjugate.shutdown();
+    dcBlock.shutdown();
+    decim.shutdown();
+    inBuf.shutdown();
+
+    vfoStreams.clear();
+    vfos.clear();
 }
 
 void IQFrontEnd::setInput(dsp::stream<dsp::complex_t>* in) {
@@ -298,8 +322,8 @@ void IQFrontEnd::updateFFTPath(bool updateWaterfall) {
 
     // Update FFT plan
     fftwf_free(fftInBuf);
-    fftwf_free(fftOutBuf);
     fftInBuf = (fftwf_complex*)fftwf_malloc(_fftSize * sizeof(fftwf_complex));
+    fftwf_free(fftOutBuf);
     fftOutBuf = (fftwf_complex*)fftwf_malloc(_fftSize * sizeof(fftwf_complex));
     fftwPlan = fftwf_plan_dft_1d(_fftSize, fftInBuf, fftOutBuf, FFTW_FORWARD, FFTW_ESTIMATE);
 

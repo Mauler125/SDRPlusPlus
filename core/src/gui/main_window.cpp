@@ -230,9 +230,25 @@ void MainWindow::init() {
 }
 
 void MainWindow::shutdown() {
+    onPlayStateChange.unbindAll();
+
+    module_manager_menu::shutdown();
+    vfo_color_menu::shutdown();
+    displaymenu::shutdown();
+    bandplanmenu::shutdown();
+    sinkmenu::shutdown();
+    sourcemenu::shutdown();
+
+    sigpath::iqFrontEnd.stop();
+    sigpath::iqFrontEnd.shutdown();
+
     fftwf_destroy_plan(fftwPlan);
+    fftwPlan = NULL;
     fftwf_free(fft_out);
+    fft_out = NULL;
     fftwf_free(fft_in);
+    fft_in = NULL;
+
     gui::waterfall.shutdown();
 }
 

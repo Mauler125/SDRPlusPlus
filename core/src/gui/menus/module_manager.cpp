@@ -28,6 +28,13 @@ namespace module_manager_menu {
         modTypeId = 0;
     }
 
+    void shutdown() {
+        modTypes.clear();
+        toBeRemoved.clear();
+        modTypesTxt.clear();
+        errorMessage.clear();
+    }
+
     void draw(void* ctx) {
         bool modified = false;
 

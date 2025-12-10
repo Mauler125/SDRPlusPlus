@@ -381,6 +381,20 @@ void SinkManager::showMenu() {
     }
 }
 
+void SinkManager::shutdown() {
+    streamNames.clear();
+    providerNamesTxt.clear();
+    providerNames.clear();
+    streams.clear();
+    providers.clear();
+    onStreamUnregistered.unbindAll();
+    onStreamUnregister.unbindAll();
+    onStreamRegistered.unbindAll();
+    onSinkProviderUnregistered.unbindAll();
+    onSinkProviderUnregister.unbindAll();
+    onSinkProviderRegistered.unbindAll();
+}
+
 std::vector<std::string> SinkManager::getStreamNames() {
     return streamNames;
 }

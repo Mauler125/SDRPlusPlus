@@ -112,6 +112,14 @@ namespace displaymenu {
         uiScaleId = uiScales.valueId(style::uiScale);
     }
 
+    void shutdown() {
+        uiScales.clear();
+        colorMapAuthor.clear();
+        colorMapNamesTxt.clear();
+        colorMapNames.clear();
+        fftSizes.clear();
+    }
+
     void setWaterfallShown(bool shown) {
         showWaterfall = shown;
         showWaterfall ? gui::waterfall.showWaterfall() : gui::waterfall.hideWaterfall();

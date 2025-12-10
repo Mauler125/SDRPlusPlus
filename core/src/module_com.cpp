@@ -50,3 +50,8 @@ bool ModuleComManager::callInterface(const std::string& name, int code, void* in
     iface.handler(code, in, out, iface.ctx);
     return true;
 }
+
+void ModuleComManager::unregisterAll() {
+    std::lock_guard<std::recursive_mutex> lck(mtx);
+    interfaces.clear();
+}

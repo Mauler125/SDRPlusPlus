@@ -25,6 +25,11 @@ void CommandArgsParser::defineAll() {
         define('\0', "autostart", "Automatically start the SDR after loading");
 }
 
+void CommandArgsParser::undefineAll() {
+    aliases.clear();
+    args.clear();
+}
+
 int CommandArgsParser::parse(int argc, char* argv[]) {
     for (int i = 1; i < argc; i++) {
         std::string arg = argv[i];

@@ -92,6 +92,7 @@ public:
     int countModuleInstances(const std::string& module);
 
     void doPostInitAll();
+    void doShutdownAll();
 
     Event<std::string> onInstanceCreated;
     Event<std::string> onInstanceDelete;

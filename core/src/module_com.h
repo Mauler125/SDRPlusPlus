@@ -16,6 +16,7 @@ public:
     bool interfaceExists(const std::string& name);
     std::string getModuleName(const std::string& name);
     bool callInterface(const std::string& name, int code, void* in, void* out);
+    void unregisterAll();
 
 private:
     std::recursive_mutex mtx;

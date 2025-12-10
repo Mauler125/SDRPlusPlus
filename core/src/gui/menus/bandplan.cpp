@@ -34,6 +34,11 @@ namespace bandplanmenu {
         gui::waterfall.setBandPlanPos(bandPlanPos);
     }
 
+    void shutdown() {
+        bandPlanPos = 0;
+        gui::waterfall.setBandPlanPos(bandPlanPos);
+    }
+
     void draw(void* ctx) {
         float menuColumnWidth = ImGui::GetContentRegionAvail().x;
         ImGui::PushItemWidth(menuColumnWidth);

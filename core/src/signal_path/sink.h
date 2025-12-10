@@ -113,6 +113,8 @@ public:
     void loadSinksFromConfig();
     void showMenu();
 
+    void shutdown();
+
     std::vector<std::string> getStreamNames();
 
     Event<std::string> onSinkProviderRegistered;

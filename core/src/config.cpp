@@ -54,6 +54,12 @@ void ConfigManager::save(bool lock) {
     if (lock) { mtx.unlock(); }
 }
 
+void ConfigManager::clear() {
+    std::lock_guard<std::mutex> lock(mtx);
+    conf.clear();
+    path.clear();
+}
+
 void ConfigManager::enableAutoSave() {
     if (autoSaveEnabled) { return; }
     autoSaveEnabled = true;

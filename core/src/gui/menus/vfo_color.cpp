@@ -76,6 +76,13 @@ namespace vfo_color_menu {
         core::configManager.release(modified);
     }
 
+    void shutdown() {
+        sigpath::vfoManager.onVfoCreated.unbindHandler(&vfoAddHndl);
+        vfoAddHndl.handler = nullptr;
+        vfoColors.clear();
+        openName.clear();
+    }
+
     void draw(void* ctx) {
         ImGui::BeginTable("VFO Color Buttons Table", 2);
         ImGui::TableNextRow();
