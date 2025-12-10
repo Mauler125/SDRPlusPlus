@@ -100,7 +100,6 @@ protected:
     float* fftWindowBuf;
     fftwf_complex *fftInBuf, *fftOutBuf;
     fftwf_plan fftwPlan;
-    float* fftDbOut;
 
     double effectiveSr;
 
