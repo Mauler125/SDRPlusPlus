@@ -33,7 +33,7 @@ static std::string genFileName(const std::string& prefix, const std::string& suf
     tm* ltm = localtime(&now);
     char buf[1024];
     const int ret = snprintf(buf, sizeof(buf), "%s_%02d-%02d-%02d_%02d-%02d-%02d%s", prefix.c_str(), ltm->tm_hour, ltm->tm_min, ltm->tm_sec, ltm->tm_mday, ltm->tm_mon + 1, ltm->tm_year + 1900, suffix.c_str());
-    return std::string(buf, std::clamp(ret, 0, sizeof(buf));
+    return std::string(buf, std::clamp<int>(ret, 0, sizeof(buf)));
 }
 
 #define INPUT_SAMPLE_RATE 150000
