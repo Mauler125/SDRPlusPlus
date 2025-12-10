@@ -38,6 +38,14 @@ namespace core {
     ModuleComManager modComManager;
     CommandArgsParser args;
 
+    static void printEmblem() {
+        flog::info("{0}", R"(   _______  ___    __    __ )");
+        flog::info("{0}", R"(  / __/ _ \/ _ \__/ /___/ /_)");
+        flog::info("{0}", R"( _\ \/ // / , _/_  __/_  __/)");
+        flog::info("{0}", R"(/___/____/_/|_| /_/   /_/   )");
+        flog::info("v{0}; built on {1} at {2}", VERSION_STR, getBuildDate(), getBuildTime());
+    };
+
     static void setupConfig() {
         // ======== DEFAULT CONFIG ========
         json defConfig;
@@ -319,7 +327,7 @@ namespace core {
 
 // main
 int sdrpp_main(int argc, char* argv[]) {
-    flog::info("SDR++ v" VERSION_STR);
+    core::printEmblem();
 
 #ifdef IS_MACOS_BUNDLE
     // If this is a MacOS .app, CD to the correct directory
