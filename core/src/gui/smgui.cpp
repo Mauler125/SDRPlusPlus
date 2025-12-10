@@ -283,7 +283,11 @@ namespace SmGui {
             // Load entry type
             DrawListElem elem;
             int consumed = loadItem(elem, &buf[i], len);
-            if (consumed < 0) { return -1; }
+            if (consumed < 0) {
+                flog::error("Drawlist load failed");
+                elements.clear();
+                return -1;
+            }
             i += consumed;
             len -= consumed;
 
@@ -294,7 +298,7 @@ namespace SmGui {
         // Validate and clear if invalid
         if (!validate()) {
             flog::error("Drawlist validation failed");
-            //elements.clear();
+            elements.clear();
             return -1;
         }
 
