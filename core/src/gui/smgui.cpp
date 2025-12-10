@@ -292,7 +292,7 @@ namespace SmGui {
             len -= consumed;
 
             // Add element to list
-            elements.push_back(elem);
+            elements.push_back(std::move(elem));
         }
 
         // Validate and clear if invalid
