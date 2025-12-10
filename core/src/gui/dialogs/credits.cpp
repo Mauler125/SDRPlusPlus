@@ -5,6 +5,7 @@
 #include <config.h>
 #include <credits.h>
 #include <version.h>
+#include <core.h>
 
 namespace credits {
     ImFont* bigFont;
@@ -88,7 +89,7 @@ namespace credits {
         ImGui::Spacing();
         ImGui::Spacing();
 
-        ImGui::TextUnformatted("SDR++ v" VERSION_STR " (Built at " __TIME__ ", " __DATE__ ")");
+        ImGui::TextUnformatted(core::getBuildString());
         end();
     }
 }

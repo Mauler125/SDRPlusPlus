@@ -286,6 +286,18 @@ namespace core {
         }
     }
 
+    const char* getBuildDate() {
+        return __DATE__;
+    }
+
+    const char* getBuildTime() {
+        return __TIME__;
+    }
+
+    const char* getBuildString() {
+        return "SDR++ v" VERSION_STR " (Built at " __DATE__ " on " __TIME__ ")";
+    }
+
     void setInputSampleRate(double samplerate) {
         // Forward this to the server
         if (args["server"].b()) { server::setInputSampleRate(samplerate); return; }

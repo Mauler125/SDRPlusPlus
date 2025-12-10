@@ -10,6 +10,9 @@ namespace core {
     SDRPP_EXPORT ModuleComManager modComManager;
     SDRPP_EXPORT CommandArgsParser args;
 
+    const char* getBuildDate();
+    const char* getBuildTime();
+    const char* getBuildString();
     void setInputSampleRate(double samplerate);
 };
 
