@@ -9,7 +9,7 @@ namespace dsp::filter {
     public:
         Deemphasis() {}
 
-        Deemphasis(stream<T>* in, double tau, double samplerate) {}
+        Deemphasis(stream<T>* in, double tau, double samplerate) { init(in, tau, samplerate); }
 
         void init(stream<T>* in, double tau, double samplerate) {
             _tau = tau;
