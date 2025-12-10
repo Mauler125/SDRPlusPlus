@@ -249,7 +249,7 @@ namespace SmGui {
             elem.step = (DrawStep)data[i++];
             elem.forceSync = data[i++];
         }
-        else if (elem.type == DRAW_LIST_ELEM_TYPE_BOOL && len-- >= 1) {
+        else if (elem.type == DRAW_LIST_ELEM_TYPE_BOOL && len >= 1) {
             elem.b = data[i++];
         }
         else if (elem.type == DRAW_LIST_ELEM_TYPE_INT && len >= 4) {
