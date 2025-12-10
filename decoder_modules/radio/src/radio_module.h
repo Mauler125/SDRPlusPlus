@@ -10,7 +10,7 @@
 #include <dsp/noise_reduction/fm_if.h>
 #include <dsp/noise_reduction/squelch.h>
 #include <dsp/multirate/rational_resampler.h>
-#include <dsp/filter/deephasis.h>
+#include <dsp/filter/deemphasis.h>
 #include <core.h>
 #include <stdint.h>
 #include <utils/optionlist.h>
