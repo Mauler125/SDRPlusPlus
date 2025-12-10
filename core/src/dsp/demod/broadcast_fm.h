@@ -24,12 +24,7 @@ namespace dsp::demod {
 
         ~BroadcastFM() {
             if (!base_type::_block_init) { return; }
-            base_type::stop();
-            buffer::free(lmr);
-            buffer::free(l);
-            buffer::free(r);
-            taps::free(pilotFirTaps);
-            taps::free(audioFirTaps);
+            shutdown();
         }
 
         virtual void init(stream<complex_t>* in, double deviation, double samplerate, bool stereo = true, bool lowPass = true, bool rdsOut = false) {
@@ -63,6 +58,26 @@ namespace dsp::demod {
             rdsResamp.out.free();
 
             base_type::init(in);
+        }
+
+        virtual void shutdown() {
+            base_type::shutdown();
+
+            rdsResamp.shutdown();
+            xlator.shutdown();
+            arFir.shutdown();
+            alFir.shutdown();
+            lmrDelay.shutdown();
+            lprDelay.shutdown();
+            pilotPLL.shutdown();
+            rtoc.shutdown();
+            demod.shutdown();
+
+            buffer::free(r);
+            buffer::free(l);
+            buffer::free(lmr);
+            taps::free(audioFirTaps);
+            taps::free(pilotFirTaps);
         }
 
         void setDeviation(double deviation) {

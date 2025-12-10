@@ -14,8 +14,7 @@ namespace dsp::multirate {
 
         ~PowerDecimator() {
             if (!base_type::_block_init) { return; }
-            base_type::stop();
-            freeFirs();
+            shutdown();
         }
 
         void init(stream<T>* in, unsigned int ratio) {
@@ -23,6 +22,11 @@ namespace dsp::multirate {
             _ratio = ratio;
             reconfigure();
             base_type::init(in);
+        }
+
+        void shutdown() {
+            base_type::shutdown();
+            freeFirs();
         }
 
         static inline unsigned int getMaxRatio() {
@@ -83,8 +87,8 @@ namespace dsp::multirate {
     protected:
         void freeFirs() {
             for (auto& fir : decimFirs) { delete fir; }
-            for (auto& taps : decimTaps) { taps::free(taps); }
             decimFirs.clear();
+            for (auto& taps : decimTaps) { taps::free(taps); }
             decimTaps.clear();
         }
 

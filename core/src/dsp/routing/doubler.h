@@ -9,11 +9,21 @@ namespace dsp::routing {
         Doubler() {}
 
         Doubler(stream<T>* in) { init(in); }
+        ~Doubler() {
+            if (!base_type::_block_init) { return; }
+            shutdown();
+        }
 
         void init(stream<T>* in) {
             base_type::registerOutput(&outA);
             base_type::registerOutput(&outB);
             base_type::init(in);
+        }
+
+        void shutdown() {
+            base_type::shutdown();
+            base_type::unregisterOutput(&outB);
+            base_type::unregisterOutput(&outA);
         }
 
         int run() {

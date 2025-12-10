@@ -13,6 +13,10 @@ namespace dsp::demod {
         CW() {}
         
         CW(stream<complex_t>* in, double tone, double agcAttack, double agcDecay, double samplerate) { init(in, tone, agcAttack, agcDecay, samplerate); }
+        ~CW() {
+            if (!base_type::_block_init) { return; }
+            shutdown();
+        }
 
         void init(stream<complex_t>* in, double tone, double agcAttack, double agcDecay, double samplerate) {
             _tone = tone;
@@ -26,6 +30,12 @@ namespace dsp::demod {
             }
 
             base_type::init(in);
+        }
+
+        void shutdown() {
+            base_type::shutdown();
+            agc.shutdown();
+            xlator.shutdown();
         }
 
         void setTone(double tone) {

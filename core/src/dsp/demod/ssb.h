@@ -19,6 +19,10 @@ namespace dsp::demod {
         SSB() {}
 
         SSB(stream<complex_t>* in, Mode mode, double bandwidth, double samplerate, double agcAttack, double agcDecay) { init(in, mode, bandwidth, samplerate, agcAttack, agcDecay); }
+        ~SSB() {
+            if (!base_type::_block_init) { return; }
+            shutdown();
+        }
 
         void init(stream<complex_t>* in, Mode mode, double bandwidth, double samplerate, double agcAttack, double agcDecay) {
             _mode = mode;
@@ -33,6 +37,12 @@ namespace dsp::demod {
             }
 
             base_type::init(in);
+        }
+
+        void shutdown() {
+            base_type::shutdown();
+            agc.shutdown();
+            xlator.shutdown();
         }
 
         void setMode(Mode mode) {

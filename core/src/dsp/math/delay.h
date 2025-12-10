@@ -12,8 +12,7 @@ namespace dsp::math {
 
         ~Delay() {
             if (!base_type::_block_init) { return; }
-            base_type::stop();
-            buffer::free(buffer);
+            shutdown();
         }
 
         void init(stream<T>* in, int delay) {
@@ -24,6 +23,11 @@ namespace dsp::math {
             buffer::clear(buffer, _delay);
 
             base_type::init(in);
+        }
+
+        void shutdown() {
+            base_type::shutdown();
+            buffer::free(buffer);
         }
 
         void setDelay(int delay) {

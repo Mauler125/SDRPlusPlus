@@ -18,7 +18,7 @@ namespace dsp::buffer {
         // I also don't check for _block_init for the exact sample reason, something's weird
         ~Reshaper() {
             if (!base_type::_block_init) { return; }
-            base_type::stop();
+            shutdown();
         }
 
         void init(stream<T>* in, int keep, int skip) {
@@ -29,6 +29,15 @@ namespace dsp::buffer {
             base_type::registerInput(_in);
             base_type::registerOutput(&out);
             base_type::_block_init = true;
+        }
+
+        void shutdown() {
+            base_type::_block_init = false;
+            base_type::stop();
+            base_type::unregisterOutput(&out);
+            base_type::unregisterInput(_in);
+            ringBuf.shutdown();
+            _in = NULL;
         }
 
         void setInput(stream<T>* in) {

@@ -13,9 +13,19 @@ namespace dsp::sink {
 
         RingBuffer(stream<T>* in, int maxLatency) { init(in, maxLatency); }
 
+        ~RingBuffer() {
+            if (!base_type::_block_init) { return; }
+            shutdown();
+        }
+
         void init(stream<T>* in, int maxLatency) {
             data.init(maxLatency);
             base_type::init(in);
+        }
+
+        void shutdown() {
+            base_type::shutdown();
+            data.shutdown();
         }
 
         int run() {

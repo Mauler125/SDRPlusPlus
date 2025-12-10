@@ -22,8 +22,7 @@ namespace dsp::demod {
 
         ~AM() {
             if (!base_type::_block_init) { return; }
-            base_type::stop();
-            taps::free(lpfTaps);
+            shutdown();
         }
 
         void init(stream<complex_t>* in, AGCMode agcMode, double bandwidth, double agcAttack, double agcDecay, double dcBlockRate, double samplerate) {
@@ -44,6 +43,15 @@ namespace dsp::demod {
             lpf.out.free();
             
             base_type::init(in);
+        }
+
+        void shutdown() {
+            base_type::shutdown();
+            lpf.shutdown();
+            taps::free(lpfTaps);
+            dcBlock.shutdown();
+            audioAgc.shutdown();
+            carrierAgc.shutdown();
         }
 
         void setAGCMode(AGCMode agcMode) {

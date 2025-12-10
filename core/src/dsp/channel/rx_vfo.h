@@ -12,8 +12,7 @@ namespace dsp::channel {
 
         ~RxVFO() {
             if (!base_type::_block_init) { return; }
-            base_type::stop();
-            taps::free(ftaps);
+            shutdown();
         }
 
         void init(stream<complex_t>* in, double inSamplerate, double outSamplerate, double bandwidth, double offset) {
@@ -30,6 +29,14 @@ namespace dsp::channel {
             filter.init(NULL, ftaps);
 
             base_type::init(in);
+        }
+
+        void shutdown() {
+            base_type::shutdown();
+            filter.shutdown();
+            resamp.shutdown();
+            xlator.shutdown();
+            taps::free(ftaps);
         }
 
         void setInSamplerate(double inSamplerate) {

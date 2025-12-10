@@ -17,8 +17,7 @@ namespace dsp::demod {
 
         ~GFSK() {
             if (!base_type::_block_init) { return; }
-            base_type::stop();
-            taps::free(rrcTaps);
+            shutdown();
         }
 
         void init(stream<complex_t>* in, double symbolrate, double samplerate, double deviation, int rrcTapCount, double rrcBeta, double omegaGain, double muGain, double omegaRelLimit = 0.01) {
@@ -38,6 +37,14 @@ namespace dsp::demod {
             recov.out.free();
 
             base_type::init(in);
+        }
+
+        void shutdown() {
+            base_type::shutdown();
+            recov.shutdown();
+            rrc.shutdown();
+            taps::free(rrcTaps);
+            demod.shutdown();
         }
 
         void setSymbolrate(double symbolrate) {

@@ -18,8 +18,7 @@ namespace dsp::demod {
 
         ~FM() {
             if (!base_type::_block_init) { return; }
-            base_type::stop();
-            dsp::taps::free(filterTaps);
+            shutdown();
         }
 
         void init(dsp::stream<dsp::complex_t>* in, double samplerate, double bandwidth, bool lowPass, bool highPass) {
@@ -41,6 +40,13 @@ namespace dsp::demod {
             fir.out.free();
 
             base_type::init(in);
+        }
+
+        void shutdown() {
+            base_type::shutdown();
+            dsp::taps::free(filterTaps);
+            fir.shutdown();
+            demod.shutdown();
         }
 
         void setSamplerate(double samplerate) {

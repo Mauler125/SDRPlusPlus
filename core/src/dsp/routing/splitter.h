@@ -9,6 +9,16 @@ namespace dsp::routing {
         Splitter() {}
 
         Splitter(stream<T>* in) { base_type::init(in); }
+        ~Splitter() {
+            if (!base_type::_block_init) { return; }
+            shutdown();
+        }
+
+        void shutdown() {
+            base_type::shutdown();
+            unbindAll();
+            streams.clear();
+        }
 
         void bindStream(stream<T>* stream) {
             assert(base_type::_block_init);
@@ -41,6 +51,12 @@ namespace dsp::routing {
             streams.erase(sit);
             base_type::unregisterOutput(stream);
             base_type::tempStart();
+        }
+
+        void unbindAll() {
+            for (stream<T>* stream : streams) {
+                base_type::unregisterOutput(stream);
+            }
         }
 
         int run() {

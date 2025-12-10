@@ -14,9 +14,7 @@ namespace dsp::multirate {
 
         ~PolyphaseResampler() {
             if (!base_type::_block_init) { return; }
-            base_type::stop();
-            buffer::free(buffer);
-            freePolyphaseBank(phases);
+            shutdown();
         }
 
         void init(stream<T>* in, int interp, int decim, tap<float> taps) {
@@ -33,6 +31,12 @@ namespace dsp::multirate {
             buffer::clear<T>(buffer, phases.tapsPerPhase - 1);
 
             base_type::init(in);
+        }
+
+        void shutdown() {
+            base_type::shutdown();
+            buffer::free(buffer);
+            freePolyphaseBank(phases);
         }
 
         void setRatio(int interp, int decim, tap<float>& taps) {

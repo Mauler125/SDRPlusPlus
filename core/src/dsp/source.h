@@ -7,11 +7,16 @@ namespace dsp {
     public:
         Source() { init(); }
 
-        virtual ~Source() {}
+        virtual ~Source() { shutdown(); }
 
         virtual void init() {
             registerOutput(&out);
             _block_init = true;
+        }
+
+        virtual void shutdown() {
+            _block_init = false;
+            unregisterOutput(&out);
         }
 
         virtual int run() = 0;

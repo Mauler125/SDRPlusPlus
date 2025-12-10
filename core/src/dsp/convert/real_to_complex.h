@@ -8,17 +8,20 @@ namespace dsp::convert {
         RealToComplex() {}
 
         RealToComplex(stream<float>* in) { init(in); }
-
         ~RealToComplex() {
             if (!base_type::_block_init) { return; }
-            base_type::stop();
-            buffer::free(nullBuf);
+            shutdown();
         }
 
         void init(stream<float>* in) {
             nullBuf = buffer::alloc<float>(STREAM_BUFFER_SIZE);
             buffer::clear(nullBuf, STREAM_BUFFER_SIZE);
             base_type::init(in);
+        }
+
+        void shutdown() {
+            base_type::shutdown();
+            buffer::free(nullBuf);
         }
 
         inline int process(int count, const float* in, complex_t* out) {

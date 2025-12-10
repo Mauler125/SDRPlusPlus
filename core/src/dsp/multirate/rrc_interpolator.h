@@ -11,6 +11,10 @@ namespace dsp::multirate {
         RRCInterpolator() {}
 
         RRCInterpolator(stream<T>* in, double symbolrate, double samplerate, double rrcBeta, int rrcTapCount) { init(in, symbolrate, samplerate, rrcBeta, rrcTapCount); }
+        ~RRCInterpolator() {
+            if (!base_type::_block_init) { return; }
+            shutdown();
+        }
 
         void init(stream<T>* in, double symbolrate, double samplerate, double rrcBeta, int rrcTapCount) {
             _symbolrate = symbolrate;
@@ -23,6 +27,12 @@ namespace dsp::multirate {
             genTaps();
 
             base_type::init(in);
+        }
+
+        void shutdown() {
+            base_type::shutdown();
+            taps::free(rrcTaps);
+            resamp.shutdown();
         }
 
         void setRates(double symbolrate, double samplerate) {

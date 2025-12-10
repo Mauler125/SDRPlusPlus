@@ -8,8 +8,8 @@ namespace dsp {
 
         virtual ~hier_block() {
             if (!_block_init) { return; }
-            stop();
             _block_init = false;
+            stop();
         }
 
         virtual void start() {

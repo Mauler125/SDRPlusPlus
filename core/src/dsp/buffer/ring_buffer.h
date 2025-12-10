@@ -29,8 +29,16 @@ namespace dsp::buffer {
             writeCursor = 0;
             readable = 0;
             writable = size;
+            if (memory) { buffer::free(memory); }
             memory = buffer::alloc<T>(size);
             buffer::clear(memory, size);
+        }
+
+        void shutdown() {
+            if (memory) {
+                buffer::free(memory);
+                memory = NULL;
+            }
         }
 
         int read(T* data, int len) {

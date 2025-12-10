@@ -13,14 +13,18 @@ namespace dsp::noise_reduction {
 
         ~FMIF() {
             if (!base_type::_block_init) { return; }
-            base_type::stop();
-            destroyBuffers();
+            shutdown();
         }
 
         void init(stream<complex_t>* in, int bins) {
             _bins = bins;
             initBuffers();
             base_type::init(in);
+        }
+
+        void shutdown() {
+            base_type::shutdown();
+            destroyBuffers();
         }
 
         void setBins(int bins) {

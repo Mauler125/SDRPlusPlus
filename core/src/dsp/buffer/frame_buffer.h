@@ -16,10 +16,7 @@ namespace dsp::buffer {
 
         ~SampleFrameBuffer() {
             if (!base_type::_block_init) { return; }
-            base_type::stop();
-            for (int i = 0; i < TEST_BUFFER_SIZE; i++) {
-                buffer::free(buffers[i]);
-            }
+            shutdown();
         }
 
         void init(stream<T>* in) {
@@ -32,6 +29,19 @@ namespace dsp::buffer {
             base_type::registerInput(in);
             base_type::registerOutput(&out);
             base_type::_block_init = true;
+        }
+
+        void shutdown() {
+            base_type::_block_init = false;
+            base_type::stop();
+            base_type::unregisterOutput(&out);
+            base_type::unregisterInput(_in);
+
+            for (int i = 0; i < TEST_BUFFER_SIZE; i++) {
+                buffer::free(buffers[i]);
+            }
+
+            _in = NULL;
         }
 
         void setInput(stream<T>* in) {

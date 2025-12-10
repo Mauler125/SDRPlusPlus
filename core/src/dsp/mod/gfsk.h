@@ -11,6 +11,10 @@ namespace dsp::mod {
         GFSK(stream<float>* in, double symbolrate, double samplerate, double rrcBeta, int rrcTapCount, double deviation) {
             init(in, symbolrate, samplerate, rrcBeta, rrcTapCount, deviation);
         }
+        ~GFSK() {
+            if (!base_type::_block_init) { return; }
+            shutdown();
+        }
 
         void init(stream<float>* in, double symbolrate, double samplerate, double rrcBeta, int rrcTapCount, double deviation) {
             _samplerate = samplerate;
@@ -20,6 +24,12 @@ namespace dsp::mod {
             mod.init(NULL, _deviation, _samplerate);
 
             base_type::init(in);
+        }
+
+        void shutdown() {
+            base_type::shutdown();
+            mod.shutdown();
+            interp.shutdown();
         }
 
         void setRates(double symbolrate, double samplerate) {

@@ -10,7 +10,10 @@ namespace dsp {
 
         Operator(stream<A>* a, stream<B>* b) { init(a, b); }
 
-        virtual ~Operator() {}
+        virtual ~Operator() {
+            if (!_block_init) { return; }
+            shutdown();
+        }
 
         virtual void init(stream<A>* a, stream<B>* b) {
             _a = a;
@@ -19,6 +22,16 @@ namespace dsp {
             base_type::registerInput(_b);
             base_type::registerOutput(&out);
             base_type::_block_init = true;
+        }
+
+        virtual void shutdown() {
+            base_type::_block_init = false;
+            base_type::stop();
+            base_type::unregisterOutput(&out);
+            base_type::unregisterInput(_b);
+            base_type::unregisterInput(_a);
+            _b = NULL;
+            _a = NULL;
         }
 
         virtual void setInputs(stream<A>* a, stream<B>* b) {

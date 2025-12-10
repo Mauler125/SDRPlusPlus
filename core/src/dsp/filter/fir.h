@@ -13,8 +13,7 @@ namespace dsp::filter {
 
         ~FIR() {
             if (!base_type::_block_init) { return; }
-            base_type::stop();
-            buffer::free(buffer);
+            shutdown();
         }
 
         virtual void init(stream<D>* in, tap<T>& taps) {
@@ -26,6 +25,11 @@ namespace dsp::filter {
             buffer::clear<D>(buffer, _taps.size - 1);
 
             base_type::init(in);
+        }
+
+        virtual void shutdown() {
+            base_type::shutdown();
+            buffer::free(buffer);
         }
 
         virtual void setTaps(tap<T>& taps) {

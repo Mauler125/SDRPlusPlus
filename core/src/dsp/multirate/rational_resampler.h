@@ -20,8 +20,7 @@ namespace dsp::multirate {
 
         ~RationalResampler() {
             if (!base_type::_block_init) { return; }
-            base_type::stop();
-            taps::free(rtaps);
+            shutdown();
         }
 
         void init(stream<T>* in, double inSamplerate, double outSamplerate) {
@@ -40,6 +39,13 @@ namespace dsp::multirate {
             reconfigure();
 
             base_type::init(in);
+        }
+
+        void shutdown() {
+            base_type::shutdown();
+            resamp.shutdown();
+            decim.shutdown();
+            taps::free(rtaps);
         }
 
         void reset() {

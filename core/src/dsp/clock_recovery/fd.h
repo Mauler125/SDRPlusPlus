@@ -15,9 +15,7 @@ namespace dsp::clock_recovery {
 
         ~FD() {
             if (!base_type::_block_init) { return; }
-            base_type::stop();
-            dsp::multirate::freePolyphaseBank(interpBank);
-            buffer::free(buffer);
+            shutdown();
         }
 
         void init(stream<float>* in, double omega, double omegaGain, double muGain, double omegaRelLimit, int interpPhaseCount = 128, int interpTapCount = 8) {
@@ -34,6 +32,13 @@ namespace dsp::clock_recovery {
             bufStart = &buffer[_interpTapCount - 1];
         
             base_type::init(in);
+        }
+
+        void shutdown() {
+            base_type::shutdown();
+            buffer::free(buffer);
+            dsp::multirate::freePolyphaseBank(interpBank);
+            pcl.shutdown();
         }
 
         void setOmega(double omega) {

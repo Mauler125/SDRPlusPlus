@@ -8,6 +8,10 @@ namespace dsp::buffer {
         Packer() {}
 
         Packer(stream<T>* in, int count) { init(in, count); }
+        ~Packer() {
+            if (!base_type::_block_init) { return; }
+            shutdown();
+        }
 
         void init(stream<T>* in, int count) {
             _in = in;
@@ -15,6 +19,15 @@ namespace dsp::buffer {
             block::registerInput(_in);
             block::registerOutput(&out);
             block::_block_init = true;
+        }
+
+        void shutdown() {
+            block::_block_init = false;
+            block::stop();
+            block::unregisterInput(_in);
+            block::unregisterOutput(&out);
+            samples = 1;
+            _in = nullptr;
         }
 
         void setInput(stream<T>* in) {

@@ -9,6 +9,10 @@ namespace dsp::sink {
         Handler() {}
 
         Handler(stream<T>* in, void (*handler)(T* data, int count, void* ctx), void* ctx) { init(in, handler, ctx); }
+        ~Handler() {
+            if (!base_type::_block_init) { return; }
+            shutdown();
+        }
 
         void init(stream<T>* in, void (*handler)(T* data, int count, void* ctx), void* ctx) {
             _handler = handler;

@@ -12,8 +12,7 @@ namespace dsp::noise_reduction {
 
         ~Squelch() {
             if (!base_type::_block_init) { return; }
-            base_type::stop();
-            buffer::free(normBuffer);
+            shutdown();
         }
 
         void init(stream<complex_t>* in, double level) {
@@ -22,6 +21,11 @@ namespace dsp::noise_reduction {
             normBuffer = buffer::alloc<float>(STREAM_BUFFER_SIZE);
 
             base_type::init(in);
+        }
+
+        void shutdown() {
+            base_type::shutdown();
+            buffer::free(normBuffer);
         }
 
         void setLevel(double level) {

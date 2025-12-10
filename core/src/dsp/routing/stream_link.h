@@ -9,11 +9,21 @@ namespace dsp::routing {
         StreamLink() {}
 
         StreamLink(stream<T>* in, stream<T>* out) { init(in, out); }
+        ~StreamLink() {
+            if (!base_type::_block_init) { return; }
+            shutdown();
+        }
 
         void init(stream<T>* in, stream<T>* out) {
             _out = out;
             base_type::registerOutput(_out);
             base_type::init(in);
+        }
+
+        void shutdown() {
+            base_type::shutdown();
+            base_type::unregisterOutput(_out);
+            _out = nullptr;
         }
 
         void setOutput(stream<T>* out) {

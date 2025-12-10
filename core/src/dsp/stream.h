@@ -27,9 +27,7 @@ namespace dsp {
     public:
         stream(bool doDefaultAlloc = true) {
             if (doDefaultAlloc) {
-                readBuf = buffer::alloc<T>(STREAM_BUFFER_SIZE);
-                writeBuf = buffer::alloc<T>(STREAM_BUFFER_SIZE);
-                bufferSize = STREAM_BUFFER_SIZE;
+                alloc(STREAM_BUFFER_SIZE);
             }
         }
 
@@ -120,6 +118,12 @@ namespace dsp {
             writerStop = false;
         }
 
+        void alloc(int size) {
+            readBuf = buffer::alloc<T>(size);
+            writeBuf = buffer::alloc<T>(size);
+            bufferSize = size;
+        }
+
         void free() {
             if (readBuf) {
                 buffer::free(readBuf);
@@ -129,6 +133,7 @@ namespace dsp {
                 buffer::free(writeBuf);
                 writeBuf = NULL;
             }
+            bufferSize = 0;
         }
 
         T* readBuf = nullptr;
