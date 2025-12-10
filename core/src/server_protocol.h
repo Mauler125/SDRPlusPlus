@@ -58,7 +58,8 @@ namespace server {
         COMMAND_SET_COMPRESSION,
 
         // Server to client
-        COMMAND_SET_SAMPLE_RATE = 0x80,
+        COMMAND_SET_UI = 0x80,
+        COMMAND_SET_SAMPLE_RATE,
         COMMAND_DISCONNECT
     };
 
@@ -66,6 +67,8 @@ namespace server {
         switch (type) {
         case COMMAND_GET_UI:
             return "get_ui";
+        case COMMAND_SET_UI:
+            return "set_ui";
         case COMMAND_UI_ACTION:
             return "ui_action";
         case COMMAND_START:

@@ -11,6 +11,32 @@
 using namespace std::chrono_literals;
 
 namespace server {
+    static void emitRuntimeConnError(const int res) {
+        switch (res) {
+        case CONN_ERR_UNAVAIL:
+            throw std::runtime_error("Connection unavailable");
+            break;
+        case CONN_ERR_TIMEOUT:
+            throw std::runtime_error("Timed out");
+            break;
+        case CONN_ERR_BUSY:
+            throw std::runtime_error("Server busy");
+            break;
+        case CONN_ERR_OVERFLOW:
+            throw std::runtime_error("Buffer overflow");
+            break;
+        case CONN_ERR_SEND_FAIL:
+            throw std::runtime_error("Send failure");
+            break;
+        case CONN_ERR_PARSE_FAIL:
+            throw std::runtime_error("Parse failure");
+            break;
+        default:
+            throw std::runtime_error("Unknown error");
+            break;
+        }
+    }
+
     Client::Client(std::shared_ptr<net::Socket> sock, dsp::stream<dsp::complex_t>* out, const uint8_t* key) : decompIn(false) {
         this->sock = sock;
         output = out;
@@ -56,25 +82,14 @@ namespace server {
         if (res < 0) {
             // Close client
             close();
+            emitRuntimeConnError(res);
+        }
 
-            // Throw error
-            switch (res) {
-            case CONN_ERR_TIMEOUT:
-                throw std::runtime_error("Timed out");
-                break;
-            case CONN_ERR_BUSY:
-                throw std::runtime_error("Server busy");
-                break;
-            case CONN_ERR_OVERFLOW:
-                throw std::runtime_error("Buffer overflow");
-                break;
-            case CONN_ERR_SEND_FAIL:
-                throw std::runtime_error("Send failure");
-                break;
-            default:
-                throw std::runtime_error("Unknown error");
-                break;
-            }
+        res = getRate();
+        if (res < 0) {
+            // Close client
+            close();
+            emitRuntimeConnError(res);
         }
     }
 
@@ -114,16 +129,7 @@ namespace server {
             // Send
             if (syncRequired) {
                 flog::warn("Action requires resync");
-                auto waiter = awaitCommandAck(COMMAND_UI_ACTION);
-                sendCommand(COMMAND_UI_ACTION, size);
-                if (waiter->await(PROTOCOL_TIMEOUT_MS)) {
-                    std::lock_guard lck(dlMtx);
-                    dl.load(r_cmd_data, r_pkt_hdr->size - sizeof(PacketHeader) - sizeof(CommandHeader));
-                }
-                else {
-                    flog::error("Timeout out after asking for UI");
-                }
-                waiter->handled();
+                getUI();
                 flog::warn("Resync done");
             }
             else {
@@ -364,30 +370,73 @@ namespace server {
         lastRecvSeqNr = 0;
     }
 
-    int Client::getUI() {
-        if (!isOpen()) { return -1; }
-        auto waiter = awaitCommandAck(COMMAND_GET_UI);
-        if (!sendCommand(COMMAND_GET_UI, 0)) {
+    PacketWaiter* Client::executeGet(Command sendCmd, Command ackCmd, int& result) {
+        if (!isOpen()) {
+            result = -1;
+            return NULL;
+        }
+        PacketWaiter* waiter = awaitCommandAck(ackCmd);
+        if (!sendCommand(sendCmd, 0)) {
             flog::error("Packet send failure");
             waiter->handled();
-            return CONN_ERR_SEND_FAIL;
+            result = CONN_ERR_SEND_FAIL;
+            return NULL;
         }
         if (waiter->await(PROTOCOL_TIMEOUT_MS)) {
-            std::lock_guard lck(dlMtx);
-
             if (r_pkt_hdr->size > SERVER_MAX_PACKET_SIZE) {
                 flog::error("Packet is too large; {0} > {1}", r_pkt_hdr->size, SERVER_MAX_PACKET_SIZE);
                 waiter->handled();
-                return CONN_ERR_OVERFLOW;
+                result = CONN_ERR_OVERFLOW;
+                return NULL;
             }
 
-            dl.load(r_cmd_data, r_pkt_hdr->size - sizeof(PacketHeader) - sizeof(CommandHeader));
+            // Caller is responsible for signaling the waiter
+            return waiter;
         }
         else {
-            if (!serverBusy) { flog::error("Timeout out after asking for UI"); };
+            if (!serverBusy) { flog::error("Timeout out after sending {0} and waiting for {1}", commandTypeToString(sendCmd), commandTypeToString(ackCmd)); };
             waiter->handled();
-            return serverBusy ? CONN_ERR_BUSY : CONN_ERR_TIMEOUT;
+            result = serverBusy ? CONN_ERR_BUSY : CONN_ERR_TIMEOUT;
+            return NULL;
         }
+    }
+
+    int Client::getUI() {
+        int execRet;
+        PacketWaiter* waiter = executeGet(COMMAND_GET_UI, COMMAND_SET_UI, execRet);
+
+        if (!waiter) {
+            return execRet;
+        }
+
+        std::lock_guard lck(dlMtx);
+        if (dl.load(r_cmd_data, r_pkt_hdr->size - sizeof(PacketHeader) - sizeof(CommandHeader)) < 0) {
+            flog::error("Failed to parse Drawlist data", r_pkt_hdr->size, SERVER_MAX_PACKET_SIZE);
+            waiter->handled();
+            return CONN_ERR_PARSE_FAIL;
+        }
+
+        waiter->handled();
+        return 0;
+    }
+
+    int Client::getRate() {
+        int execRet;
+        PacketWaiter* waiter = executeGet(COMMAND_GET_SAMPLE_RATE, COMMAND_SET_SAMPLE_RATE, execRet);
+
+        if (!waiter) {
+            return execRet;
+        }
+
+        if (r_cmd_hdr->cmd != COMMAND_SET_SAMPLE_RATE || (r_pkt_hdr->size - sizeof(PacketHeader)) != sizeof(CommandHeader) + sizeof(double)) {
+            flog::error("Sanity checks on command header values failed");
+            waiter->handled();
+            return CONN_ERR_PARSE_FAIL;
+        }
+
+        currentSampleRate = *(double*)r_cmd_data;
+        core::setInputSampleRate(currentSampleRate);
+
         waiter->handled();
         return 0;
     }

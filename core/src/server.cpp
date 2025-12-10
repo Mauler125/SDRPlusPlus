@@ -51,7 +51,7 @@ namespace server {
     int sourceId = 0;
     bool running = false;
     bool canUseCompression = false;
-    bool compression = true;
+    bool compression = false;
     bool useEncryption = false;
     bool doShutdown = false;
     uint8_t netKey[CHACHA20_KEY_LEN];
@@ -545,7 +545,7 @@ namespace server {
 
     bool commandHandler(Command cmd, uint8_t* data, int len) {
         if (cmd == COMMAND_GET_UI) {
-            return sendUI(COMMAND_GET_UI, "", dummyElem);
+            return sendUI("", dummyElem);
         }
         else if (cmd == COMMAND_UI_ACTION && len >= 3) {
             // Check if sending back data is needed
@@ -570,7 +570,7 @@ namespace server {
 
             // Render and send back
             if (sendback) {
-                return sendUI(COMMAND_UI_ACTION, diffId.str, diffValue);
+                return sendUI(diffId.str, diffValue);
             }
             else {
                 renderUI(NULL, diffId.str, diffValue);
@@ -643,7 +643,7 @@ namespace server {
         }
     }
 
-    bool sendUI(Command originCmd, std::string diffId, SmGui::DrawListElem diffValue) {
+    bool sendUI(std::string diffId, SmGui::DrawListElem diffValue) {
         // Render UI
         SmGui::DrawList dl;
         renderUI(&dl, diffId, diffValue);
@@ -653,18 +653,18 @@ namespace server {
         dl.store(s_cmd_data, size);
 
         // Send to network
-        return sendCommandAck(originCmd, size);
+        return sendCommandAck(COMMAND_SET_UI, size);
+    }
+
+    bool sendSampleRate(double sampleRate) {
+        *(double*)s_cmd_data = sampleRate;
+        return sendCommandAck(COMMAND_SET_SAMPLE_RATE, sizeof(double));
     }
 
     bool sendError(Error err) {
         PacketHeader* hdr = (PacketHeader*)sbuf;
         s_pkt_data[0] = err;
         return sendPacket(PACKET_TYPE_ERROR, 1);
-    }
-
-    bool sendSampleRate(double sampleRate) {
-        *(double*)s_cmd_data = sampleRate;
-        return sendCommand(COMMAND_SET_SAMPLE_RATE, sizeof(double));
     }
 
     bool setInputSampleRate(double samplerate) {

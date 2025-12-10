@@ -17,9 +17,9 @@ namespace server {
     void renderUI(SmGui::DrawList* dl, std::string diffId, SmGui::DrawListElem diffValue);
 
     bool commandHandler(Command cmd, uint8_t* data, int len);
-    bool sendUI(Command originCmd, std::string diffId, SmGui::DrawListElem diffValue);
-    bool sendError(Error err);
+    bool sendUI(std::string diffId, SmGui::DrawListElem diffValue);
     bool sendSampleRate(double sampleRate);
+    bool sendError(Error err);
     bool setInputSampleRate(double samplerate);
 
     bool sendPacket(PacketType type, int len);

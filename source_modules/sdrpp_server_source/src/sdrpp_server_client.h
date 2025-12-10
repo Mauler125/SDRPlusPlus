@@ -74,10 +74,12 @@ namespace server {
     };
 
     enum ConnectionError {
-        CONN_ERR_TIMEOUT    = -1,
-        CONN_ERR_BUSY       = -2,
-        CONN_ERR_OVERFLOW   = -3,
-        CONN_ERR_SEND_FAIL  = -4
+        CONN_ERR_UNAVAIL    = -1,
+        CONN_ERR_TIMEOUT    = -2,
+        CONN_ERR_BUSY       = -3,
+        CONN_ERR_OVERFLOW   = -4,
+        CONN_ERR_SEND_FAIL  = -5,
+        CONN_ERR_PARSE_FAIL = -6
     };
 
     class Client {
@@ -109,7 +111,10 @@ namespace server {
 
         void resetCryptoCounters();
 
+        PacketWaiter* executeGet(Command sendCmd, Command ackCmd, int& result);
+
         int getUI();
+        int getRate();
 
         bool sendPacket(PacketType type, int len);
         bool sendCommand(Command cmd, int len);
