@@ -325,6 +325,7 @@ void IQFrontEnd::updateFFTPath(bool updateWaterfall) {
     fftInBuf = (fftwf_complex*)fftwf_malloc(_fftSize * sizeof(fftwf_complex));
     fftwf_free(fftOutBuf);
     fftOutBuf = (fftwf_complex*)fftwf_malloc(_fftSize * sizeof(fftwf_complex));
+    fftwf_destroy_plan(fftwPlan);
     fftwPlan = fftwf_plan_dft_1d(_fftSize, fftInBuf, fftOutBuf, FFTW_FORWARD, FFTW_ESTIMATE);
 
     // Clear the rest of the FFT input buffer
