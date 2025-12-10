@@ -26,7 +26,7 @@ namespace dsp::buffer {
                 buffers[i] = buffer::alloc<T>(STREAM_BUFFER_SIZE);
             }
 
-            base_type::registerInput(in);
+            base_type::registerInput(_in);
             base_type::registerOutput(&out);
             base_type::_block_init = true;
         }
