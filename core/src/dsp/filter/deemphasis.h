@@ -4,12 +4,12 @@
 
 namespace dsp::filter {
     template<class T>
-    class Deemphasis : public Processor<T, T> {
+    class DeEmphasis : public Processor<T, T> {
         using base_type = Processor<T, T>;
     public:
-        Deemphasis() {}
+        DeEmphasis() {}
 
-        Deemphasis(stream<T>* in, double tau, double samplerate) { init(in, tau, samplerate); }
+        DeEmphasis(stream<T>* in, double tau, double samplerate) { init(in, tau, samplerate); }
 
         void init(stream<T>* in, double tau, double samplerate) {
             _tau = tau;

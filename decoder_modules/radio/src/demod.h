@@ -5,7 +5,7 @@
 #include <config.h>
 #include <utils/event.h>
 
-enum DeemphasisMode {
+enum DeEmphasisMode {
     DEEMP_MODE_22US,
     DEEMP_MODE_50US,
     DEEMP_MODE_75US,
@@ -40,9 +40,9 @@ namespace demod {
         virtual bool getBandwidthLocked() = 0;
         virtual double getDefaultSnapInterval() = 0;
         virtual int getVFOReference() = 0;
-        virtual bool getDeempAllowed() = 0;
+        virtual bool getDeEmpAllowed() = 0;
         virtual bool getPostProcEnabled() = 0;
-        virtual int getDefaultDeemphasisMode() = 0;
+        virtual int getDefaultDeEmpMode() = 0;
         virtual bool getFMIFNRAllowed() = 0;
         virtual bool getNBAllowed() = 0;
         virtual dsp::stream<dsp::stereo_t>* getOutput() = 0;

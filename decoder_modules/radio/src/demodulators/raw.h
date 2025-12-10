@@ -54,9 +54,9 @@ namespace demod {
         bool getBandwidthLocked() { return true; }
         double getDefaultSnapInterval() { return 2500.0; }
         int getVFOReference() { return ImGui::WaterfallVFO::REF_CENTER; }
-        bool getDeempAllowed() { return false; }
+        bool getDeEmpAllowed() { return false; }
         bool getPostProcEnabled() { return false; }
-        int getDefaultDeemphasisMode() { return DEEMP_MODE_NONE; }
+        int getDefaultDeEmpMode() { return DEEMP_MODE_NONE; }
         bool getFMIFNRAllowed() { return false; }
         bool getNBAllowed() { return true; }
         dsp::stream<dsp::stereo_t>* getOutput() { return &c2s.out; }

@@ -21,7 +21,7 @@ ConfigManager config;
 
 #define CONCAT(a, b) ((std::string(a) + b).c_str())
 
-std::map<DeemphasisMode, double> deempTaus = {
+std::map<DeEmphasisMode, double> deempTaus = {
     { DEEMP_MODE_22US, 22e-6 },
     { DEEMP_MODE_50US, 50e-6 },
     { DEEMP_MODE_75US, 75e-6 }
@@ -224,12 +224,12 @@ private:
             config.release(true);
         }
 
-        // Deemphasis mode
+        // DeEmphasis mode
         if (_this->deempAllowed) {
             ImGui::LeftLabel("De-emphasis");
             ImGui::SetNextItemWidth(menuWidth - ImGui::GetCursorPosX());
             if (ImGui::Combo(("##_radio_wfm_deemp_" + _this->name).c_str(), &_this->deempId, _this->deempModes.txt)) {
-                _this->setDeemphasisMode(_this->deempModes[_this->deempId]);
+                _this->setDeEmphasisMode(_this->deempModes[_this->deempId]);
             }
         }
 
@@ -361,8 +361,8 @@ private:
         bandwidthLocked = selectedDemod->getBandwidthLocked();
         snapInterval = selectedDemod->getDefaultSnapInterval();
         squelchLevel = MIN_SQUELCH;
-        deempAllowed = selectedDemod->getDeempAllowed();
-        deempId = deempModes.valueId((DeemphasisMode)selectedDemod->getDefaultDeemphasisMode());
+        deempAllowed = selectedDemod->getDeEmpAllowed();
+        deempId = deempModes.valueId((DeEmphasisMode)selectedDemod->getDefaultDeEmpMode());
         squelchEnabled = false;
         postProcEnabled = selectedDemod->getPostProcEnabled();
         FMIFNRAllowed = selectedDemod->getFMIFNRAllowed();
@@ -446,7 +446,7 @@ private:
             afChain.enableBlock(&resamp, [=](dsp::stream<dsp::stereo_t>* out){ stream.setInput(out); });
 
             // Configure deemphasis
-            setDeemphasisMode(deempModes[deempId]);
+            setDeEmphasisMode(deempModes[deempId]);
         }
         else {
             // Disable everything if post processing is disabled
@@ -495,7 +495,7 @@ private:
         afChain.start();
     }
 
-    void setDeemphasisMode(DeemphasisMode mode) {
+    void setDeEmphasisMode(DeEmphasisMode mode) {
         deempId = deempModes.valueId(mode);
         if (!postProcEnabled || !selectedDemod) { return; }
         bool deempEnabled = (mode != DEEMP_MODE_NONE);
@@ -661,13 +661,13 @@ private:
     dsp::stream<dsp::stereo_t> dummyAudioStream;
     dsp::chain<dsp::stereo_t> afChain;
     dsp::multirate::RationalResampler<dsp::stereo_t> resamp;
-    dsp::filter::Deemphasis<dsp::stereo_t> deemp;
+    dsp::filter::DeEmphasis<dsp::stereo_t> deemp;
 
     SinkManager::Stream stream;
 
     demod::Demodulator* selectedDemod = NULL;
 
-    OptionList<std::string, DeemphasisMode> deempModes;
+    OptionList<std::string, DeEmphasisMode> deempModes;
     OptionList<std::string, IFNRPreset> ifnrPresets;
 
     double audioSampleRate = 48000.0;
