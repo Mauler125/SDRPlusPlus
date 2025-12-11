@@ -109,10 +109,10 @@ namespace backend {
             monitor = glfwGetPrimaryMonitor();
             window = glfwCreateWindow(winWidth, winHeight, core::getBuildString(), NULL, NULL);
             if (window == NULL) {
-                flog::info("OpenGL {0}.{1} {2} was not supported", OPENGL_VERSIONS_MAJOR[i], OPENGL_VERSIONS_MINOR[i], OPENGL_VERSIONS_IS_ES[i] ? "ES " : "");
+                flog::info("OpenGL {0}.{1}{2} was not supported", OPENGL_VERSIONS_MAJOR[i], OPENGL_VERSIONS_MINOR[i], OPENGL_VERSIONS_IS_ES[i] ? " ES" : "");
                 continue;
             }
-            flog::info("Using OpenGL {0}.{1} {2}", OPENGL_VERSIONS_MAJOR[i], OPENGL_VERSIONS_MINOR[i], OPENGL_VERSIONS_IS_ES[i] ? " ES" : "");
+            flog::info("Using OpenGL {0}.{1}{2}", OPENGL_VERSIONS_MAJOR[i], OPENGL_VERSIONS_MINOR[i], OPENGL_VERSIONS_IS_ES[i] ? " ES" : "");
             glfwMakeContextCurrent(window);
             break;
         }
