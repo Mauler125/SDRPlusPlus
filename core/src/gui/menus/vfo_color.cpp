@@ -8,7 +8,7 @@
 
 namespace vfo_color_menu {
     std::map<std::string, ImVec4> vfoColors;
-    std::string openName = "";
+    std::string openName;
     EventHandler<VFOManager::VFO*> vfoAddHndl;
 
     void vfoAddHandler(VFOManager::VFO* vfo, void* ctx) {

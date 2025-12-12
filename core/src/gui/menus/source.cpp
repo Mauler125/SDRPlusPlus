@@ -33,7 +33,7 @@ namespace sourcemenu {
     double newOffset = 0.0;
 
     bool showDelOffsetDialog = false;
-    std::string delOffsetName = "";
+    std::string delOffsetName;
 
     // Offset IDs
     enum {

@@ -6,7 +6,7 @@
 namespace tuner {
 
     void centerTuning(const std::string& vfoName, double freq) {
-        if (vfoName != "") {
+        if (!vfoName.empty()) {
             if (gui::waterfall.vfos.find(vfoName) == gui::waterfall.vfos.end()) { return; }
             sigpath::vfoManager.setOffset(vfoName, 0);
         }
@@ -20,7 +20,7 @@ namespace tuner {
     }
 
     void normalTuning(const std::string& vfoName, double freq) {
-        if (vfoName == "") {
+        if (vfoName.empty()) {
             centerTuning(vfoName, freq);
             return;
         }

@@ -12,7 +12,7 @@ namespace bandplan {
     std::map<std::string, BandPlanColor_t> colorTable;
 
     void generateTxt() {
-        bandplanNameTxt = "";
+        bandplanNameTxt.clear();
         for (int i = 0; i < bandplanNames.size(); i++) {
             bandplanNameTxt += bandplanNames[i];
             bandplanNameTxt += '\0';

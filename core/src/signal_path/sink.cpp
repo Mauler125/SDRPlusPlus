@@ -350,7 +350,7 @@ void SinkManager::showMenu() {
     int count = 0;
     int maxCount = streams.size();
 
-    std::string provStr = "";
+    std::string provStr;
     for (auto const& name : providerNames) {
         provStr += name;
         provStr += '\0';

@@ -28,7 +28,7 @@ namespace thememenu {
         // Apply scaling
         ImGui::GetStyle().ScaleAllSizes(style::uiScale);
 
-        themeNamesTxt = "";
+        themeNamesTxt.clear();
         for (auto name : themeNames) {
             themeNamesTxt += name;
             themeNamesTxt += '\0';

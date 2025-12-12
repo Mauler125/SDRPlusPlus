@@ -136,7 +136,7 @@ namespace net::rigctl {
 
     int recvLine(std::shared_ptr<net::Socket> sock, std::vector<std::string>& args) {
         // Read line
-        std::string line = "";
+        std::string line;
         int err = sock->recvline(line, 0, 1000);
         if (err <= 0) { return err; }
 
@@ -147,7 +147,7 @@ namespace net::rigctl {
             if (i == line.size()) { break; }
 
             // Read part
-            std::string part = "";
+            std::string part;
             for (; i < line.size() && line[i] != ' '; i++) { part += line[i]; }
             args.push_back(part);
         }

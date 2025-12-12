@@ -160,7 +160,7 @@ bool Menu::draw(bool updateStates) {
             if (insertBefore == displayedCount) {
                 order.push_back(draggedOpt);
             }
-            else if (insertBeforeName != "") {
+            else if (!insertBeforeName.empty()) {
                 int beforeId = 0;
                 for (int i = 0; i < order.size(); i++) {
                     if (order[i].name == insertBeforeName) {
@@ -174,8 +174,8 @@ bool Menu::draw(bool updateStates) {
         }
 
         menuClicked = false;
-        draggedMenuName = "";
-        insertBeforeName = "";
+        draggedMenuName.clear();
+        insertBeforeName.clear();
         insertBefore = -1;
     }
 

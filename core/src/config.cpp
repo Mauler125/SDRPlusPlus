@@ -17,7 +17,7 @@ void ConfigManager::setPath(const std::string& file) {
 
 void ConfigManager::load(const json& def, bool lock) {
     if (lock) { mtx.lock(); }
-    if (path == "") {
+    if (path.empty()) {
         flog::error("Config manager tried to load file with no path specified");
         if (lock) { mtx.unlock(); }
         return;

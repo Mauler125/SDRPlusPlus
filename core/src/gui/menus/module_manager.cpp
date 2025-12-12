@@ -19,7 +19,7 @@ namespace module_manager_menu {
         modName[0] = 0;
 
         modTypes.clear();
-        modTypesTxt = "";
+        modTypesTxt.clear();
         for (auto& [name, mod] : core::moduleManager.modules) {
             modTypes.push_back(name);
             modTypesTxt += name;

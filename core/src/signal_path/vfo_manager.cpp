@@ -103,14 +103,14 @@ VFOManager::VFO* VFOManager::createVFO(const std::string& name, int reference, d
 }
 
 void VFOManager::deleteVFO(VFOManager::VFO* vfo) {
-    std::string name = "";
+    std::string name;
     for (auto const& [_name, _vfo] : vfos) {
         if (_vfo == vfo) {
             name = _name;
             break;
         }
     }
-    if (name == "") {
+    if (name.empty()) {
         return;
     }
     onVfoDelete.emit(vfo);

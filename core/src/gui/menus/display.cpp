@@ -15,8 +15,8 @@ namespace displaymenu {
     bool fullWaterfallUpdate = true;
     int colorMapId = 0;
     std::vector<std::string> colorMapNames;
-    std::string colorMapNamesTxt = "";
-    std::string colorMapAuthor = "";
+    std::string colorMapNamesTxt;
+    std::string colorMapAuthor;
     int selectedWindow = 0;
     int fftRate = 20;
     int fftSizeId = 0;

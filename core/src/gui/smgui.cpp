@@ -21,7 +21,7 @@ namespace SmGui {
 
     DrawList* rdl = NULL;
     bool forceSyncForNext = false;
-    std::string diffId = "";
+    std::string diffId;
     DrawListElem diffValue;
     bool nextItemFillWidth = false;
     bool serverMode = false;

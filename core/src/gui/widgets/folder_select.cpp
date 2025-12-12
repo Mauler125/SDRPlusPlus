@@ -19,8 +19,8 @@ bool FolderSelect::render(const std::string& id) {
         ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.0f, 0.0f, 0.0f, 1.0f));
     }
     ImGui::SetNextItemWidth(menuColumnWidth - buttonWidth);
-    if (ImGui::InputText(id.c_str(), strPath, 2047)) {
-        path = std::string(strPath);
+    if (ImGui::InputText(id.c_str(), strPath, std::size(strPath))) {
+        path.assign(strPath);
         std::string expandedPath = expandString(strPath);
         if (!std::filesystem::is_directory(expandedPath)) {
             pathValid = false;
@@ -66,8 +66,8 @@ void FolderSelect::worker() {
     auto fold = pfd::select_folder("Select Folder", pathValid ? std::filesystem::path(expandString(path)).parent_path().string() : "");
     std::string res = fold.result();
 
-    if (res != "") {
-        path = res;
+    if (!res.empty()) {
+        path = std::move(res);
         strcpy(strPath, path.c_str());
         pathChanged = true;
     }
