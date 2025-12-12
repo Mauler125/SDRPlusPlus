@@ -366,23 +366,23 @@ void IQFrontEnd::start() {
 }
 
 void IQFrontEnd::stop() {
-    // Stop input buffer
-    inBuf.stop();
-
-    // Stop pre-proc chain (automatically start all bound blocks)
-    preproc.stop();
-
-    // Stop IQ splitter
-    split.stop();
+    // Stop FFT chain
+    fftSink.stop();
+    reshape.stop();
 
     // Stop all VFOs
     for (auto& [name, vfo] : vfos) {
         vfo->stop();
     }
 
-    // Stop FFT chain
-    reshape.stop();
-    fftSink.stop();
+    // Stop IQ splitter
+    split.stop();
+
+    // Stop pre-proc chain (automatically start all bound blocks)
+    preproc.stop();
+
+    // Stop input buffer
+    inBuf.stop();
 }
 
 double IQFrontEnd::getEffectiveSamplerate() {
