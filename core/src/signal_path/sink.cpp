@@ -257,7 +257,7 @@ void SinkManager::showVolumeSlider(const std::string& name, const std::string& p
     float ypos = ImGui::GetCursorPosY();
     float sliderOffset = 8.0f * style::uiScale;
 
-    if (streams.find(name) == streams.end() || name == "") {
+    if (name.empty() || streams.find(name) == streams.end()) {
         float dummy = 0.0f;
         style::beginDisabled();
         ImGui::ImageButton("sdrpp_unmute_btn_", icons::MUTED, ImVec2(height, height), ImVec2(0, 0), ImVec2(1, 1), ImVec4(0, 0, 0, 0), ImGui::GetStyleColorVec4(ImGuiCol_Text));

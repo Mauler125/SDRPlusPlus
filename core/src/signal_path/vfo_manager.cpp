@@ -93,7 +93,7 @@ VFOManager::VFOManager() {
 }
 
 VFOManager::VFO* VFOManager::createVFO(const std::string& name, int reference, double offset, double bandwidth, double sampleRate, double minBandwidth, double maxBandwidth, bool bandwidthLocked) {
-    if (vfos.find(name) != vfos.end() || name == "") {
+    if (name.empty() || vfos.find(name) != vfos.end()) {
         return NULL;
     }
     VFOManager::VFO* vfo = new VFO(name, reference, offset, bandwidth, sampleRate, minBandwidth, maxBandwidth, bandwidthLocked);
