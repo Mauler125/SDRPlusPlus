@@ -26,7 +26,7 @@
 namespace flog {
     std::mutex outMtx;
 
-    const char* TYPE_STR[_TYPE_COUNT] = {
+    static const char* TYPE_STR[_TYPE_COUNT] = {
         "DEBUG",
         "INFO",
         "WARN",
@@ -35,7 +35,7 @@ namespace flog {
 
 #ifdef _WIN32
 #define COLOR_WHITE (FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE)
-    const WORD TYPE_COLORS[_TYPE_COUNT] = {
+    static const WORD TYPE_COLORS[_TYPE_COUNT] = {
         FOREGROUND_GREEN | FOREGROUND_BLUE,
         FOREGROUND_GREEN,
         FOREGROUND_RED | FOREGROUND_GREEN,
@@ -43,7 +43,7 @@ namespace flog {
     };
 #else
 #define COLOR_WHITE "\x1B[0m"
-    const char* TYPE_COLORS[_TYPE_COUNT] = {
+    static const char* TYPE_COLORS[_TYPE_COUNT] = {
         "\x1B[36m",
         "\x1B[32m",
         "\x1B[33m",
