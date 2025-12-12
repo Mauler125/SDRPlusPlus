@@ -137,12 +137,13 @@ bool ThemeManager::applyTheme(const std::string& name) {
     auto& imguiStyle = ImGui::GetStyle();
     auto& implotStyle = ImPlot::GetStyle();
 
-    imguiStyle.WindowRounding = 0.0f;
-    imguiStyle.ChildRounding = 0.0f;
-    imguiStyle.FrameRounding = 0.0f;
-    imguiStyle.GrabRounding = 0.0f;
-    imguiStyle.PopupRounding = 0.0f;
-    imguiStyle.ScrollbarRounding = 0.0f;
+    imguiStyle.WindowRounding = 6.0f;
+    imguiStyle.ChildRounding = 3.0f;
+    imguiStyle.FrameRounding = 3.0f;
+    imguiStyle.GrabRounding = 3.0f;
+    imguiStyle.PopupRounding = 3.0f;
+    imguiStyle.ScrollbarRounding = 3.0f;
+    imguiStyle.TabRounding = 3.0f;
 
     Theme thm = m_loadedThemes[name];
 
