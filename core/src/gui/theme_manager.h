@@ -19,6 +19,7 @@ public:
     bool loadThemesFromDir(const std::string& path);
     bool loadTheme(const std::string& path);
     bool applyTheme(const std::string& name);
+    inline const std::string& getThemeAuthor() const { return m_themeAuthor; }
 
     std::vector<std::string> getThemeNames();
 
@@ -34,4 +35,5 @@ private:
     static const std::unordered_map<std::string_view, int> sm_implotColorStringToCodeTable;
 
     std::map<std::string, Theme> m_loadedThemes;
+    std::string m_themeAuthor;
 };

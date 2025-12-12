@@ -4,5 +4,5 @@
 namespace thememenu {
     void init(const std::string& resDir);
     void applyTheme();
-    void draw(void* ctx);
+    void draw();
 }

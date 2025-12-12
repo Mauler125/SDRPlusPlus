@@ -149,7 +149,12 @@ bool ThemeManager::applyTheme(const std::string& name) {
     uint8_t ret[4];
     std::map<std::string, std::string> params = thm.data;
     for (auto const& [param, val] : params) {
-        if (param == "name" || param == "author") { continue; }
+        if (param == "name") { continue; }
+
+        if (param == "author") {
+            m_themeAuthor = val;
+            continue;
+        }
 
         if (param == "WaterfallBackground") {
             decodeRGBA(val, ret);

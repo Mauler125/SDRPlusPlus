@@ -43,7 +43,7 @@ namespace thememenu {
          gui::themeManager.applyTheme(themeNames[themeId]);
      }
 
-    void draw(void* ctx) {
+    void draw() {
         float menuWidth = ImGui::GetContentRegionAvail().x;
         ImGui::LeftLabel("Theme");
         ImGui::SetNextItemWidth(menuWidth - ImGui::GetCursorPosX());
@@ -53,5 +53,7 @@ namespace thememenu {
             core::configManager.conf["theme"] = themeNames[themeId];
             core::configManager.release(true);
         }
+
+        ImGui::Text("Theme Author: %s", gui::themeManager.getThemeAuthor().c_str());
     }
 }

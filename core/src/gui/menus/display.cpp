@@ -289,6 +289,8 @@ namespace displaymenu {
             ImGui::Text("Color map Author: %s", colorMapAuthor.c_str());
         }
 
+        thememenu::draw();
+
         if (restartRequired) {
             ImGui::TextColored(ImVec4(1.0f, 1.0f, 0.0f, 1.0f), "Restart required.");
         }
