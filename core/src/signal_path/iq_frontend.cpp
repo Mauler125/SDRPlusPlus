@@ -1,8 +1,23 @@
 #include "iq_frontend.h"
+#include "../dsp/window/rectangular.h"
+#include "../dsp/window/hann.h"
+#include "../dsp/window/hamming.h"
 #include "../dsp/window/blackman.h"
+#include "../dsp/window/blackman_harris.h"
+#include "../dsp/window/blackman_nuttall.h"
 #include "../dsp/window/nuttall.h"
+#include "../dsp/window/flat_top.h"
+#include "../dsp/window/kaiser.h"
+#include "../dsp/window/tukey.h"
+#include "../dsp/window/gaussian.h"
+#include "../dsp/window/bartlett.h"
+#include "../dsp/window/bartlett_hann.h"
+#include "../dsp/window/lanczos.h"
+#include "../dsp/window/poisson.h"
+#include "../dsp/window/half_sine.h"
 #include <utils/flog.h>
 #include <gui/gui.h>
+#include <gui/style.h>
 #include <core.h>
 
 IQFrontEnd::~IQFrontEnd() {
@@ -45,15 +60,7 @@ void IQFrontEnd::init(dsp::stream<dsp::complex_t>* in, double sampleRate, bool b
     fftSink.init(&reshape.out, handler, this);
 
     fftWindowBuf = dsp::buffer::alloc<float>(_nzFFTSize);
-    if (_fftWindow == FFTWindow::RECTANGULAR) {
-        for (int i = 0; i < _nzFFTSize; i++) { fftWindowBuf[i] = 0; }
-    }
-    else if (_fftWindow == FFTWindow::BLACKMAN) {
-        for (int i = 0; i < _nzFFTSize; i++) { fftWindowBuf[i] = dsp::window::blackman(i, _nzFFTSize); }
-    }
-    else if (_fftWindow == FFTWindow::NUTTALL) {
-        for (int i = 0; i < _nzFFTSize; i++) { fftWindowBuf[i] = dsp::window::nuttall(i, _nzFFTSize); }
-    }
+    generateFFTWindow();
 
     fftInBuf = (fftwf_complex*)fftwf_malloc(_fftSize * sizeof(fftwf_complex));
     fftOutBuf = (fftwf_complex*)fftwf_malloc(_fftSize * sizeof(fftwf_complex));
@@ -207,6 +214,118 @@ void IQFrontEnd::removeVFO(const std::string& name) {
     delete vfoIn;
 }
 
+typedef double (*WindowFunc)(const double n, const double N, const void* const parms);
+
+static inline WindowFunc getWindowFunction(const IQFrontEnd::FFTWindow type) {
+    switch (type) {
+    case IQFrontEnd::FFTWindow::RECTANGULAR:
+        return dsp::window::rectangular;
+    case IQFrontEnd::FFTWindow::HANN:
+        return dsp::window::hann;
+    case IQFrontEnd::FFTWindow::HAMMING:
+        return dsp::window::hamming;
+    case IQFrontEnd::FFTWindow::BLACKMAN:
+        return dsp::window::blackman;
+    case IQFrontEnd::FFTWindow::BLACKMAN_HARRIS:
+        return dsp::window::blackmanHarris;
+    case IQFrontEnd::FFTWindow::BLACKMAN_NUTTALL:
+        return dsp::window::blackmanNuttall;
+    case IQFrontEnd::FFTWindow::NUTTALL:
+        return dsp::window::nuttall;
+    case IQFrontEnd::FFTWindow::FLAT_TOP:
+        return dsp::window::flatTop;
+    case IQFrontEnd::FFTWindow::KAISER:
+        return dsp::window::kaiser;
+    case IQFrontEnd::FFTWindow::TUKEY:
+        return dsp::window::tukey;
+    case IQFrontEnd::FFTWindow::GAUSSIAN:
+        return dsp::window::gaussian;
+    case IQFrontEnd::FFTWindow::BARTLETT:
+        return dsp::window::bartlett;
+    case IQFrontEnd::FFTWindow::BARTLETT_HANN:
+        return dsp::window::bartlettHann;
+    case IQFrontEnd::FFTWindow::LANCZOS:
+        return dsp::window::lanczos;
+    case IQFrontEnd::FFTWindow::POISSON:
+        return dsp::window::poisson;
+    case IQFrontEnd::FFTWindow::HALF_SINE:
+        return dsp::window::halfSine;
+    default:
+        assert(0);
+        return dsp::window::rectangular;
+    }
+}
+
+void* IQFrontEnd::getWindowParams(const FFTWindow type) {
+    switch (type) {
+    case FFTWindow::HANN:
+        return &_hannParams;
+    case FFTWindow::KAISER:
+        return &_kaiserParams;
+    case FFTWindow::TUKEY:
+        return &_tukeyParams;
+    case FFTWindow::GAUSSIAN:
+        return &_gaussianParams;
+    case FFTWindow::POISSON:
+        return &_poissonParams;
+    default:
+        return NULL;
+    }
+}
+
+static inline float fftShiftSign(const int idx) {
+    return (idx % 2) ? -1.0f : 1.0f;
+}
+
+void IQFrontEnd::generateFFTWindow() {
+    WindowFunc window = getWindowFunction(_fftWindow);
+    void* const params = getWindowParams(_fftWindow);
+
+    for (int i = 0; i < _nzFFTSize; i++) {
+        fftWindowBuf[i] = window(i, _nzFFTSize, params) * fftShiftSign(i);
+    }
+}
+
+static inline bool ImGui_SliderDouble(const char* label, double* v, double v_min, double v_max, const char* format, ImGuiSliderFlags flags) {
+    return ImGui::SliderScalar(label, ImGuiDataType_Double, v, &v_min, &v_max, format, flags);
+}
+
+void IQFrontEnd::renderFFTWindowMenu(const float menuWidth) {
+    bool parmChanged = false;
+
+    switch (_fftWindow) {
+    case FFTWindow::HANN:
+        ImGui::LeftLabel("Hann Alpha");
+        ImGui::SetNextItemWidth(menuWidth - ImGui::GetCursorPosX());
+        parmChanged |= ImGui_SliderDouble("##iqfrontend_hann_alpha", &_hannParams.alpha, 0.0, 1.0, "%.3f", ImGuiSliderFlags_AlwaysClamp);
+        break;
+    case FFTWindow::KAISER:
+        ImGui::LeftLabel("Kaiser Beta");
+        ImGui::SetNextItemWidth(menuWidth - ImGui::GetCursorPosX());
+        parmChanged |= ImGui_SliderDouble("##iqfrontend_kaiser_beta", &_kaiserParams.beta, 0.0, 60.0, "%.3f", ImGuiSliderFlags_AlwaysClamp);
+        break;
+    case FFTWindow::TUKEY:
+        ImGui::LeftLabel("Tukey Alpha");
+        ImGui::SetNextItemWidth(menuWidth - ImGui::GetCursorPosX());
+        parmChanged |= ImGui_SliderDouble("##iqfrontend_tukey_alpha", &_tukeyParams.alpha, 0.0, 1.0, "%.3f", ImGuiSliderFlags_AlwaysClamp);
+        break;
+    case FFTWindow::GAUSSIAN:
+        ImGui::LeftLabel("Gaussian Sigma");
+        ImGui::SetNextItemWidth(menuWidth - ImGui::GetCursorPosX());
+        parmChanged |= ImGui_SliderDouble("##iqfrontend_gaussian_sigma", &_gaussianParams.sigma, 0.1, 0.5, "%.3f", ImGuiSliderFlags_AlwaysClamp);
+        break;
+    case FFTWindow::POISSON:
+        ImGui::LeftLabel("Poisson Alpha");
+        ImGui::SetNextItemWidth(menuWidth - ImGui::GetCursorPosX());
+        parmChanged |= ImGui_SliderDouble("##iqfrontend_poisson_alpha", &_poissonParams.alpha, 0.0, 5.0, "%.3f", ImGuiSliderFlags_AlwaysClamp);
+        break;
+    }
+
+    if (parmChanged) {
+        updateFFTPath();
+    }
+}
+
 void IQFrontEnd::setFFTSize(int size) {
     _fftSizeRequested = size;
     updateFFTPath(true);
@@ -310,15 +429,7 @@ void IQFrontEnd::updateFFTPath(bool updateWaterfall) {
     // Update window
     dsp::buffer::free(fftWindowBuf);
     fftWindowBuf = dsp::buffer::alloc<float>(_nzFFTSize);
-    if (_fftWindow == FFTWindow::RECTANGULAR) {
-        for (int i = 0; i < _nzFFTSize; i++) { fftWindowBuf[i] = 1.0f * ((i % 2) ? -1.0f : 1.0f); }
-    }
-    else if (_fftWindow == FFTWindow::BLACKMAN) {
-        for (int i = 0; i < _nzFFTSize; i++) { fftWindowBuf[i] = dsp::window::blackman(i, _nzFFTSize) * ((i % 2) ? -1.0f : 1.0f); }
-    }
-    else if (_fftWindow == FFTWindow::NUTTALL) {
-        for (int i = 0; i < _nzFFTSize; i++) { fftWindowBuf[i] = dsp::window::nuttall(i, _nzFFTSize) * ((i % 2) ? -1.0f : 1.0f); }
-    }
+    generateFFTWindow();
 
     // Update FFT plan
     fftwf_free(fftInBuf);

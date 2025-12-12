@@ -1,8 +1,7 @@
 #pragma once
-#include "cosine.h"
 
 namespace dsp::window {
-    inline double rectangular(double n, double N) {
+    inline double rectangular(const double n, const double N, const void* const /*params*/) {
         return 1.0;
     }
 }

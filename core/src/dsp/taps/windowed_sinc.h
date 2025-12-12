@@ -6,7 +6,7 @@
 
 namespace dsp::taps {
     template<class T, typename Func>
-    inline tap<T> windowedSinc(int count, double omega, Func window, double norm = 1.0) {
+    inline tap<T> windowedSinc(int count, double omega, Func window, double norm = 1.0, void* params = nullptr) {
         // Allocate taps
         tap<T> taps = taps::alloc<T>(count);
         
@@ -17,11 +17,11 @@ namespace dsp::taps {
         for (int i = 0; i < count; i++) {
             double t = (double)i - half + 0.5;
             if constexpr (std::is_same_v<T, float>) {
-                taps.taps[i] = math::sinc(t * omega) * window(t - half, count) * corr;
+                taps.taps[i] = math::sinc(t * omega) * window(t - half, count, params) * corr;
             }
             if constexpr (std::is_same_v<T, complex_t>) {
                 complex_t cplx = { (float)math::sinc(t * omega), 0.0f };
-                taps.taps[i] = cplx * window(t - half, count) * corr;
+                taps.taps[i] = cplx * window(t - half, count, params) * corr;
             }
         }
 
@@ -29,7 +29,7 @@ namespace dsp::taps {
     }
 
     template<class T, typename Func>
-    inline tap<T> windowedSinc(int count, double cutoff, double samplerate, Func window, double norm = 1.0) {
-        return windowedSinc<T>(count, math::hzToRads(cutoff, samplerate), window, norm);
+    inline tap<T> windowedSinc(int count, double cutoff, double samplerate, Func window, double norm = 1.0, void* params = nullptr) {
+        return windowedSinc<T>(count, math::hzToRads(cutoff, samplerate), window, norm, params);
     }
 }

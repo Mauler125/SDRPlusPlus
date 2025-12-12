@@ -34,8 +34,25 @@ namespace displaymenu {
 
     const IQFrontEnd::FFTWindow fftWindowList[] = {
         IQFrontEnd::FFTWindow::RECTANGULAR,
+
+        IQFrontEnd::FFTWindow::HANN,
+        IQFrontEnd::FFTWindow::HAMMING,
         IQFrontEnd::FFTWindow::BLACKMAN,
-        IQFrontEnd::FFTWindow::NUTTALL
+        IQFrontEnd::FFTWindow::BLACKMAN_HARRIS,
+        IQFrontEnd::FFTWindow::BLACKMAN_NUTTALL,
+        IQFrontEnd::FFTWindow::NUTTALL,
+        IQFrontEnd::FFTWindow::FLAT_TOP,
+
+        IQFrontEnd::FFTWindow::BARTLETT,
+        IQFrontEnd::FFTWindow::BARTLETT_HANN,
+        IQFrontEnd::FFTWindow::LANCZOS,
+        IQFrontEnd::FFTWindow::HALF_SINE,
+
+        IQFrontEnd::FFTWindow::KAISER,
+        IQFrontEnd::FFTWindow::TUKEY,
+        IQFrontEnd::FFTWindow::GAUSSIAN,
+
+        IQFrontEnd::FFTWindow::POISSON
     };
 
     void updateFFTSpeeds() {
@@ -232,12 +249,31 @@ namespace displaymenu {
 
         ImGui::LeftLabel("FFT Window");
         ImGui::SetNextItemWidth(menuWidth - ImGui::GetCursorPosX());
-        if (ImGui::Combo("##sdrpp_fft_window", &selectedWindow, "Rectangular\0Blackman\0Nuttall\0")) {
+
+        static const char fftWindowListStr[] = "Rectangular\0"
+                                               "Hann\0"
+                                               "Hamming\0"
+                                               "Blackman\0"
+                                               "Blackman-Harris\0"
+                                               "Blackman-Nuttall\0"
+                                               "Nuttall\0"
+                                               "Flat-Top\0"
+                                               "Bartlett\0"
+                                               "Bartlett-Hann\0"
+                                               "Lanczos\0"
+                                               "Half-Sine\0"
+                                               "Kaiser\0"
+                                               "Tukey\0"
+                                               "Gaussian\0"
+                                               "Poisson\0";
+
+        if (ImGui::Combo("##sdrpp_fft_window", &selectedWindow, fftWindowListStr)) {
             sigpath::iqFrontEnd.setFFTWindow(fftWindowList[selectedWindow]);
             core::configManager.acquire();
             core::configManager.conf["fftWindow"] = selectedWindow;
             core::configManager.release(true);
         }
+        sigpath::iqFrontEnd.renderFFTWindowMenu(menuWidth);
 
         if (colorMapNames.size() > 0) {
             ImGui::LeftLabel("Color Map");

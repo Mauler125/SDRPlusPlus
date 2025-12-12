@@ -8,6 +8,11 @@
 #include "../dsp/channel/rx_vfo.h"
 #include "../dsp/sink/handler_sink.h"
 #include "../dsp/math/conjugate.h"
+#include "../dsp/window/hann.h"
+#include "../dsp/window/kaiser.h"
+#include "../dsp/window/tukey.h"
+#include "../dsp/window/gaussian.h"
+#include "../dsp/window/poisson.h"
 #include <fftw3.h>
 
 class IQFrontEnd {
@@ -16,8 +21,27 @@ public:
 
     enum FFTWindow {
         RECTANGULAR,
+
+        HANN,
+        HAMMING,
         BLACKMAN,
-        NUTTALL
+        BLACKMAN_HARRIS,
+        BLACKMAN_NUTTALL,
+        NUTTALL,
+        FLAT_TOP,
+
+        BARTLETT,
+        BARTLETT_HANN,
+        LANCZOS,
+        HALF_SINE,
+
+        KAISER,
+        TUKEY,
+        GAUSSIAN,
+
+        POISSON,
+
+        _WINDOW_COUNT
     };
 
     void init(dsp::stream<dsp::complex_t>* in, double sampleRate, bool buffering, int decimRatio, bool dcBlocking, int fftSize, double fftRate, FFTWindow fftWindow, float* (*acquireFFTBuffer)(void* ctx), void (*releaseFFTBuffer)(void* ctx), void* fftCtx);
@@ -37,6 +61,11 @@ public:
 
     dsp::channel::RxVFO* addVFO(const std::string& name, double sampleRate, double bandwidth, double offset);
     void removeVFO(const std::string& name);
+
+    void generateFFTWindow();
+
+    void* getWindowParams(const FFTWindow type);
+    void renderFFTWindowMenu(const float menuWidth);
 
     void setFFTSize(int size);
     void setFFTRate(double rate);
@@ -105,4 +134,10 @@ protected:
 
     bool _init = false;
 
+private:
+    dsp::window::HannParams _hannParams;
+    dsp::window::KaiserParams _kaiserParams;
+    dsp::window::TukeyParams _tukeyParams;
+    dsp::window::GaussianParams _gaussianParams;
+    dsp::window::PoissonParams _poissonParams;
 };
