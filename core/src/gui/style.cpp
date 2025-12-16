@@ -53,23 +53,11 @@ namespace style {
     }
 
     void beginDisabled() {
-        ImGui::PushItemFlag(ImGuiItemFlags_Disabled, true);
-        auto& style = ImGui::GetStyle();
-        ImVec4* colors = style.Colors;
-        ImVec4 btnCol = colors[ImGuiCol_Button];
-        ImVec4 frameCol = colors[ImGuiCol_FrameBg];
-        ImVec4 textCol = colors[ImGuiCol_Text];
-        btnCol.w = 0.15f;
-        frameCol.w = 0.30f;
-        textCol.w = 0.65f;
-        ImGui::PushStyleColor(ImGuiCol_Button, btnCol);
-        ImGui::PushStyleColor(ImGuiCol_FrameBg, frameCol);
-        ImGui::PushStyleColor(ImGuiCol_Text, textCol);
+        ImGui::BeginDisabled();
     }
 
     void endDisabled() {
-        ImGui::PopItemFlag();
-        ImGui::PopStyleColor(3);
+        ImGui::EndDisabled();
     }
 }
 
