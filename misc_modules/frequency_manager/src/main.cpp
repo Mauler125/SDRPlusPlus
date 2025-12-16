@@ -105,7 +105,7 @@ public:
 
 private:
     static void applyBookmark(FrequencyBookmark bm, std::string vfoName) {
-        if (vfoName == "") {
+        if (vfoName.empty()) {
             // TODO: Replace with proper tune call
             gui::waterfall.setCenterFrequency(bm.frequency);
             gui::waterfall.centerFreqMoved = true;

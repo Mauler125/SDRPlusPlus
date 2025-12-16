@@ -151,7 +151,7 @@ private:
     // Rich Presence
     DiscordRichPresence presence;
     double lastFreq;
-    std::string lastMode = "";
+    std::string lastMode;
 
     // Threading
     int workerCounter = 0;
