@@ -117,13 +117,13 @@ public:
 
     std::vector<std::string> getStreamNames();
 
-    Event<std::string> onSinkProviderRegistered;
-    Event<std::string> onSinkProviderUnregister;
-    Event<std::string> onSinkProviderUnregistered;
+    Event<const std::string&> onSinkProviderRegistered;
+    Event<const std::string&> onSinkProviderUnregister;
+    Event<const std::string&> onSinkProviderUnregistered;
 
-    Event<std::string> onStreamRegistered;
-    Event<std::string> onStreamUnregister;
-    Event<std::string> onStreamUnregistered;
+    Event<const std::string&> onStreamRegistered;
+    Event<const std::string&> onStreamUnregister;
+    Event<const std::string&> onStreamUnregistered;
 
 private:
     void loadStreamConfig(const std::string& name);

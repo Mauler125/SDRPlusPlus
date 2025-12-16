@@ -597,9 +597,8 @@ private:
 
     uint64_t samplerate = 48000;
 
-    EventHandler<std::string> onStreamRegisteredHandler;
-    EventHandler<std::string> onStreamUnregisterHandler;
-
+    EventHandler<const std::string&> onStreamRegisteredHandler;
+    EventHandler<const std::string&> onStreamUnregisterHandler;
 };
 
 MOD_EXPORT void _INIT_() {

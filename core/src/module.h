@@ -94,9 +94,9 @@ public:
     void doPostInitAll();
     void doShutdownAll();
 
-    Event<std::string> onInstanceCreated;
-    Event<std::string> onInstanceDelete;
-    Event<std::string> onInstanceDeleted;
+    Event<const std::string&> onInstanceCreated;
+    Event<const std::string&> onInstanceDelete;
+    Event<const std::string&> onInstanceDeleted;
 
     std::map<std::string, ModuleManager::Module_t> modules;
     std::map<std::string, ModuleManager::Instance_t> instances;

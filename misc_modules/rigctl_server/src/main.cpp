@@ -687,9 +687,9 @@ private:
 
     std::string command = "";
 
-    EventHandler<std::string> modChangedHandler;
+    EventHandler<const std::string&> modChangedHandler;
     EventHandler<VFOManager::VFO*> vfoCreatedHandler;
-    EventHandler<std::string> vfoDeletedHandler;
+    EventHandler<const std::string&> vfoDeletedHandler;
 
     std::vector<std::string> vfoNames;
     std::string vfoNamesTxt;
