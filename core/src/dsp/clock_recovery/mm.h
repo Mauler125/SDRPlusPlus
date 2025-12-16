@@ -39,7 +39,6 @@ namespace dsp::clock_recovery {
             base_type::shutdown();
             buffer::free(buffer);
             dsp::multirate::freePolyphaseBank(interpBank);
-            pcl.shutdown();
         }
 
         void setOmega(double omega) {

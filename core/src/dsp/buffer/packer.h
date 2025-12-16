@@ -9,7 +9,7 @@ namespace dsp::buffer {
 
         Packer(stream<T>* in, int count) { init(in, count); }
         ~Packer() {
-            if (!base_type::_block_init) { return; }
+            if (!block::_block_init) { return; }
             shutdown();
         }
 

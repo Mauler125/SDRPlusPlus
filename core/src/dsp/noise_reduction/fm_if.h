@@ -113,7 +113,7 @@ namespace dsp::noise_reduction {
 
             // Allocate and generate Window
             fftWin = buffer::alloc<float>(_bins);
-            for (int i = 0; i < _bins; i++) { fftWin[i] = window::nuttall(i, _bins - 1); }
+            for (int i = 0; i < _bins; i++) { fftWin[i] = window::nuttall(i, _bins - 1, 0); }
 
             // Plan FFTs
             forwardPlan = fftwf_plan_dft_1d(_bins, (fftwf_complex*)forwFFTIn, (fftwf_complex*)forwFFTOut, FFTW_FORWARD, FFTW_ESTIMATE);

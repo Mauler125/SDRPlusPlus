@@ -13,13 +13,13 @@ namespace dsp::taps {
         float offsetOmega = math::hzToRads((bandStart + bandStop) / 2.0, sampleRate);
         int count = estimateTapCount(transWidth, sampleRate);
         if (oddTapCount && !(count % 2)) { count++; }
-        return windowedSinc<T>(count, (bandStop - bandStart) / 2.0, sampleRate, [=](double n, double N) {
+        return windowedSinc<T>(count, (bandStop - bandStart) / 2.0, sampleRate, [=](double n, double N, void* unused) {
             if constexpr (std::is_same_v<T, float>) {
-                return 2.0f * cosf(offsetOmega * (float)n) * window::nuttall(n, N);
+                return 2.0f * cosf(offsetOmega * (float)n) * window::nuttall(n, N, unused);
             }
             if constexpr (std::is_same_v<T, complex_t>) {
                 // The offset is negative to flip the taps. Complex bandpass are asymetric
-                return math::phasor(-offsetOmega * (float)n) * window::nuttall(n, N);
+                return math::phasor(-offsetOmega * (float)n) * window::nuttall(n, N, unused);
             }
         });
     }
