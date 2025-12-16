@@ -26,7 +26,7 @@ namespace vfo_color_menu {
         // Load colors from config
         bool modified = false;
         core::configManager.acquire();
-        json conf = core::configManager.conf["vfoColors"];
+        const json& conf = core::configManager.conf["vfoColors"];
         for (auto& [name, val] : conf.items()) {
             // If not a string, repair with default
             if (!val.is_string()) {

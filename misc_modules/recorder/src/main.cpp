@@ -486,21 +486,22 @@ private:
         }
 
         // Replace in template
-        templ = std::regex_replace(templ, std::regex("\\$t"), type);
-        templ = std::regex_replace(templ, std::regex("\\$f"), freqStr);
-        templ = std::regex_replace(templ, std::regex("\\$h"), hourStr);
-        templ = std::regex_replace(templ, std::regex("\\$m"), minStr);
-        templ = std::regex_replace(templ, std::regex("\\$s"), secStr);
-        templ = std::regex_replace(templ, std::regex("\\$d"), dayStr);
-        templ = std::regex_replace(templ, std::regex("\\$M"), monStr);
-        templ = std::regex_replace(templ, std::regex("\\$y"), yearStr);
-        templ = std::regex_replace(templ, std::regex("\\$r"), modeStr);
-        return templ;
+        std::string newTempl = templ;
+        newTempl = std::regex_replace(templ, std::regex("\\$t"), type);
+        newTempl = std::regex_replace(templ, std::regex("\\$f"), freqStr);
+        newTempl = std::regex_replace(templ, std::regex("\\$h"), hourStr);
+        newTempl = std::regex_replace(templ, std::regex("\\$m"), minStr);
+        newTempl = std::regex_replace(templ, std::regex("\\$s"), secStr);
+        newTempl = std::regex_replace(templ, std::regex("\\$d"), dayStr);
+        newTempl = std::regex_replace(templ, std::regex("\\$M"), monStr);
+        newTempl = std::regex_replace(templ, std::regex("\\$y"), yearStr);
+        newTempl = std::regex_replace(templ, std::regex("\\$r"), modeStr);
+        return newTempl;
     }
 
     std::string expandString(const std::string& input) {
-        input = std::regex_replace(input, std::regex("%ROOT%"), root);
-        return std::regex_replace(input, std::regex("//"), "/");
+        const std::string ret = std::regex_replace(input, std::regex("%ROOT%"), root);
+        return std::regex_replace(ret, std::regex("//"), "/");
     }
 
     static void complexHandler(dsp::complex_t* data, int count, void* ctx) {

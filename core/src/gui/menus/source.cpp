@@ -171,9 +171,9 @@ namespace sourcemenu {
         core::configManager.acquire();
 
         // Load other settings
-        std::string selectedSource = core::configManager.conf["source"];
+        const std::string& selectedSource = core::configManager.conf["source"];
         manualOffset = core::configManager.conf["manualOffset"];
-        std::string selectedOffset = core::configManager.conf["selectedOffset"];
+        const std::string& selectedOffset = core::configManager.conf["selectedOffset"];
         iqCorrection = core::configManager.conf["iqCorrection"];
         invertIQ = core::configManager.conf["invertIQ"];
         int decimation = core::configManager.conf["decimation"];

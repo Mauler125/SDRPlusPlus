@@ -307,7 +307,7 @@ void SinkManager::showVolumeSlider(const std::string& name, const std::string& p
 }
 
 void SinkManager::loadStreamConfig(const std::string& name) {
-    json conf = core::configManager.conf["streams"][name];
+    const json& conf = core::configManager.conf["streams"][name];
     SinkManager::Stream* stream = streams[name];
     std::string provName = conf["sink"];
     if (providers.find(provName) == providers.end()) {
