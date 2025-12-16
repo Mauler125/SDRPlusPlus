@@ -51,7 +51,7 @@ namespace bandplanmenu {
         ImGui::PopItemWidth();
 
         ImGui::LeftLabel("Position");
-        ImGui::SetNextItemWidth(menuColumnWidth - ImGui::GetCursorPosX());
+        ImGui::FillWidth();
         if (ImGui::Combo("##_bandplan_pos_", &bandPlanPos, bandPlanPosTxt)) {
             gui::waterfall.setBandPlanPos(bandPlanPos);
             core::configManager.acquire();

@@ -106,8 +106,6 @@ public:
 private:
     static void menuHandler(void* ctx) {
         SigctlServerModule* _this = (SigctlServerModule*)ctx;
-        float menuWidth = ImGui::GetContentRegionAvail().x;
-
         bool listening = (_this->listener && _this->listener->isListening());
 
         if (listening) { style::beginDisabled(); }
@@ -117,7 +115,7 @@ private:
             config.release(true);
         }
         ImGui::SameLine();
-        ImGui::SetNextItemWidth(menuWidth - ImGui::GetCursorPosX());
+        ImGui::FillWidth();
         if (ImGui::InputInt(CONCAT("##_rigctl_srv_port_", _this->name), &_this->port, 0, 0)) {
             config.acquire();
             config.conf[_this->name]["port"] = _this->port;
@@ -126,7 +124,7 @@ private:
         if (listening) { style::endDisabled(); }
 
         ImGui::LeftLabel("Controlled VFO");
-        ImGui::SetNextItemWidth(menuWidth - ImGui::GetCursorPosX());
+        ImGui::FillWidth();
         {
             std::lock_guard lck(_this->vfoMtx);
             if (ImGui::Combo(CONCAT("##_rigctl_srv_vfo_", _this->name), &_this->vfoId, _this->vfoNamesTxt.c_str())) {
@@ -140,7 +138,7 @@ private:
         }
 
         ImGui::LeftLabel("Controlled Recorder");
-        ImGui::SetNextItemWidth(menuWidth - ImGui::GetCursorPosX());
+        ImGui::FillWidth();
         {
             std::lock_guard lck(_this->vfoMtx);
             if (ImGui::Combo(CONCAT("##_rigctl_srv_rec_", _this->name), &_this->recorderId, _this->recorderNamesTxt.c_str())) {
@@ -174,6 +172,8 @@ private:
             config.conf[_this->name]["autoStart"] = _this->autoStart;
             config.release(true);
         }
+
+        float menuWidth = ImGui::GetContentRegionAvail().x;
 
         if (listening && ImGui::Button(CONCAT("Stop##_rigctl_srv_stop_", _this->name), ImVec2(menuWidth, 0))) {
             _this->stopServer();

@@ -123,8 +123,6 @@ public:
     }
 
     void menuHandler() {
-        float menuWidth = ImGui::GetContentRegionAvail().x;
-
         bool listening = (listener && listener->isListening()) || (conn && conn->isOpen());
 
         if (listening) { style::beginDisabled(); }
@@ -134,7 +132,7 @@ public:
             config.release(true);
         }
         ImGui::SameLine();
-        ImGui::SetNextItemWidth(menuWidth - ImGui::GetCursorPosX());
+        ImGui::FillWidth();
         if (ImGui::InputInt(CONCAT("##_network_sink_port_", _streamName), &port, 0, 0)) {
             config.acquire();
             config.conf[_streamName]["port"] = port;
@@ -142,7 +140,7 @@ public:
         }
 
         ImGui::LeftLabel("Protocol");
-        ImGui::SetNextItemWidth(menuWidth - ImGui::GetCursorPosX());
+        ImGui::FillWidth();
         if (ImGui::Combo(CONCAT("##_network_sink_mode_", _streamName), &modeId, sinkModesTxt)) {
             config.acquire();
             config.conf[_streamName]["protocol"] = modeId;
@@ -152,7 +150,7 @@ public:
         if (listening) { style::endDisabled(); }
 
         ImGui::LeftLabel("Samplerate");
-        ImGui::SetNextItemWidth(menuWidth - ImGui::GetCursorPosX());
+        ImGui::FillWidth();
         if (ImGui::Combo(CONCAT("##_network_sink_sr_", _streamName), &srId, sampleRatesTxt.c_str())) {
             sampleRate = sampleRates[srId];
             _stream->setSampleRate(sampleRate);
@@ -169,6 +167,8 @@ public:
             config.conf[_streamName]["stereo"] = stereo;
             config.release(true);
         }
+
+        float menuWidth = ImGui::GetContentRegionAvail().x;
 
         if (listening && ImGui::Button(CONCAT("Stop##_network_sink_stop_", _streamName), ImVec2(menuWidth, 0))) {
             stopServer();

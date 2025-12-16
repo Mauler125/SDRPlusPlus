@@ -123,11 +123,9 @@ private:
     static void menuHandler(void* ctx) {
         M17DecoderModule* _this = (M17DecoderModule*)ctx;
 
-        float menuWidth = ImGui::GetContentRegionAvail().x;
-
         if (!_this->enabled) { style::beginDisabled(); }
 
-        ImGui::SetNextItemWidth(menuWidth);
+        ImGui::FillWidth();
         _this->diag.draw();
 
         if (ImGui::Checkbox(CONCAT("Show Reference Lines##m17_showlines_", _this->name), &_this->showLines)) {

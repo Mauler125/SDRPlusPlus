@@ -76,7 +76,6 @@ void MainWindow::init() {
     gui::menu.registerEntry("Sinks", sinkmenu::draw, NULL);
     gui::menu.registerEntry("Band Plan", bandplanmenu::draw, NULL);
     gui::menu.registerEntry("Display", displaymenu::draw, NULL);
-    gui::menu.registerEntry("Theme", thememenu::draw, NULL);
     gui::menu.registerEntry("VFO Color", vfo_color_menu::draw, NULL);
     gui::menu.registerEntry("Module Manager", module_manager_menu::draw, NULL);
 
@@ -178,12 +177,6 @@ void MainWindow::init() {
     // Update UI settings
     LoadingScreen::show("Loading configuration");
     core::configManager.acquire();
-    fftMin = core::configManager.conf["min"];
-    fftMax = core::configManager.conf["max"];
-    gui::waterfall.setFFTMin(fftMin);
-    gui::waterfall.setWaterfallMin(fftMin);
-    gui::waterfall.setFFTMax(fftMax);
-    gui::waterfall.setWaterfallMax(fftMax);
 
     double frequency = core::configManager.conf["frequency"];
 
@@ -194,7 +187,6 @@ void MainWindow::init() {
     gui::freqSelect.frequencyChanged = false;
     sigpath::sourceManager.tune(frequency);
     gui::waterfall.setCenterFrequency(frequency);
-    bw = 1.0;
     gui::waterfall.vfoFreqChanged = false;
     gui::waterfall.centerFreqMoved = false;
     gui::waterfall.selectFirstVFO();
@@ -293,7 +285,7 @@ void MainWindow::draw() {
     ImVec4 textCol = ImGui::GetStyleColorVec4(ImGuiCol_Text);
 
     ImGui::WaterfallVFO* vfo = NULL;
-    if (gui::waterfall.selectedVFO != "") {
+    if (!gui::waterfall.selectedVFO.empty()) {
         vfo = gui::waterfall.vfos[gui::waterfall.selectedVFO];
     }
 
@@ -366,8 +358,9 @@ void MainWindow::draw() {
 
     // To Bar
     // ImGui::BeginChild("TopBarChild", ImVec2(0, 49.0f * style::uiScale), false, ImGuiWindowFlags_HorizontalScrollbar);
+    const float btnBorderSz = 2.0f;
 
-    ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(5, 5));
+    ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(btnBorderSz, btnBorderSz));
     ImVec2 btnSize(30 * style::uiScale, 30 * style::uiScale);
 
     if (ImGui::ImageButton("sdrpp_menu_btn", icons::MENU, btnSize, ImVec2(0, 0), ImVec2(1, 1), ImVec4(0, 0, 0, 0), textCol) || (processKeyboardInputs && ImGui::IsKeyPressed(ImGuiKey_Menu, false))) {
@@ -404,17 +397,17 @@ void MainWindow::draw() {
     ImGui::SameLine();
     float origY = ImGui::GetCursorPosY();
 
-    sigpath::sinkManager.showVolumeSlider(gui::waterfall.selectedVFO, "##_sdrpp_main_volume_", 248 * style::uiScale, btnSize.x, 5, true);
+    sigpath::sinkManager.showVolumeSlider(gui::waterfall.selectedVFO, "##_sdrpp_main_volume_", 248 * style::uiScale, btnSize.y, btnBorderSz, true);
 
     ImGui::SameLine();
 
-    ImGui::SetCursorPosY(origY);
+    ImGui::SetCursorPosY(origY + btnBorderSz);
     gui::freqSelect.draw();
 
     ImGui::SameLine();
 
     ImGui::SetCursorPosY(origY);
-    ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(5, 5));
+    ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(btnBorderSz, btnBorderSz));
 
     if (tuningMode == tuner::TUNER_MODE_CENTER) {
         if (ImGui::ImageButton("sdrpp_ena_st_btn", icons::CENTER_TUNING, btnSize, ImVec2(0, 0), ImVec2(1, 1), ImVec4(0, 0, 0, 0), textCol)) {
@@ -436,32 +429,26 @@ void MainWindow::draw() {
         }
     }
 
-    ImGui::PopStyleVar();
     ImGui::SameLine();
 
-    int snrOffset = 87.0f * style::uiScale;
-    int snrWidth = std::clamp<int>(ImGui::GetWindowSize().x - ImGui::GetCursorPosX() - snrOffset, 100.0f * style::uiScale, 300.0f * style::uiScale);
-    int snrPos = std::max<int>(ImGui::GetWindowSize().x - (snrWidth + snrOffset), ImGui::GetCursorPosX());
-
-    ImGui::SetCursorPosX(snrPos);
-    ImGui::SetCursorPosY(origY + (5.0f * style::uiScale));
-    ImGui::SetNextItemWidth(snrWidth);
-    ImGui::SNRMeter((vfo != NULL) ? gui::waterfall.selectedVFOSNR : 0);
-
-    // Note: this is what makes the vertical size correct, needs to be fixed
-    ImGui::SameLine();
-
-    // ImGui::EndChild();
-
-    // Logo button
-    ImGui::SetCursorPosX(ImGui::GetWindowSize().x - (48 * style::uiScale));
-    ImGui::SetCursorPosY(10.0f * style::uiScale);
-    ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(0, 0));
-    if (ImGui::ImageButton("sdrpp_logo_btn", icons::LOGO, ImVec2(32 * style::uiScale, 32 * style::uiScale), ImVec2(0, 0), ImVec2(1, 1))) {
+    ImGui::SetCursorPosY(origY);
+    if (ImGui::ImageButton("sdrpp_about_btn", icons::ABOUT, btnSize, ImVec2(0, 0), ImVec2(1, 1), ImVec4(0, 0, 0, 0), textCol)) {
         openCredits = true;
     }
 
     ImGui::PopStyleVar();
+    ImGui::SameLine();
+
+    ImGui::SetCursorPosX(ImGui::GetCursorPosX() + (ImGui::GetStyle().ItemSpacing.x * style::uiScale));
+    ImGui::SetCursorPosY(origY + btnBorderSz);
+
+    float snrWidth = ImGui::GetContentRegionAvail().x - ImGui::CalcTextSize("0.").x;
+    ImGui::SetNextItemWidth(snrWidth);
+
+    ImGui::SNRMeter((vfo != NULL) ? gui::waterfall.selectedVFOSNR : 0);
+
+    // ImGui::EndChild();
+
     if (credits::isOpen && ImGui::IsKeyPressed(ImGuiKey_Escape)) {
         credits::isOpen = false;
     }
@@ -477,15 +464,18 @@ void MainWindow::draw() {
         displaymenu::checkKeybinds();
     }
 
-    ImVec2 winSize = ImGui::GetWindowSize();
+    ImVec2 winSize = ImGui::GetContentRegionMax();
 
     // Left Column
     if (showMenu) {
-        ImGui::Columns(3, "WindowColumns", false);
+        ImGui::Columns(2, "WindowColumns", false);
         ImGui::SetColumnWidth(0, menuWidth);
-        ImGui::SetColumnWidth(1, std::max<int>(winSize.x - menuWidth - (60.0f * style::uiScale), 100.0f * style::uiScale));
-        ImGui::SetColumnWidth(2, 60.0f * style::uiScale);
-        ImGui::BeginChild("Left Column");
+
+        ImGui::PushStyleColor(ImGuiCol_Border, ImVec4(0.0f, 0.0f, 0.0f, 0.0f));
+        ImGui::PushStyleVar(ImGuiStyleVar_ChildRounding, 2.5f * style::uiScale);
+        ImGui::BeginChild("Left Column", ImVec2(0, 0), ImGuiChildFlags_Borders);
+        ImGui::PopStyleVar();
+        ImGui::PopStyleColor();
 
         if (gui::menu.draw(firstMenuRender)) {
             core::configManager.acquire();
@@ -534,35 +524,43 @@ void MainWindow::draw() {
         }
 
         ImGui::EndChild();
+
+        const ImVec2 rectMin = ImGui::GetItemRectMin();
+        const ImVec2 rectMax = ImGui::GetItemRectMax();
+
+        const ImU32 borderColor = ImGui::ColorConvertFloat4ToU32(gui::themeManager.getCoreColor(ThemeManager::CoreCol_MainBorderColor));
+        ImGui::GetWindowDrawList()->AddRect(rectMin, rectMax, borderColor, 1.0f * style::uiScale, 0, style::uiScale);
     }
     else {
-        // When hiding the menu bar
-        ImGui::Columns(3, "WindowColumns", false);
-        ImGui::SetColumnWidth(0, 8 * style::uiScale);
-        ImGui::SetColumnWidth(1, winSize.x - ((8 + 60) * style::uiScale));
-        ImGui::SetColumnWidth(2, 60.0f * style::uiScale);
+        // When hiding the menu bar, just 1 column (waterfall/fft display) at that point
+        ImGui::Columns(1, "WindowColumns", false);
     }
 
+    // Note: need to divide item spacing on X by the number of columns in order
+    // to have correct spacing on each side.
+    const ImVec2& itemSpacing = ImGui::GetStyle().ItemSpacing;
+    const float columnItemSpacingX = itemSpacing.x / 2;
+    ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(columnItemSpacingX, itemSpacing.y));
+
     // Right Column
-    ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(0, 0));
     ImGui::NextColumn();
-    ImGui::PopStyleVar();
 
     // Handle menu resize
     if (processMouseInputs && showMenu) {
         const float curY = ImGui::GetCursorPosY();
         const bool click = ImGui::IsMouseClicked(ImGuiMouseButton_Left);
         const bool down = ImGui::IsMouseDown(ImGuiMouseButton_Left);
-        const ImVec2 winPos = ImGui::GetWindowPos();
+        ImVec2 winPos = ImGui::GetWindowPos();
+        winPos.x += columnItemSpacingX;
+        winPos.y -= 1.0f; // Account for line cursor.
         const ImVec2 mousePos = ImGui::GetMousePos();
         const ImVec2 mouseLocal = mousePos - winPos;
         if (grabbingMenu) {
-            newWidth = mouseLocal.x;
-            newWidth = std::clamp<float>(newWidth, 250, winSize.x - 250);
+            newWidth = std::clamp<float>(mouseLocal.x, 250, winSize.x - 250);
             ImGui::GetForegroundDrawList()->AddLine(
                 ImVec2(winPos.x + newWidth, winPos.y + curY),
-                ImVec2(winPos.x + newWidth, winPos.y + winSize.y - 10),
-                ImGui::GetColorU32(ImGuiCol_SeparatorActive));
+                ImVec2(winPos.x + newWidth, winPos.y + winSize.y),
+                ImGui::GetColorU32(ImGuiCol_SeparatorActive), style::uiScale);
         }
         if (mouseLocal.x >= newWidth - (2.0f * style::uiScale) &&
             mouseLocal.x <= newWidth + (2.0f * style::uiScale) &&
@@ -584,6 +582,7 @@ void MainWindow::draw() {
         }
     }
 
+    ImGui::PopStyleVar();
     ImGui::BeginChild("Waterfall");
 
     gui::waterfall.draw();
@@ -650,59 +649,6 @@ void MainWindow::draw() {
         }
     }
 
-    ImGui::NextColumn();
-    ImGui::BeginChild("WaterfallControls");
-
-    ImGui::SetCursorPosX((ImGui::GetWindowSize().x / 2.0) - (ImGui::CalcTextSize("Zoom").x / 2.0));
-    ImGui::TextUnformatted("Zoom");
-    ImGui::SetCursorPosX((ImGui::GetWindowSize().x / 2.0) - 10 * style::uiScale);
-    ImVec2 wfSliderSize(20.0 * style::uiScale, 150.0 * style::uiScale);
-    if (ImGui::VSliderFloat("##_7_", wfSliderSize, &bw, 1.0, 0.0, "")) {
-        double factor = (double)bw * (double)bw;
-
-        // Map 0.0 -> 1.0 to 1000.0 -> bandwidth
-        double wfBw = gui::waterfall.getBandwidth();
-        double delta = wfBw - 1000.0;
-        double finalBw = std::min<double>(1000.0 + (factor * delta), wfBw);
-
-        gui::waterfall.setViewBandwidth(finalBw);
-        if (vfo != NULL) {
-            gui::waterfall.setViewOffset(vfo->centerOffset); // center vfo on screen
-        }
-    }
-
-    ImGui::NewLine();
-
-    ImGui::SetCursorPosX((ImGui::GetWindowSize().x / 2.0) - (ImGui::CalcTextSize("Max").x / 2.0));
-    ImGui::TextUnformatted("Max");
-    ImGui::SetCursorPosX((ImGui::GetWindowSize().x / 2.0) - 10 * style::uiScale);
-    if (ImGui::VSliderFloat("##_8_", wfSliderSize, &fftMax, 0.0, -160.0f, "")) {
-        fftMax = std::max<float>(fftMax, fftMin + 10);
-        core::configManager.acquire();
-        core::configManager.conf["max"] = fftMax;
-        core::configManager.release(true);
-    }
-
-    ImGui::NewLine();
-
-    ImGui::SetCursorPosX((ImGui::GetWindowSize().x / 2.0) - (ImGui::CalcTextSize("Min").x / 2.0));
-    ImGui::TextUnformatted("Min");
-    ImGui::SetCursorPosX((ImGui::GetWindowSize().x / 2.0) - 10 * style::uiScale);
-    ImGui::SetItemKeyOwner(ImGuiKey_MouseWheelY);
-    if (ImGui::VSliderFloat("##_9_", wfSliderSize, &fftMin, 0.0, -160.0f, "")) {
-        fftMin = std::min<float>(fftMax - 10, fftMin);
-        core::configManager.acquire();
-        core::configManager.conf["min"] = fftMin;
-        core::configManager.release(true);
-    }
-
-    ImGui::EndChild();
-
-    gui::waterfall.setFFTMin(fftMin);
-    gui::waterfall.setFFTMax(fftMax);
-    gui::waterfall.setWaterfallMin(fftMin);
-    gui::waterfall.setWaterfallMax(fftMax);
-
     ImGui::End();
 
     if (openCredits) {
@@ -751,16 +697,20 @@ void MainWindow::setPlayState(bool _playing) {
     }
 }
 
-void MainWindow::setViewBandwidthSlider(float bandwidth) {
-    bw = bandwidth;
-}
-
 bool MainWindow::sdrIsRunning() {
     return playing;
 }
 
 bool MainWindow::isPlaying() {
     return playing;
+}
+
+ImGui::WaterfallVFO* MainWindow::getSelectedVFO() {
+    if (!gui::waterfall.selectedVFO.empty()) {
+        return gui::waterfall.vfos[gui::waterfall.selectedVFO];
+    }
+
+    return NULL;
 }
 
 void MainWindow::setFirstMenuRender() {

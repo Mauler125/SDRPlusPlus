@@ -27,7 +27,6 @@ namespace credits {
         ImGui::SetNextWindowPos(vp->Pos + vp->Size * 0.5f, ImGuiCond_Always, ImVec2(0.5f, 0.5f));
 
         ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(20.0f, 20.0f));
-        ImGui::PushStyleColor(ImGuiCol_Border, ImVec4(0, 0, 0, 0));
     }
     static void end() {
         if (!isOpen) {
@@ -35,7 +34,6 @@ namespace credits {
         }
 
         ImGui::EndPopup();
-        ImGui::PopStyleColor();
         ImGui::PopStyleVar();
     }
 

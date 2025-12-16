@@ -44,9 +44,8 @@ namespace thememenu {
      }
 
     void draw() {
-        float menuWidth = ImGui::GetContentRegionAvail().x;
         ImGui::LeftLabel("Theme");
-        ImGui::SetNextItemWidth(menuWidth - ImGui::GetCursorPosX());
+        ImGui::FillWidth();
         if (ImGui::Combo("##theme_select_combo", &themeId, themeNamesTxt.c_str())) {
             applyTheme();
             core::configManager.acquire();

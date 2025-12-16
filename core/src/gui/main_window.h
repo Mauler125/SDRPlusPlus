@@ -10,6 +10,7 @@
 #include <gui/tuner.h>
 
 #define WINDOW_FLAGS ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoDocking | ImGuiWindowFlags_NoBringToFrontOnFocus | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoBackground
+class ImGui::WaterfallVFO;
 
 class MainWindow {
 public:
@@ -19,7 +20,6 @@ public:
     bool canProcessMouseInputs();
     bool canProcessKeyboardInputs();
     void muteInputThisFrame(bool mute);
-    void setViewBandwidthSlider(float bandwidth);
     bool sdrIsRunning();
     void setFirstMenuRender();
 
@@ -28,6 +28,8 @@ public:
 
     void setPlayState(bool _playing);
     bool isPlaying();
+
+    ImGui::WaterfallVFO* getSelectedVFO();
 
 private:
     static void vfoAddedHandler(VFOManager::VFO* vfo, void* ctx);
@@ -45,9 +47,6 @@ private:
 
     // GUI Variables
     int fftSize = 8192 * 8;
-    float fftMin = -70.0;
-    float fftMax = 0.0;
-    float bw = 8000000;
 
     int menuWidth = 300;
     int newWidth = 300;

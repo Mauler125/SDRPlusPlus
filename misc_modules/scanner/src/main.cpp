@@ -42,43 +42,42 @@ public:
 private:
     static void menuHandler(void* ctx) {
         ScannerModule* _this = (ScannerModule*)ctx;
-        float menuWidth = ImGui::GetContentRegionAvail().x;
         
         if (_this->running) { ImGui::BeginDisabled(); }
         ImGui::LeftLabel("Start");
-        ImGui::SetNextItemWidth(menuWidth - ImGui::GetCursorPosX());
+        ImGui::FillWidth();
         if (ImGui::InputDouble("##start_freq_scanner", &_this->startFreq, 100.0, 100000.0, "%0.0f")) {
             _this->startFreq = round(_this->startFreq);
         }
         ImGui::LeftLabel("Stop");
-        ImGui::SetNextItemWidth(menuWidth - ImGui::GetCursorPosX());
+        ImGui::FillWidth();
         if (ImGui::InputDouble("##stop_freq_scanner", &_this->stopFreq, 100.0, 100000.0, "%0.0f")) {
             _this->stopFreq = round(_this->stopFreq);
         }
         ImGui::LeftLabel("Interval");
-        ImGui::SetNextItemWidth(menuWidth - ImGui::GetCursorPosX());
+        ImGui::FillWidth();
         if (ImGui::InputDouble("##interval_scanner", &_this->interval, 100.0, 100000.0, "%0.0f")) {
             _this->interval = round(_this->interval);
         }
         ImGui::LeftLabel("Passband Ratio (%)");
-        ImGui::SetNextItemWidth(menuWidth - ImGui::GetCursorPosX());
+        ImGui::FillWidth();
         if (ImGui::InputDouble("##pb_ratio_scanner", &_this->passbandRatio, 1.0, 10.0, "%0.0f")) {
             _this->passbandRatio = std::clamp<double>(round(_this->passbandRatio), 1.0, 100.0);
         }
         ImGui::LeftLabel("Tuning Time (ms)");
-        ImGui::SetNextItemWidth(menuWidth - ImGui::GetCursorPosX());
+        ImGui::FillWidth();
         if (ImGui::InputInt("##tuning_time_scanner", &_this->tuningTime, 100, 1000)) {
             _this->tuningTime = std::clamp<int>(_this->tuningTime, 100, 10000.0);
         }
         ImGui::LeftLabel("Linger Time (ms)");
-        ImGui::SetNextItemWidth(menuWidth - ImGui::GetCursorPosX());
+        ImGui::FillWidth();
         if (ImGui::InputInt("##linger_time_scanner", &_this->lingerTime, 100, 1000)) {
             _this->lingerTime = std::clamp<int>(_this->lingerTime, 100, 10000.0);
         }
         if (_this->running) { ImGui::EndDisabled(); }
 
         ImGui::LeftLabel("Level");
-        ImGui::SetNextItemWidth(menuWidth - ImGui::GetCursorPosX());
+        ImGui::FillWidth();
         ImGui::SliderFloat("##scanner_level", &_this->level, -150.0, 0.0);
 
         ImGui::BeginTable(("scanner_bottom_btn_table" + _this->name).c_str(), 2);
@@ -98,6 +97,8 @@ private:
             _this->scanUp = true;
         }
         ImGui::EndTable();
+
+        float menuWidth = ImGui::GetContentRegionAvail().x;
 
         if (!_this->running) {
             if (ImGui::Button("Start##scanner_start", ImVec2(menuWidth, 0))) {

@@ -202,9 +202,8 @@ private:
 
     static void menuHandler(void* ctx) {
         SDRPPServerSourceModule* _this = (SDRPPServerSourceModule*)ctx;
-        float menuWidth = ImGui::GetContentRegionAvail().x;
-
         bool connected = _this->connected();
+
         gui::mainWindow.playButtonLocked = !connected;
 
         ImGui::GenericDialog("##sdrpp_srv_src_err_dialog", _this->serverBusy, GENERIC_DIALOG_BUTTONS_OK, [=](){
@@ -218,7 +217,7 @@ private:
             config.release(true);
         }
         ImGui::SameLine();
-        ImGui::SetNextItemWidth(menuWidth - ImGui::GetCursorPosX());
+        ImGui::FillWidth();
         if (ImGui::InputInt(CONCAT("##sdrpp_srv_srv_port_", _this->name), &_this->port, 0, 0)) {
             config.acquire();
             config.conf["port"] = _this->port;
@@ -235,6 +234,9 @@ private:
         if (connected) { style::endDisabled(); }
 
         if (_this->running) { style::beginDisabled(); }
+
+        float menuWidth = ImGui::GetContentRegionAvail().x;
+
         if (!connected && ImGui::Button("Connect##sdrpp_srv_source", ImVec2(menuWidth, 0))) {
             _this->tryConnect();
         }

@@ -6,6 +6,19 @@
 #include <filesystem>
 #include <fstream>
 
+ThemeManager::ThemeManager() {
+    initCoreColors();
+}
+
+void ThemeManager::initCoreColors() {
+    m_colorArray[CoreCol_WaterfallBg] = ImVec4(0.0f, 0.0f, 0.0f, 1.0f);
+    m_colorArray[CoreCol_ClearColor] = ImVec4(0.0666f, 0.0666f, 0.0666f, 1.0f);
+    m_colorArray[CoreCol_FFTHoldColor] = ImVec4(0.0f, 1.0f, 0.75f, 1.0f);
+    m_colorArray[CoreCol_CrosshairColor] = ImVec4(0.86f, 0.86f, 0.0f, 1.0f);
+    m_colorArray[CoreCol_MainBorderColor] = ImVec4(0.20f, 0.20f, 0.20f, 1.00f);
+    m_colorArray[CoreCol_WaterfallSeparatorColor] = ImVec4(0.20f, 0.20f, 0.20f, 1.00f);
+}
+
 bool ThemeManager::loadThemesFromDir(const std::string& path) {
     // // TEST JUST TO DUMP THE ORIGINAL THEME
     //printf("ImGui theme:\n\n");
@@ -93,20 +106,12 @@ bool ThemeManager::loadTheme(const std::string& path) {
     for (auto const& [param, val] : params) {
         if (param == "name" || param == "author") { continue; }
 
-        // Exception for non-imgu colors
-        if (param == "WaterfallBackground" || param == "ClearColor" || param == "FFTHoldColor" || param == "CrosshairColor") {
-            if (val[0] != '#' || !std::all_of(val.begin() + 1, val.end(), ::isxdigit) || val.length() != 9) {
-                flog::error("Theme {0} contains invalid {1} field. Expected hex RGBA color", path, param);
-                return false;
-            }
-            continue;
-        }
-
         bool isValid = false;
 
         // If param is a color, check that it's a valid RGBA hex value
         if (sm_imguiColorStringToCodeTable.find(param) != sm_imguiColorStringToCodeTable.end() ||
-            sm_implotColorStringToCodeTable.find(param) != sm_implotColorStringToCodeTable.end()) {
+            sm_implotColorStringToCodeTable.find(param) != sm_implotColorStringToCodeTable.end() ||
+            sm_coreColorStringToCodeTable.find(param) != sm_coreColorStringToCodeTable.end()) {
             if (val[0] != '#' || !std::all_of(val.begin() + 1, val.end(), ::isxdigit) || val.length() != 9) {
                 flog::error("Theme {0} contains invalid {1} field. Expected hex RGBA color", path, param);
                 return false;
@@ -133,9 +138,17 @@ bool ThemeManager::applyTheme(const std::string& name) {
     }
 
     ImGui::StyleColorsDark();
+    ImPlot::StyleColorsClassic();
+    initCoreColors();
 
     auto& imguiStyle = ImGui::GetStyle();
     auto& implotStyle = ImPlot::GetStyle();
+
+    imguiStyle.WindowPadding.x = 6.0f;
+    imguiStyle.WindowPadding.y = 6.0f;
+
+    imguiStyle.ItemSpacing.x = 6.0f;
+    imguiStyle.ItemSpacing.y = 4.0f;
 
     imguiStyle.WindowRounding = 6.0f;
     imguiStyle.ChildRounding = 3.0f;
@@ -157,40 +170,25 @@ bool ThemeManager::applyTheme(const std::string& name) {
             continue;
         }
 
-        if (param == "WaterfallBackground") {
-            decodeRGBA(val, ret);
-            waterfallBg = ImVec4((float)ret[0] / 255.0f, (float)ret[1] / 255.0f, (float)ret[2] / 255.0f, (float)ret[3] / 255.0f);
-            continue;
-        }
-
-        if (param == "ClearColor") {
-            decodeRGBA(val, ret);
-            clearColor = ImVec4((float)ret[0] / 255.0f, (float)ret[1] / 255.0f, (float)ret[2] / 255.0f, (float)ret[3] / 255.0f);
-            continue;
-        }
-
-        if (param == "FFTHoldColor") {
-            decodeRGBA(val, ret);
-            fftHoldColor = ImVec4((float)ret[0] / 255.0f, (float)ret[1] / 255.0f, (float)ret[2] / 255.0f, (float)ret[3] / 255.0f);
-            continue;
-        }
-
-        if (param == "CrosshairColor") {
-            decodeRGBA(val, ret);
-            crosshairColor = ImVec4((float)ret[0] / 255.0f, (float)ret[1] / 255.0f, (float)ret[2] / 255.0f, (float)ret[3] / 255.0f);
-            continue;
-        }
-
         // If param is a color, check that it's a valid RGBA hex value
-        if (sm_imguiColorStringToCodeTable.find(param) != sm_imguiColorStringToCodeTable.end()) {
+        const auto imguiColIter = sm_imguiColorStringToCodeTable.find(param);
+        if (imguiColIter != sm_imguiColorStringToCodeTable.end()) {
             decodeRGBA(val, ret);
-            imguiStyle.Colors[sm_imguiColorStringToCodeTable.at(param)] = ImVec4((float)ret[0] / 255.0f, (float)ret[1] / 255.0f, (float)ret[2] / 255.0f, (float)ret[3] / 255.0f);
+            imguiStyle.Colors[imguiColIter->second] = ImVec4((float)ret[0] / 255.0f, (float)ret[1] / 255.0f, (float)ret[2] / 255.0f, (float)ret[3] / 255.0f);
             continue;
         }
 
-        if (sm_implotColorStringToCodeTable.find(param) != sm_implotColorStringToCodeTable.end()) {
+        const auto implotColIter = sm_implotColorStringToCodeTable.find(param);
+        if (implotColIter != sm_implotColorStringToCodeTable.end()) {
             decodeRGBA(val, ret);
-            implotStyle.Colors[sm_implotColorStringToCodeTable.at(param)] = ImVec4((float)ret[0] / 255.0f, (float)ret[1] / 255.0f, (float)ret[2] / 255.0f, (float)ret[3] / 255.0f);
+            implotStyle.Colors[implotColIter->second] = ImVec4((float)ret[0] / 255.0f, (float)ret[1] / 255.0f, (float)ret[2] / 255.0f, (float)ret[3] / 255.0f);
+            continue;
+        }
+
+        const auto coreColIter = sm_coreColorStringToCodeTable.find(param);
+        if (coreColIter != sm_coreColorStringToCodeTable.end()) {
+            decodeRGBA(val, ret);
+            m_colorArray[coreColIter->second] = ImVec4((float)ret[0] / 255.0f, (float)ret[1] / 255.0f, (float)ret[2] / 255.0f, (float)ret[3] / 255.0f);
             continue;
         }
     }
@@ -214,6 +212,19 @@ std::vector<std::string> ThemeManager::getThemeNames() {
     for (auto [name, theme] : m_loadedThemes) { names.push_back(name); }
     return names;
 }
+
+const ImVec4& ThemeManager::getCoreColor(const CoreCol col) {
+    return m_colorArray[col];
+}
+
+const std::unordered_map<std::string_view, int> ThemeManager::sm_coreColorStringToCodeTable = {
+    { "WaterfallBackground", CoreCol_WaterfallBg },
+    { "ClearColor", CoreCol_ClearColor },
+    { "FFTHoldColor", CoreCol_FFTHoldColor },
+    { "CrosshairColor", CoreCol_CrosshairColor },
+    { "MainBorderColor", CoreCol_MainBorderColor },
+    { "WaterfallSeparatorColor", CoreCol_WaterfallSeparatorColor },
+};
 
 const std::unordered_map<std::string_view, int> ThemeManager::sm_imguiColorStringToCodeTable = {
     { "Text", ImGuiCol_Text },
@@ -287,8 +298,8 @@ const std::unordered_map<std::string_view, int> ThemeManager::sm_implotColorStri
     { "PlotMarkerFill", ImPlotCol_MarkerFill },
     { "PlotErrorBar", ImPlotCol_ErrorBar },
     { "PlotFrameBg", ImPlotCol_FrameBg },
-    { "PlotPlotBg", ImPlotCol_PlotBg },
-    { "PlotPlotBorder", ImPlotCol_PlotBorder },
+    { "PlotBg", ImPlotCol_PlotBg },
+    { "PlotBorder", ImPlotCol_PlotBorder },
     { "PlotLegendBg", ImPlotCol_LegendBg },
     { "PlotLegendBorder", ImPlotCol_LegendBorder },
     { "PlotLegendText", ImPlotCol_LegendText },

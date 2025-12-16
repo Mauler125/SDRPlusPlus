@@ -65,7 +65,7 @@ public:
     void generateFFTWindow();
 
     void* getWindowParams(const FFTWindow type);
-    void renderFFTWindowMenu(const float menuWidth);
+    void renderFFTWindowMenu();
 
     void setFFTSize(int size);
     void setFFTRate(double rate);

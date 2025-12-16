@@ -196,8 +196,6 @@ private:
         bool open = true;
         gui::mainWindow.muteInputThisFrame(true);
 
-        float menuWidth = ImGui::GetContentRegionAvail().x;
-
         std::string id = "New##freq_manager_new_popup_" + name;
         ImGui::OpenPopup(id.c_str());
 
@@ -206,7 +204,7 @@ private:
 
         if (ImGui::BeginPopup(id.c_str(), ImGuiWindowFlags_NoResize)) {
             ImGui::LeftLabel("Name");
-            ImGui::SetNextItemWidth(menuWidth - ImGui::GetCursorPosX());
+            ImGui::FillWidth();
             if (ImGui::InputText(("##freq_manager_edit_name" + name).c_str(), nameBuf, 1023)) {
                 editedListName = nameBuf;
             }
@@ -244,7 +242,7 @@ private:
     bool selectListsDialog() {
         gui::mainWindow.muteInputThisFrame(true);
 
-        float menuWidth = ImGui::GetContentRegionAvail().x;
+        float menuWidth = menuWidth;
 
         std::string id = "Select lists##freq_manager_sel_popup_" + name;
         ImGui::OpenPopup(id.c_str());
@@ -348,7 +346,7 @@ private:
 
     static void menuHandler(void* ctx) {
         FrequencyManagerModule* _this = (FrequencyManagerModule*)ctx;
-        float menuWidth = ImGui::GetContentRegionAvail().x;
+        float menuWidth = menuWidth;
 
         // TODO: Replace with something that won't iterate every frame
         std::vector<std::string> selectedNames;
@@ -421,7 +419,7 @@ private:
         ImGui::TableNextRow();
 
         ImGui::TableSetColumnIndex(0);
-        if (ImGui::Button(("Add##_freq_mgr_add_" + _this->name).c_str(), ImVec2(ImGui::GetContentRegionAvail().x, 0))) {
+        if (ImGui::Button(("Add##_freq_mgr_add_" + _this->name).c_str(), ImVec2(menuWidth, 0))) {
             // If there's no VFO selected, just save the center freq
             if (gui::waterfall.selectedVFO == "") {
                 _this->editedBookmark.frequency = gui::waterfall.getCenterFrequency();
@@ -459,13 +457,13 @@ private:
 
         ImGui::TableSetColumnIndex(1);
         if (selectedNames.size() == 0 && _this->selectedListName != "") { style::beginDisabled(); }
-        if (ImGui::Button(("Remove##_freq_mgr_rem_" + _this->name).c_str(), ImVec2(ImGui::GetContentRegionAvail().x, 0))) {
+        if (ImGui::Button(("Remove##_freq_mgr_rem_" + _this->name).c_str(), ImVec2(menuWidth, 0))) {
             _this->deleteBookmarksOpen = true;
         }
         if (selectedNames.size() == 0 && _this->selectedListName != "") { style::endDisabled(); }
         ImGui::TableSetColumnIndex(2);
         if (selectedNames.size() != 1 && _this->selectedListName != "") { style::beginDisabled(); }
-        if (ImGui::Button(("Edit##_freq_mgr_edt_" + _this->name).c_str(), ImVec2(ImGui::GetContentRegionAvail().x, 0))) {
+        if (ImGui::Button(("Edit##_freq_mgr_edt_" + _this->name).c_str(), ImVec2(menuWidth, 0))) {
             _this->editOpen = true;
             _this->editedBookmark = _this->bookmarks[selectedNames[0]];
             _this->editedBookmarkName = selectedNames[0];
@@ -529,14 +527,14 @@ private:
         ImGui::TableNextRow();
 
         ImGui::TableSetColumnIndex(0);
-        if (ImGui::Button(("Import##_freq_mgr_imp_" + _this->name).c_str(), ImVec2(ImGui::GetContentRegionAvail().x, 0)) && !_this->importOpen) {
+        if (ImGui::Button(("Import##_freq_mgr_imp_" + _this->name).c_str(), ImVec2(menuWidth, 0)) && !_this->importOpen) {
             _this->importOpen = true;
             _this->importDialog = new pfd::open_file("Import bookmarks", "", { "JSON Files (*.json)", "*.json", "All Files", "*" }, pfd::opt::multiselect);
         }
 
         ImGui::TableSetColumnIndex(1);
         if (selectedNames.size() == 0 && _this->selectedListName != "") { style::beginDisabled(); }
-        if (ImGui::Button(("Export##_freq_mgr_exp_" + _this->name).c_str(), ImVec2(ImGui::GetContentRegionAvail().x, 0)) && !_this->exportOpen) {
+        if (ImGui::Button(("Export##_freq_mgr_exp_" + _this->name).c_str(), ImVec2(menuWidth, 0)) && !_this->exportOpen) {
             _this->exportedBookmarks = json::object();
             config.acquire();
             for (auto& _name : selectedNames) {
@@ -554,7 +552,7 @@ private:
         }
 
         ImGui::LeftLabel("Bookmark display mode");
-        ImGui::SetNextItemWidth(menuWidth - ImGui::GetCursorPosX());
+        ImGui::FillWidth();
         if (ImGui::Combo(("##_freq_mgr_dms_" + _this->name).c_str(), &_this->bookmarkDisplayMode, bookmarkDisplayModesTxt)) {
             config.acquire();
             config.conf["bookmarkDisplayMode"] = _this->bookmarkDisplayMode;

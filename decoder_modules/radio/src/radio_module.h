@@ -168,8 +168,6 @@ private:
         RadioModule* _this = (RadioModule*)ctx;
 
         if (!_this->enabled) { style::beginDisabled(); }
-
-        float menuWidth = ImGui::GetContentRegionAvail().x;
         ImGui::BeginGroup();
 
         ImGui::Columns(4, CONCAT("RadioModeColumns##_", _this->name), false);
@@ -206,7 +204,7 @@ private:
 
         if (!_this->bandwidthLocked) {
             ImGui::LeftLabel("Bandwidth");
-            ImGui::SetNextItemWidth(menuWidth - ImGui::GetCursorPosX());
+            ImGui::FillWidth();
             if (ImGui::InputFloat(("##_radio_bw_" + _this->name).c_str(), &_this->bandwidth, 1, 100, "%.0f")) {
                 _this->bandwidth = std::clamp<float>(_this->bandwidth, _this->minBandwidth, _this->maxBandwidth);
                 _this->setBandwidth(_this->bandwidth);
@@ -215,7 +213,7 @@ private:
 
         // VFO snap interval
         ImGui::LeftLabel("Snap Interval");
-        ImGui::SetNextItemWidth(menuWidth - ImGui::GetCursorPosX());
+        ImGui::FillWidth();
         if (ImGui::InputInt(("##_radio_snap_" + _this->name).c_str(), &_this->snapInterval, 1, 100)) {
             if (_this->snapInterval < 1) { _this->snapInterval = 1; }
             _this->vfo->setSnapInterval(_this->snapInterval);
@@ -227,7 +225,7 @@ private:
         // DeEmphasis mode
         if (_this->deempAllowed) {
             ImGui::LeftLabel("De-emphasis");
-            ImGui::SetNextItemWidth(menuWidth - ImGui::GetCursorPosX());
+            ImGui::FillWidth();
             if (ImGui::Combo(("##_radio_wfm_deemp_" + _this->name).c_str(), &_this->deempId, _this->deempModes.txt)) {
                 _this->setDeEmphasisMode(_this->deempModes[_this->deempId]);
             }
@@ -240,7 +238,7 @@ private:
             }
             if (!_this->nbEnabled && _this->enabled) { style::beginDisabled(); }
             ImGui::SameLine();
-            ImGui::SetNextItemWidth(menuWidth - ImGui::GetCursorPosX());
+            ImGui::FillWidth();
             if (ImGui::SliderFloat(("##_radio_nb_lvl_" + _this->name).c_str(), &_this->nbLevel, _this->MIN_NB, _this->MAX_NB, "%.3fdB")) {
                 _this->setNBLevel(_this->nbLevel);
             }
@@ -254,7 +252,7 @@ private:
         }
         if (!_this->squelchEnabled && _this->enabled) { style::beginDisabled(); }
         ImGui::SameLine();
-        ImGui::SetNextItemWidth(menuWidth - ImGui::GetCursorPosX());
+        ImGui::FillWidth();
         if (ImGui::SliderFloat(("##_radio_sqelch_lvl_" + _this->name).c_str(), &_this->squelchLevel, _this->MIN_SQUELCH, _this->MAX_SQUELCH, "%.3fdB")) {
             _this->setSquelchLevel(_this->squelchLevel);
         }
@@ -268,7 +266,7 @@ private:
             if (_this->selectedDemodID == RADIO_DEMOD_NFM) {
                 if (!_this->FMIFNREnabled && _this->enabled) { style::beginDisabled(); }
                 ImGui::SameLine();
-                ImGui::SetNextItemWidth(menuWidth - ImGui::GetCursorPosX());
+                ImGui::FillWidth();
                 if (ImGui::Combo(("##_radio_fmifnr_ena_" + _this->name).c_str(), &_this->fmIFPresetId, _this->ifnrPresets.txt)) {
                     _this->setIFNRPreset(_this->ifnrPresets[_this->fmIFPresetId]);
                 }

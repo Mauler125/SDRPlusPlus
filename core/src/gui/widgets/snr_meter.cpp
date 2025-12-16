@@ -25,12 +25,14 @@ namespace ImGui {
         float it = size.x / 9;
         char buf[I32_STR_BUF_SIZE];
 
+        const float posY = (10.0f * style::uiScale) - 1;
+
         window->DrawList->AddRectFilled(min + ImVec2(0, 1), min + ImVec2(roundf((float)val * ratio), 10 * style::uiScale), IM_COL32(0, 136, 255, 255));
-        window->DrawList->AddLine(min, min + ImVec2(0, (10.0f * style::uiScale) - 1), text, style::uiScale);
-        window->DrawList->AddLine(min + ImVec2(0, (10.0f * style::uiScale) - 1), min + ImVec2(size.x + 1, (10.0f * style::uiScale) - 1), text, style::uiScale);
+        window->DrawList->AddLine(min, min + ImVec2(0, posY), text, style::uiScale);
+        window->DrawList->AddLine(min + ImVec2(0, posY), min + ImVec2(size.x + 1, posY), text, style::uiScale);
 
         for (int i = 0; i < 10; i++) {
-            window->DrawList->AddLine(min + ImVec2(roundf((float)i * it), (10.0f * style::uiScale) - 1), min + ImVec2(roundf((float)i * it), (15.0f * style::uiScale) - 1), text, style::uiScale);
+            window->DrawList->AddLine(min + ImVec2(roundf((float)i * it), posY), min + ImVec2(roundf((float)i * it), (15.0f * style::uiScale) - 1), text, style::uiScale);
             const int len = std::clamp(sprintf(buf, "%d", i * 10), 0, (int)sizeof(buf));
             ImVec2 sz = ImGui::CalcTextSize(buf, &buf[len]);
             window->DrawList->AddText(min + ImVec2(roundf(((float)i * it) - (sz.x / 2.0)) + 1, 16.0f * style::uiScale), text, buf, &buf[len]);

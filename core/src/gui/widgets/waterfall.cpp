@@ -1084,7 +1084,7 @@ namespace ImGui {
         widgetEndPos = ImGui::GetWindowContentRegionMax();
         widgetPos.x += window->Pos.x;
         widgetPos.y += window->Pos.y;
-        widgetEndPos.x += window->Pos.x - 1; // Padding
+        widgetEndPos.x += window->Pos.x;
         widgetEndPos.y += window->Pos.y;
         widgetSize = ImVec2(widgetEndPos.x - widgetPos.x, widgetEndPos.y - widgetPos.y);
 
@@ -1102,9 +1102,8 @@ namespace ImGui {
         }
 
         //window->DrawList->AddRectFilled(widgetPos, widgetEndPos, IM_COL32( 0, 0, 0, 255 ));
-        ImU32 bg = ImGui::ColorConvertFloat4ToU32(gui::themeManager.waterfallBg);
-        window->DrawList->AddRectFilled(widgetPos, widgetEndPos, bg);
-        window->DrawList->AddLine(ImVec2(widgetPos.x, freqAreaMax.y), ImVec2(widgetPos.x + widgetSize.x, freqAreaMax.y), IM_COL32(50, 50, 50, 255), style::uiScale);
+        ImU32 bg = ImGui::ColorConvertFloat4ToU32(gui::themeManager.getCoreColor(ThemeManager::CoreCol_WaterfallBg));
+        window->DrawList->AddRectFilled(widgetPos, widgetEndPos, bg, 3.0f * style::uiScale);
 
         if (gui::mainWindow.processMouseInputs && gui::mainWindow.processKeyboardInputs) {
             inputHandled = false;
@@ -1140,7 +1139,12 @@ namespace ImGui {
             drawBandPlan();
         }
 
-        window->DrawList->AddRect(widgetPos, widgetEndPos, IM_COL32(50, 50, 50, 255), 0.0, 0, style::uiScale);
+        const ImU32 lineColor = ImGui::ColorConvertFloat4ToU32(gui::themeManager.getCoreColor(ThemeManager::CoreCol_WaterfallSeparatorColor));
+        window->DrawList->AddLine(ImVec2(widgetPos.x, wfAreaMin.y), ImVec2(widgetPos.x + widgetSize.x, wfAreaMin.y), lineColor, style::uiScale);
+
+        const ImU32 rectColor = ImGui::ColorConvertFloat4ToU32(gui::themeManager.getCoreColor(ThemeManager::CoreCol_MainBorderColor));
+        window->DrawList->AddRect(widgetPos, widgetEndPos, rectColor, 1.0f * style::uiScale, 0, style::uiScale);
+
         buf_mtx.unlock();
     }
 

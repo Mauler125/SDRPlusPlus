@@ -39,9 +39,8 @@ namespace demod {
         void stop() { demod.stop(); }
 
         void showMenu() {
-            float menuWidth = ImGui::GetContentRegionAvail().x;
             ImGui::LeftLabel("AGC Attack");
-            ImGui::SetNextItemWidth(menuWidth - ImGui::GetCursorPosX());
+            ImGui::FillWidth();
             if (ImGui::SliderFloat(("##_radio_am_agc_attack_" + name).c_str(), &agcAttack, 1.0f, 200.0f)) {
                 demod.setAGCAttack(agcAttack / getIFSampleRate());
                 _config->acquire();
@@ -49,7 +48,7 @@ namespace demod {
                 _config->release(true);
             }
             ImGui::LeftLabel("AGC Decay");
-            ImGui::SetNextItemWidth(menuWidth - ImGui::GetCursorPosX());
+            ImGui::FillWidth();
             if (ImGui::SliderFloat(("##_radio_am_agc_decay_" + name).c_str(), &agcDecay, 1.0f, 20.0f)) {
                 demod.setAGCDecay(agcDecay / getIFSampleRate());
                 _config->acquire();

@@ -259,10 +259,10 @@ namespace backend {
         int display_w, display_h;
         glfwGetFramebufferSize(window, &display_w, &display_h);
         glViewport(0, 0, display_w, display_h);
-        glClearColor(gui::themeManager.clearColor.x,
-                     gui::themeManager.clearColor.y,
-                     gui::themeManager.clearColor.z,
-                     gui::themeManager.clearColor.w);
+
+        const ImVec4& clearColor = gui::themeManager.getCoreColor(ThemeManager::CoreCol_ClearColor);
+        glClearColor(clearColor.x, clearColor.y, clearColor.z, clearColor.w);
+
         glClear(GL_COLOR_BUFFER_BIT);
         ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 

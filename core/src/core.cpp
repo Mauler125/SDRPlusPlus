@@ -318,7 +318,7 @@ namespace core {
         gui::waterfall.setBandwidth(effectiveSr);
         gui::waterfall.setViewOffset(0);
         gui::waterfall.setViewBandwidth(effectiveSr);
-        gui::mainWindow.setViewBandwidthSlider(1.0);
+        displaymenu::setViewBandwidthSlider(1.0f);
 
         // Debug logs
         flog::info("New DSP samplerate: {0} (source samplerate is {1})", effectiveSr, samplerate);

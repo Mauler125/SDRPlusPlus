@@ -250,18 +250,16 @@ namespace sourcemenu {
         bool open = true;
         gui::mainWindow.muteInputThisFrame(true);
 
-        float menuWidth = ImGui::GetContentRegionAvail().x;
-
         const char* id = "Add offset##sdrpp_add_offset_dialog_";
         ImGui::OpenPopup(id);
 
         if (ImGui::BeginPopup(id, ImGuiWindowFlags_NoResize)) {
             ImGui::LeftLabel("Name");
-            ImGui::SetNextItemWidth(menuWidth - ImGui::GetCursorPosX());
+            ImGui::FillWidth();
             ImGui::InputText("##sdrpp_add_offset_name", newOffsetName, 1023);
 
             ImGui::LeftLabel("Offset");
-            ImGui::SetNextItemWidth(menuWidth - ImGui::GetCursorPosX());
+            ImGui::FillWidth();
             ImGui::InputDouble("##sdrpp_add_offset_offset", &newOffset);
 
             bool nameExists = offsets.nameExists(newOffsetName);
@@ -325,28 +323,40 @@ namespace sourcemenu {
             core::configManager.release(true);
         }
 
-        ImGui::LeftLabel("Offset mode");
-        ImGui::SetNextItemWidth(itemWidth - ImGui::GetCursorPosX() - 2.0f*(lineHeight + 1.5f*spacing));
+        ImGui::LeftLabel("Offset Mode");
+
+        const float buttonSize = ImGui::GetFrameHeight();
+        ImGuiStyle& style = ImGui::GetStyle();
+        const float innerSpacing = style.ItemInnerSpacing.x;
+        const float comboWidth = ImGui::GetContentRegionAvail().x - 2.0f * (buttonSize + innerSpacing);
+
+        ImGui::SetNextItemWidth(comboWidth);
         if (ImGui::Combo("##_sdrpp_offset", &offsetId, offsets.txt)) {
             selectOffsetById(offsetId);
             core::configManager.acquire();
             core::configManager.conf["selectedOffset"] = offsets.key(offsetId);
             core::configManager.release(true);
         }
-        ImGui::SameLine();
-        ImGui::SetCursorPosX(ImGui::GetCursorPosX() - spacing);
+
+        ImGui::SameLine(0, innerSpacing);
+        ImVec2 backupPadding = style.FramePadding;
+        style.FramePadding.x = style.FramePadding.y;
+
         if (offsetId < OFFSET_ID_CUSTOM_BASE) { ImGui::BeginDisabled(); }
-        if (ImGui::Button("-##_sdrpp_offset_del_", ImVec2(lineHeight + 0.5f*spacing, 0))) {
+        if (ImGui::Button("-##_sdrpp_offset_del_", ImVec2(buttonSize, buttonSize))) {
             delOffsetName = selectedOffset;
             showDelOffsetDialog = true;
         }
+
         if (offsetId < OFFSET_ID_CUSTOM_BASE) { ImGui::EndDisabled(); }
-        ImGui::SameLine();
-        ImGui::SetCursorPosX(ImGui::GetCursorPosX() - spacing);
-        if (ImGui::Button("+##_sdrpp_offset_add_", ImVec2(lineHeight + 0.5f*spacing, 0))) {
+        ImGui::SameLine(0, innerSpacing);
+
+        if (ImGui::Button("+##_sdrpp_offset_add_", ImVec2(buttonSize, buttonSize))) {
             strcpy(newOffsetName, "New Offset");
             showAddOffsetDialog = true;
         }
+
+        style.FramePadding = backupPadding;
 
         // Offset delete confirmation
         if (ImGui::GenericDialog("sdrpp_del_offset_confirm", showDelOffsetDialog, GENERIC_DIALOG_BUTTONS_YES_NO, []() {

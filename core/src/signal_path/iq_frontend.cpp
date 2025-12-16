@@ -290,33 +290,33 @@ static inline bool ImGui_SliderDouble(const char* label, double* v, double v_min
     return ImGui::SliderScalar(label, ImGuiDataType_Double, v, &v_min, &v_max, format, flags);
 }
 
-void IQFrontEnd::renderFFTWindowMenu(const float menuWidth) {
+void IQFrontEnd::renderFFTWindowMenu() {
     bool parmChanged = false;
 
     switch (_fftWindow) {
     case FFTWindow::HANN:
         ImGui::LeftLabel("Hann Alpha");
-        ImGui::SetNextItemWidth(menuWidth - ImGui::GetCursorPosX());
+        ImGui::FillWidth();
         parmChanged |= ImGui_SliderDouble("##iqfrontend_hann_alpha", &_hannParams.alpha, 0.0, 1.0, "%.3f", ImGuiSliderFlags_AlwaysClamp);
         break;
     case FFTWindow::KAISER:
         ImGui::LeftLabel("Kaiser Beta");
-        ImGui::SetNextItemWidth(menuWidth - ImGui::GetCursorPosX());
+        ImGui::FillWidth();
         parmChanged |= ImGui_SliderDouble("##iqfrontend_kaiser_beta", &_kaiserParams.beta, 0.0, 60.0, "%.3f", ImGuiSliderFlags_AlwaysClamp);
         break;
     case FFTWindow::TUKEY:
         ImGui::LeftLabel("Tukey Alpha");
-        ImGui::SetNextItemWidth(menuWidth - ImGui::GetCursorPosX());
+        ImGui::FillWidth();
         parmChanged |= ImGui_SliderDouble("##iqfrontend_tukey_alpha", &_tukeyParams.alpha, 0.0, 1.0, "%.3f", ImGuiSliderFlags_AlwaysClamp);
         break;
     case FFTWindow::GAUSSIAN:
         ImGui::LeftLabel("Gaussian Sigma");
-        ImGui::SetNextItemWidth(menuWidth - ImGui::GetCursorPosX());
+        ImGui::FillWidth();
         parmChanged |= ImGui_SliderDouble("##iqfrontend_gaussian_sigma", &_gaussianParams.sigma, 0.1, 0.5, "%.3f", ImGuiSliderFlags_AlwaysClamp);
         break;
     case FFTWindow::POISSON:
         ImGui::LeftLabel("Poisson Alpha");
-        ImGui::SetNextItemWidth(menuWidth - ImGui::GetCursorPosX());
+        ImGui::FillWidth();
         parmChanged |= ImGui_SliderDouble("##iqfrontend_poisson_alpha", &_poissonParams.alpha, 0.0, 5.0, "%.3f", ImGuiSliderFlags_AlwaysClamp);
         break;
     }

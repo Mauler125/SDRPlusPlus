@@ -119,7 +119,7 @@ private:
             config.release(true);
         }
         ImGui::SameLine();
-        ImGui::SetNextItemWidth(menuWidth - ImGui::GetCursorPosX());
+        ImGui::FillWidth();
         if (ImGui::InputInt(CONCAT("##_rigctl_cli_port_", _this->name), &_this->port, 0, 0)) {
             config.acquire();
             config.conf[_this->name]["port"] = _this->port;

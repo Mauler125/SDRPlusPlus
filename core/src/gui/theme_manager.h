@@ -16,6 +16,9 @@ struct Theme {
 
 class ThemeManager {
 public:
+    ThemeManager();
+    void initCoreColors();
+
     bool loadThemesFromDir(const std::string& path);
     bool loadTheme(const std::string& path);
     bool applyTheme(const std::string& name);
@@ -23,17 +26,28 @@ public:
 
     std::vector<std::string> getThemeNames();
 
-    ImVec4 waterfallBg = ImVec4(0.0f, 0.0f, 0.0f, 1.0f);
-    ImVec4 clearColor = ImVec4(0.0666f, 0.0666f, 0.0666f, 1.0f);
-    ImVec4 fftHoldColor = ImVec4(0.0f, 1.0f, 0.75f, 1.0f);
-    ImVec4 crosshairColor = ImVec4(0.86f, 0.86f, 0.0f, 1.0f);
+    enum CoreCol {
+        CoreCol_WaterfallBg,
+        CoreCol_ClearColor,
+        CoreCol_FFTHoldColor,
+        CoreCol_CrosshairColor,
+        CoreCol_MainBorderColor,
+        CoreCol_WaterfallSeparatorColor,
+
+        CoreCol_COUNT
+    };
+
+    const ImVec4& getCoreColor(const CoreCol col);
 
 private:
     static bool decodeRGBA(const std::string& str, uint8_t out[4]);
 
+    static const std::unordered_map<std::string_view, int> sm_coreColorStringToCodeTable;
     static const std::unordered_map<std::string_view, int> sm_imguiColorStringToCodeTable;
     static const std::unordered_map<std::string_view, int> sm_implotColorStringToCodeTable;
 
     std::map<std::string, Theme> m_loadedThemes;
     std::string m_themeAuthor;
+
+    ImVec4 m_colorArray[CoreCol_COUNT];
 };
