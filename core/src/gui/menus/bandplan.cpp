@@ -18,6 +18,7 @@ namespace bandplanmenu {
             return;
         }
 
+        core::configManager.acquire();
         if (bandplan::bandplans.find(core::configManager.conf["bandPlan"]) != bandplan::bandplans.end()) {
             const std::string& name = core::configManager.conf["bandPlan"];
             bandplanId = std::distance(bandplan::bandplanNames.begin(), std::find(bandplan::bandplanNames.begin(),
@@ -31,6 +32,8 @@ namespace bandplanmenu {
         bandPlanEnabled = core::configManager.conf["bandPlanEnabled"];
         bandPlanEnabled ? gui::waterfall.showBandplan() : gui::waterfall.hideBandplan();
         bandPlanPos = core::configManager.conf["bandPlanPos"];
+        core::configManager.release();
+
         gui::waterfall.setBandPlanPos(bandPlanPos);
     }
 
