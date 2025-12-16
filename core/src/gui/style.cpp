@@ -75,11 +75,9 @@ namespace style {
 
 namespace ImGui {
     void LeftLabel(const char* text) {
-        float vpos = ImGui::GetCursorPosY();
-        ImGui::SetCursorPosY(vpos + GImGui->Style.FramePadding.y);
+        ImGui::AlignTextToFramePadding();
         ImGui::TextUnformatted(text);
         ImGui::SameLine();
-        ImGui::SetCursorPosY(vpos);
     }
 
     void FillWidth() {
