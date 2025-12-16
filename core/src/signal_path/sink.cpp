@@ -246,7 +246,7 @@ void SinkManager::setStreamSink(const std::string& name, const std::string& prov
 
 void SinkManager::showVolumeSlider(const std::string& name, const std::string& prefix, float width, float btnHeight, float btnBorder, bool sameLine) {
     // TODO: Replace map with some hashmap for it to be faster
-    float height = ImGui::GetTextLineHeightWithSpacing() + 2;
+    float height = ImGui::GetTextLineHeightWithSpacing();
     float sliderHeight = height;
     if (btnHeight > 0) {
         height = btnHeight;
