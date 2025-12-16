@@ -301,6 +301,7 @@ void SinkManager::showVolumeSlider(const std::string& name, const std::string& p
 }
 
 void SinkManager::loadStreamConfig(const std::string& name) {
+    core::configManager.acquire();
     const json& conf = core::configManager.conf["streams"][name];
     SinkManager::Stream* stream = streams[name];
     std::string provName = conf["sink"];
@@ -320,6 +321,7 @@ void SinkManager::loadStreamConfig(const std::string& name) {
     }
     stream->setVolume(conf["volume"]);
     stream->volumeAjust.setMuted(conf["muted"]);
+    core::configManager.release();
 }
 
 void SinkManager::saveStreamConfig(const std::string& name) {
