@@ -276,18 +276,14 @@ void SinkManager::showVolumeSlider(const std::string& name, const std::string& p
     if (stream->volumeAjust.getMuted()) {
         if (ImGui::ImageButton("sdrpp_unmute_btn_", icons::MUTED, ImVec2(height, height), ImVec2(0, 0), ImVec2(1, 1), ImVec4(0, 0, 0, 0), ImGui::GetStyleColorVec4(ImGuiCol_Text))) {
             stream->volumeAjust.setMuted(false);
-            core::configManager.acquire();
             saveStreamConfig(name);
-            core::configManager.release(true);
         }
     }
     else {
         ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(btnBorder, btnBorder));
         if (ImGui::ImageButton("sdrpp_mute_btn_", icons::UNMUTED, ImVec2(height, height), ImVec2(0, 0), ImVec2(1, 1), ImVec4(0, 0, 0, 0), ImGui::GetStyleColorVec4(ImGuiCol_Text))) {
             stream->volumeAjust.setMuted(true);
-            core::configManager.acquire();
             saveStreamConfig(name);
-            core::configManager.release(true);
         }
     }
 
@@ -298,9 +294,7 @@ void SinkManager::showVolumeSlider(const std::string& name, const std::string& p
     ImGui::SetCursorPosY(ypos + ((height - sliderHeight) / 2.0f) + btnBorder);
     if (ImGui::SliderFloat((prefix + name).c_str(), &stream->guiVolume, 0.0f, 1.0f, "")) {
         stream->setVolume(stream->guiVolume);
-        core::configManager.acquire();
         saveStreamConfig(name);
-        core::configManager.release(true);
     }
     if (sameLine) { ImGui::SetCursorPosY(ypos); }
     //ImGui::SetCursorPosY(ypos);
@@ -329,12 +323,14 @@ void SinkManager::loadStreamConfig(const std::string& name) {
 }
 
 void SinkManager::saveStreamConfig(const std::string& name) {
+    core::configManager.acquire();
     SinkManager::Stream* stream = streams[name];
     json conf;
     conf["sink"] = providerNames[stream->providerId];
     conf["volume"] = stream->getVolume();
     conf["muted"] = stream->volumeAjust.getMuted();
     core::configManager.conf["streams"][name] = conf;
+    core::configManager.release(true);
 }
 
 // Note: acquire and release config before running this
@@ -363,9 +359,7 @@ void SinkManager::showMenu() {
         ImGui::SetNextItemWidth(menuWidth);
         if (ImGui::Combo(CONCAT("##_sdrpp_sink_select_", name), &stream->providerId, provStr.c_str())) {
             setStreamSink(name, providerNames[stream->providerId]);
-            core::configManager.acquire();
             saveStreamConfig(name);
-            core::configManager.release(true);
         }
 
         stream->sink->menuHandler();
