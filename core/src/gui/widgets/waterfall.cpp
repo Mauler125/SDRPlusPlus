@@ -196,7 +196,7 @@ namespace ImGui {
         const int bufLen = (int)sizeof(buf);
 
         ImU32 trace = ImGui::GetColorU32(ImGuiCol_PlotLines);
-        ImU32 traceHold = ImGui::ColorConvertFloat4ToU32(gui::themeManager.fftHoldColor);
+        ImU32 traceHold = ImGui::ColorConvertFloat4ToU32(gui::themeManager.getCoreColor(ThemeManager::CoreCol_FFTHoldColor));
         ImU32 shadow = ImGui::GetColorU32(ImGuiCol_PlotLines, 0.2);
         ImU32 text = ImGui::GetColorU32(ImGuiCol_Text);
         float textVOffset = 10.0f * style::uiScale;
@@ -269,7 +269,7 @@ namespace ImGui {
         onFFTRedraw.emit(args);
 
         if (gui::mainWindow.processMouseInputs) {
-            DrawCrosshairUnderCursor(ImRect(fftAreaMin, fftAreaMax), ImGui::ColorConvertFloat4ToU32(gui::themeManager.crosshairColor), 1.0f, crosshairFlags);
+            DrawCrosshairUnderCursor(ImRect(fftAreaMin, fftAreaMax), ImGui::ColorConvertFloat4ToU32(gui::themeManager.getCoreColor(ThemeManager::CoreCol_CrosshairColor)), 1.0f, crosshairFlags);
         }
 
         // X Axis
