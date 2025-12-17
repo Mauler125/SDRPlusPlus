@@ -3,7 +3,6 @@
 #include <gui/gui.h>
 #include <core.h>
 #include <gui/colormaps.h>
-#include <gui/gui.h>
 #include <gui/main_window.h>
 #include <signal_path/signal_path.h>
 #include <gui/style.h>
