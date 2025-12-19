@@ -74,7 +74,7 @@ namespace core {
         defConfig["fullWaterfallUpdate"] = false;
         defConfig["max"] = 0.0;
         defConfig["maximized"] = false;
-        defConfig["fullscreen"] = false;
+        defConfig["fullScreen"] = false;
 
         // Menu
         defConfig["menuElements"] = json::array();
