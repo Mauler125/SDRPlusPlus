@@ -9,9 +9,10 @@
 #include <imgui/imgui_internal.h>
 #include <utils/event.h>
 
+#include "../backends/glad/glad.h"
 #include <utils/opengl_include_code.h>
 
-#define WATERFALL_RESOLUTION 1000000
+#define WATERFALL_RESOLUTION 1024
 
 namespace ImGui {
     class WaterfallVFO {
@@ -23,7 +24,7 @@ namespace ImGui {
         void setSnapInterval(double interval);
         void setNotchOffset(double offset);
         void setNotchVisible(bool visible);
-        void updateDrawingVars(double viewBandwidth, float dataWidth, double viewOffset, ImVec2 widgetPos, int fftHeight); // NOTE: Datawidth double???
+        void updateDrawingVars(double viewBandwidth, float dataWidth, double viewOffset, ImVec2 widgetPos, int fftHeight);
         void draw(ImGuiWindow* window, bool selected);
 
         enum {
@@ -88,15 +89,16 @@ namespace ImGui {
         WaterFall();
         ~WaterFall();
 
-        void init();
+        bool compileShader();
+
+        bool init(const std::string& resDir);
         void shutdown();
 
         void draw();
         float* getFFTBuffer();
         void pushFFT();
 
-        void updatePallette(const float colors[][3], int colorCount);
-        void updatePalletteFromArray(float* colors, int colorCount);
+        void updatePallette(const float* colors, int colorCount);
 
         void setCenterFrequency(double freq);
         double getCenterFrequency();
@@ -175,7 +177,7 @@ namespace ImGui {
         float selectedVFOSNR = 0.0f;
 
         std::map<std::string, WaterfallVFO*> vfos;
-        std::string selectedVFO = "";
+        std::string selectedVFO;
         bool selectedVFOChanged = false;
 
         struct FFTRedrawArgs {
@@ -236,8 +238,6 @@ namespace ImGui {
         void updateWidgetPositions();
         void onPositionChange();
         void onResize();
-        void updateWaterfallFb();
-        void updateWaterfallTexture();
         void updateAllVFOs(bool checkRedrawRequired = false);
         bool calculateVFOSignalInfo(float* fftLine, WaterfallVFO* vfo, float& strength, float& snr);
 
@@ -246,9 +246,26 @@ namespace ImGui {
         void fixupTimestamps();
         void updateTimestamps();
 
+        bool uploadPaletteTexture();
+        bool uploadPendingDeltas();
+
+        void renderWaterfallTexture();
+        void renderSpectrumGeometry(const float scaleFactor);
+
         bool waterfallUpdate = false;
 
-        uint32_t waterfallPallet[WATERFALL_RESOLUTION];
+        // GPU Rendering Resources
+        GLuint wfShaderProgram = 0;
+        GLuint wfVao = 0;
+        GLuint wfVbo = 0;
+        GLuint wfFbo = 0;
+        GLuint wfFboTexture = 0;     // Resulting image
+        GLuint wfRawDataTexture = 0; // R8 normalized byte data
+        GLuint wfPaletteTexture = 0; // 1D palette
+
+        // Staging buffer for palette
+        float paletteBuffer[WATERFALL_RESOLUTION * 3];
+        bool paletteDirty = true;
 
         ImVec2 widgetPos;
         ImVec2 widgetEndPos;
@@ -258,8 +275,6 @@ namespace ImGui {
         ImVec2 lastWidgetSize;
 
         ImGuiWindow* window;
-
-        GLuint textureId;
 
         std::recursive_mutex buf_mtx;
         std::recursive_mutex latestFFTMtx;
@@ -297,17 +312,18 @@ namespace ImGui {
         float waterfallMin;
         float waterfallMax;
 
-        //std::vector<std::vector<float>> rawFFTs;
         int rawFFTSize;
-        float* rawFFTs = NULL;
+        uint8_t* rawFFTs = NULL; // Quant CPU staging buf
+        float* inputBuffer = NULL;
         float* latestFFT = NULL;
         float* latestFFTHold = NULL;
         float* tempZoomFFT = NULL;
         float* smoothingBuf = NULL;
-        int currentFFTLine = 0;
+
+        int currentFFTLine = 0;   // Write head
+        int lastUploadedLine = 0; // Upload head (tracks write head)
         int fftLines = 0;
 
-        uint32_t* waterfallFb;
         int FFTAreaHeight;
         int newFFTAreaHeight;
 
@@ -327,7 +343,7 @@ namespace ImGui {
         std::chrono::steady_clock::time_point lastScaleUpdateTime;
         std::deque<std::chrono::steady_clock::time_point> fftTimestamps;
 
-        float fftRate = 20.f; // Default = displaymenu::fftRate; mighr want to make a define for this.
+        float fftRate = 20.f;
 
         bool fftHold = false;
         float fftHoldSpeed = 0.3f;

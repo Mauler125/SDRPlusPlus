@@ -32,11 +32,6 @@
 
 void MainWindow::init() {
     LoadingScreen::show("Initializing UI");
-    gui::waterfall.init();
-    gui::waterfall.setRawFFTSize(fftSize);
-
-    credits::init();
-
     core::configManager.acquire();
     json menuElements = core::configManager.conf["menuElements"];
     std::string modulesDir = core::configManager.conf["modulesDirectory"];
@@ -46,6 +41,11 @@ void MainWindow::init() {
     // Assert that directories are absolute
     modulesDir = std::filesystem::absolute(modulesDir).string();
     resourcesDir = std::filesystem::absolute(resourcesDir).string();
+
+    gui::waterfall.init(resourcesDir);
+    gui::waterfall.setRawFFTSize(fftSize);
+
+    credits::init();
 
     // Load menu elements
     gui::menu.order.clear();
@@ -162,7 +162,7 @@ void MainWindow::init() {
         flog::warn("Color map directory {0} does not exist, not loading modules from directory", modulesDir);
     }
 
-    gui::waterfall.updatePalletteFromArray(colormaps::maps["Turbo"].map, colormaps::maps["Turbo"].entryCount);
+    gui::waterfall.updatePallette(colormaps::maps["Turbo"].map, colormaps::maps["Turbo"].entryCount);
 
     sourcemenu::init();
     sinkmenu::init();
