@@ -45,6 +45,8 @@ private:
     static const std::unordered_map<std::string_view, int> sm_coreColorStringToCodeTable;
     static const std::unordered_map<std::string_view, int> sm_imguiColorStringToCodeTable;
     static const std::unordered_map<std::string_view, int> sm_implotColorStringToCodeTable;
+    static const std::unordered_map<std::string_view, int> sm_imguiVarStringToCodeTable;
+    static const std::unordered_map<std::string_view, int> sm_implotVarStringToCodeTable;
 
     std::map<std::string, Theme> m_loadedThemes;
     std::string m_themeAuthor;

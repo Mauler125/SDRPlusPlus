@@ -60,6 +60,12 @@ bool ThemeManager::loadThemesFromDir(const std::string& path) {
     return true;
 }
 
+static bool IsValidColorString(const json& val) {
+    if (!val.is_string()) return false;
+    std::string s = val.get<std::string>();
+    return (s.length() == 9 && s[0] == '#' && std::all_of(s.begin() + 1, s.end(), ::isxdigit));
+}
+
 bool ThemeManager::loadTheme(const std::string& path) {
     if (!std::filesystem::is_regular_file(path)) {
         flog::error("Theme file doesn't exist: {0}", path);
@@ -102,8 +108,7 @@ bool ThemeManager::loadTheme(const std::string& path) {
     }
 
     // Iterate through all parameters and check their contents
-    std::map<std::string, std::string> params = data;
-    for (auto const& [param, val] : params) {
+    for (const auto& [param, val] : data.items()) {
         if (param == "name" || param == "author") { continue; }
 
         bool isValid = false;
@@ -112,15 +117,32 @@ bool ThemeManager::loadTheme(const std::string& path) {
         if (sm_imguiColorStringToCodeTable.find(param) != sm_imguiColorStringToCodeTable.end() ||
             sm_implotColorStringToCodeTable.find(param) != sm_implotColorStringToCodeTable.end() ||
             sm_coreColorStringToCodeTable.find(param) != sm_coreColorStringToCodeTable.end()) {
-            if (val[0] != '#' || !std::all_of(val.begin() + 1, val.end(), ::isxdigit) || val.length() != 9) {
-                flog::error("Theme {0} contains invalid {1} field. Expected hex RGBA color", path, param);
+
+            if (!IsValidColorString(val)) {
+                flog::error("Theme {0} contains invalid {1} field. Expected hex RGBA color string (#RRGGBBAA)", path, param);
+                return false;
+            }
+            isValid = true;
+        }
+        // Check ImGui Style Vars
+        else if (sm_imguiVarStringToCodeTable.find(param) != sm_imguiVarStringToCodeTable.end()) {
+            if (!val.is_number() && !val.is_array()) {
+                flog::error("Theme {0} contains invalid {1} field. Expected number or array.", path, param);
+                return false;
+            }
+            isValid = true;
+        }
+        // Check ImPlot Style Vars
+        else if (sm_implotVarStringToCodeTable.find(param) != sm_implotVarStringToCodeTable.end()) {
+            if (!val.is_number() && !val.is_array()) {
+                flog::error("Theme {0} contains invalid {1} field. Expected number or array.", path, param);
                 return false;
             }
             isValid = true;
         }
 
         if (!isValid) {
-            flog::error("Theme {0} contains unknown {1} field.", path, param);
+            flog::error("Theme {0} contains unknown field: {1}", path, param);
             return false;
         }
     }
@@ -129,6 +151,17 @@ bool ThemeManager::loadTheme(const std::string& path) {
     m_loadedThemes[name] = thm;
 
     return true;
+}
+
+static ImVec2 JsonToVec2(const json& val) {
+    if (val.is_array() && val.size() >= 2) {
+        return ImVec2(val[0].get<float>(), val[1].get<float>());
+    }
+    if (val.is_number()) {
+        const float f = val.get<float>();
+        return ImVec2(f, f);
+    }
+    return ImVec2(0, 0);
 }
 
 bool ThemeManager::applyTheme(const std::string& name) {
@@ -144,12 +177,10 @@ bool ThemeManager::applyTheme(const std::string& name) {
     auto& imguiStyle = ImGui::GetStyle();
     auto& implotStyle = ImPlot::GetStyle();
 
-    imguiStyle.WindowPadding.x = 6.0f;
-    imguiStyle.WindowPadding.y = 6.0f;
-
-    imguiStyle.ItemSpacing.x = 6.0f;
-    imguiStyle.ItemSpacing.y = 4.0f;
-
+    imguiStyle.WindowPadding = ImVec2(8, 8);
+    imguiStyle.FramePadding = ImVec2(4, 3);
+    imguiStyle.ItemSpacing = ImVec2(8, 4);
+    imguiStyle.ItemInnerSpacing = ImVec2(4, 4);
     imguiStyle.WindowRounding = 6.0f;
     imguiStyle.ChildRounding = 3.0f;
     imguiStyle.FrameRounding = 3.0f;
@@ -158,13 +189,11 @@ bool ThemeManager::applyTheme(const std::string& name) {
     imguiStyle.ScrollbarRounding = 3.0f;
     imguiStyle.TabRounding = 3.0f;
 
-    Theme thm = m_loadedThemes[name];
+    Theme& thm = m_loadedThemes[name];
+    uint8_t colRet[4];
 
-    uint8_t ret[4];
-    std::map<std::string, std::string> params = thm.data;
-    for (auto const& [param, val] : params) {
+    for (const auto& [param, val] : thm.data.items()) {
         if (param == "name") { continue; }
-
         if (param == "author") {
             m_themeAuthor = val;
             continue;
@@ -173,22 +202,246 @@ bool ThemeManager::applyTheme(const std::string& name) {
         // If param is a color, check that it's a valid RGBA hex value
         const auto imguiColIter = sm_imguiColorStringToCodeTable.find(param);
         if (imguiColIter != sm_imguiColorStringToCodeTable.end()) {
-            decodeRGBA(val, ret);
-            imguiStyle.Colors[imguiColIter->second] = ImVec4((float)ret[0] / 255.0f, (float)ret[1] / 255.0f, (float)ret[2] / 255.0f, (float)ret[3] / 255.0f);
+            if (decodeRGBA(val.get<std::string>(), colRet)) {
+                imguiStyle.Colors[imguiColIter->second] = ImVec4((float)colRet[0] / 255.0f, (float)colRet[1] / 255.0f, (float)colRet[2] / 255.0f, (float)colRet[3] / 255.0f);
+            }
             continue;
         }
 
         const auto implotColIter = sm_implotColorStringToCodeTable.find(param);
         if (implotColIter != sm_implotColorStringToCodeTable.end()) {
-            decodeRGBA(val, ret);
-            implotStyle.Colors[implotColIter->second] = ImVec4((float)ret[0] / 255.0f, (float)ret[1] / 255.0f, (float)ret[2] / 255.0f, (float)ret[3] / 255.0f);
+            if (decodeRGBA(val.get<std::string>(), colRet)) {
+                implotStyle.Colors[implotColIter->second] = ImVec4((float)colRet[0] / 255.0f, (float)colRet[1] / 255.0f, (float)colRet[2] / 255.0f, (float)colRet[3] / 255.0f);
+            }
             continue;
         }
 
         const auto coreColIter = sm_coreColorStringToCodeTable.find(param);
         if (coreColIter != sm_coreColorStringToCodeTable.end()) {
-            decodeRGBA(val, ret);
-            m_colorArray[coreColIter->second] = ImVec4((float)ret[0] / 255.0f, (float)ret[1] / 255.0f, (float)ret[2] / 255.0f, (float)ret[3] / 255.0f);
+            if (decodeRGBA(val.get<std::string>(), colRet)) {
+                m_colorArray[coreColIter->second] = ImVec4((float)colRet[0] / 255.0f, (float)colRet[1] / 255.0f, (float)colRet[2] / 255.0f, (float)colRet[3] / 255.0f);
+            }
+            continue;
+        }
+
+        const auto imguiVarIter = sm_imguiVarStringToCodeTable.find(param);
+        if (imguiVarIter != sm_imguiVarStringToCodeTable.end()) {
+            ImGuiStyleVar_ varId = (ImGuiStyleVar_)imguiVarIter->second;
+            switch (varId) {
+            case ImGuiStyleVar_Alpha:
+                imguiStyle.Alpha = val.get<float>();
+                break;
+            case ImGuiStyleVar_DisabledAlpha:
+                imguiStyle.DisabledAlpha = val.get<float>();
+                break;
+            case ImGuiStyleVar_WindowPadding:
+                imguiStyle.WindowPadding = JsonToVec2(val);
+                break;
+            case ImGuiStyleVar_WindowRounding:
+                imguiStyle.WindowRounding = val.get<float>();
+                break;
+            case ImGuiStyleVar_WindowBorderSize:
+                imguiStyle.WindowBorderSize = val.get<float>();
+                break;
+            case ImGuiStyleVar_WindowMinSize:
+                imguiStyle.WindowMinSize = JsonToVec2(val);
+                break;
+            case ImGuiStyleVar_WindowTitleAlign:
+                imguiStyle.WindowTitleAlign = JsonToVec2(val);
+                break;
+            case ImGuiStyleVar_ChildRounding:
+                imguiStyle.ChildRounding = val.get<float>();
+                break;
+            case ImGuiStyleVar_ChildBorderSize:
+                imguiStyle.ChildBorderSize = val.get<float>();
+                break;
+            case ImGuiStyleVar_PopupRounding:
+                imguiStyle.PopupRounding = val.get<float>();
+                break;
+            case ImGuiStyleVar_PopupBorderSize:
+                imguiStyle.PopupBorderSize = val.get<float>();
+                break;
+            case ImGuiStyleVar_FramePadding:
+                imguiStyle.FramePadding = JsonToVec2(val);
+                break;
+            case ImGuiStyleVar_FrameRounding:
+                imguiStyle.FrameRounding = val.get<float>();
+                break;
+            case ImGuiStyleVar_FrameBorderSize:
+                imguiStyle.FrameBorderSize = val.get<float>();
+                break;
+            case ImGuiStyleVar_ItemSpacing:
+                imguiStyle.ItemSpacing = JsonToVec2(val);
+                break;
+            case ImGuiStyleVar_ItemInnerSpacing:
+                imguiStyle.ItemInnerSpacing = JsonToVec2(val);
+                break;
+            case ImGuiStyleVar_IndentSpacing:
+                imguiStyle.IndentSpacing = val.get<float>();
+                break;
+            case ImGuiStyleVar_CellPadding:
+                imguiStyle.CellPadding = JsonToVec2(val);
+                break;
+            case ImGuiStyleVar_ScrollbarSize:
+                imguiStyle.ScrollbarSize = val.get<float>();
+                break;
+            case ImGuiStyleVar_ScrollbarRounding:
+                imguiStyle.ScrollbarRounding = val.get<float>();
+                break;
+            case ImGuiStyleVar_ScrollbarPadding:
+                imguiStyle.ScrollbarPadding = val.get<float>();
+                break;
+            case ImGuiStyleVar_GrabMinSize:
+                imguiStyle.GrabMinSize = val.get<float>();
+                break;
+            case ImGuiStyleVar_GrabRounding:
+                imguiStyle.GrabRounding = val.get<float>();
+                break;
+            case ImGuiStyleVar_ImageBorderSize:
+                imguiStyle.ImageBorderSize = val.get<float>();
+                break;
+            case ImGuiStyleVar_TabRounding:
+                imguiStyle.TabRounding = val.get<float>();
+                break;
+            case ImGuiStyleVar_TabBorderSize:
+                imguiStyle.TabBorderSize = val.get<float>();
+                break;
+            case ImGuiStyleVar_TabMinWidthBase:
+                imguiStyle.TabMinWidthBase = val.get<float>();
+                break;
+            case ImGuiStyleVar_TabMinWidthShrink:
+                imguiStyle.TabMinWidthShrink = val.get<float>();
+                break;
+            case ImGuiStyleVar_TabBarBorderSize:
+                imguiStyle.TabBarBorderSize = val.get<float>();
+                break;
+            case ImGuiStyleVar_TabBarOverlineSize:
+                imguiStyle.TabBarOverlineSize = val.get<float>();
+                break;
+            case ImGuiStyleVar_TableAngledHeadersAngle:
+                imguiStyle.TableAngledHeadersAngle = val.get<float>();
+                break;
+            case ImGuiStyleVar_TableAngledHeadersTextAlign:
+                imguiStyle.TableAngledHeadersTextAlign = JsonToVec2(val);
+                break;
+            case ImGuiStyleVar_TreeLinesSize:
+                imguiStyle.TreeLinesSize = val.get<float>();
+                break;
+            case ImGuiStyleVar_TreeLinesRounding:
+                imguiStyle.TreeLinesRounding = val.get<float>();
+                break;
+            case ImGuiStyleVar_ButtonTextAlign:
+                imguiStyle.ButtonTextAlign = JsonToVec2(val);
+                break;
+            case ImGuiStyleVar_SelectableTextAlign:
+                imguiStyle.SelectableTextAlign = JsonToVec2(val);
+                break;
+            case ImGuiStyleVar_SeparatorTextBorderSize:
+                imguiStyle.SeparatorTextBorderSize = val.get<float>();
+                break;
+            case ImGuiStyleVar_SeparatorTextAlign:
+                imguiStyle.SeparatorTextAlign = JsonToVec2(val);
+                break;
+            case ImGuiStyleVar_SeparatorTextPadding:
+                imguiStyle.SeparatorTextPadding = JsonToVec2(val);
+                break;
+            case ImGuiStyleVar_DockingSeparatorSize:
+                imguiStyle.DockingSeparatorSize = val.get<float>();
+                break;
+            default:
+                break;
+            }
+            continue;
+        }
+
+        const auto implotVarIter = sm_implotVarStringToCodeTable.find(param);
+        if (implotVarIter != sm_implotVarStringToCodeTable.end()) {
+            ImPlotStyleVar_ varId = (ImPlotStyleVar_)implotVarIter->second;
+            switch (varId) {
+            case ImPlotStyleVar_LineWeight:
+                implotStyle.LineWeight = val.get<float>();
+                break;
+            case ImPlotStyleVar_Marker:
+                implotStyle.Marker = val.get<int>();
+                break;
+            case ImPlotStyleVar_MarkerSize:
+                implotStyle.MarkerSize = val.get<float>();
+                break;
+            case ImPlotStyleVar_MarkerWeight:
+                implotStyle.MarkerWeight = val.get<float>();
+                break;
+            case ImPlotStyleVar_FillAlpha:
+                implotStyle.FillAlpha = val.get<float>();
+                break;
+            case ImPlotStyleVar_ErrorBarSize:
+                implotStyle.ErrorBarSize = val.get<float>();
+                break;
+            case ImPlotStyleVar_ErrorBarWeight:
+                implotStyle.ErrorBarWeight = val.get<float>();
+                break;
+            case ImPlotStyleVar_DigitalBitHeight:
+                implotStyle.DigitalBitHeight = val.get<float>();
+                break;
+            case ImPlotStyleVar_DigitalBitGap:
+                implotStyle.DigitalBitGap = val.get<float>();
+                break;
+            case ImPlotStyleVar_PlotBorderSize:
+                implotStyle.PlotBorderSize = val.get<float>();
+                break;
+            case ImPlotStyleVar_MinorAlpha:
+                implotStyle.MinorAlpha = val.get<float>();
+                break;
+            case ImPlotStyleVar_MajorTickLen:
+                implotStyle.MajorTickLen = JsonToVec2(val);
+                break;
+            case ImPlotStyleVar_MinorTickLen:
+                implotStyle.MinorTickLen = JsonToVec2(val);
+                break;
+            case ImPlotStyleVar_MajorTickSize:
+                implotStyle.MajorTickSize = JsonToVec2(val);
+                break;
+            case ImPlotStyleVar_MinorTickSize:
+                implotStyle.MinorTickSize = JsonToVec2(val);
+                break;
+            case ImPlotStyleVar_MajorGridSize:
+                implotStyle.MajorGridSize = JsonToVec2(val);
+                break;
+            case ImPlotStyleVar_MinorGridSize:
+                implotStyle.MinorGridSize = JsonToVec2(val);
+                break;
+            case ImPlotStyleVar_PlotPadding:
+                implotStyle.PlotPadding = JsonToVec2(val);
+                break;
+            case ImPlotStyleVar_LabelPadding:
+                implotStyle.LabelPadding = JsonToVec2(val);
+                break;
+            case ImPlotStyleVar_LegendPadding:
+                implotStyle.LegendPadding = JsonToVec2(val);
+                break;
+            case ImPlotStyleVar_LegendInnerPadding:
+                implotStyle.LegendInnerPadding = JsonToVec2(val);
+                break;
+            case ImPlotStyleVar_LegendSpacing:
+                implotStyle.LegendSpacing = JsonToVec2(val);
+                break;
+            case ImPlotStyleVar_MousePosPadding:
+                implotStyle.MousePosPadding = JsonToVec2(val);
+                break;
+            case ImPlotStyleVar_AnnotationPadding:
+                implotStyle.AnnotationPadding = JsonToVec2(val);
+                break;
+            case ImPlotStyleVar_FitPadding:
+                implotStyle.FitPadding = JsonToVec2(val);
+                break;
+            case ImPlotStyleVar_PlotDefaultSize:
+                implotStyle.PlotDefaultSize = JsonToVec2(val);
+                break;
+            case ImPlotStyleVar_PlotMinSize:
+                implotStyle.PlotMinSize = JsonToVec2(val);
+                break;
+            default:
+                break;
+            }
             continue;
         }
     }
@@ -313,4 +566,77 @@ const std::unordered_map<std::string_view, int> ThemeManager::sm_implotColorStri
     { "PlotAxisBgActive", ImPlotCol_AxisBgActive },
     { "PlotSelection", ImPlotCol_Selection },
     { "PlotCrosshairs", ImPlotCol_Crosshairs },
+};
+
+const std::unordered_map<std::string_view, int> ThemeManager::sm_imguiVarStringToCodeTable = {
+    { "Alpha", ImGuiStyleVar_Alpha },
+    { "DisabledAlpha", ImGuiStyleVar_DisabledAlpha },
+    { "WindowPadding", ImGuiStyleVar_WindowPadding },
+    { "WindowRounding", ImGuiStyleVar_WindowRounding },
+    { "WindowBorderSize", ImGuiStyleVar_WindowBorderSize },
+    { "WindowMinSize", ImGuiStyleVar_WindowMinSize },
+    { "WindowTitleAlign", ImGuiStyleVar_WindowTitleAlign },
+    { "ChildRounding", ImGuiStyleVar_ChildRounding },
+    { "ChildBorderSize", ImGuiStyleVar_ChildBorderSize },
+    { "PopupRounding", ImGuiStyleVar_PopupRounding },
+    { "PopupBorderSize", ImGuiStyleVar_PopupBorderSize },
+    { "FramePadding", ImGuiStyleVar_FramePadding },
+    { "FrameRounding", ImGuiStyleVar_FrameRounding },
+    { "FrameBorderSize", ImGuiStyleVar_FrameBorderSize },
+    { "ItemSpacing", ImGuiStyleVar_ItemSpacing },
+    { "ItemInnerSpacing", ImGuiStyleVar_ItemInnerSpacing },
+    { "IndentSpacing", ImGuiStyleVar_IndentSpacing },
+    { "CellPadding", ImGuiStyleVar_CellPadding },
+    { "ScrollbarSize", ImGuiStyleVar_ScrollbarSize },
+    { "ScrollbarRounding", ImGuiStyleVar_ScrollbarRounding },
+    { "ScrollbarPadding", ImGuiStyleVar_ScrollbarPadding },
+    { "GrabMinSize", ImGuiStyleVar_GrabMinSize },
+    { "GrabRounding", ImGuiStyleVar_GrabRounding },
+    { "ImageBorderSize", ImGuiStyleVar_ImageBorderSize },
+    { "TabRounding", ImGuiStyleVar_TabRounding },
+    { "TabBorderSize", ImGuiStyleVar_TabBorderSize },
+    { "TabMinWidthBase", ImGuiStyleVar_TabMinWidthBase },
+    { "TabMinWidthShrink", ImGuiStyleVar_TabMinWidthShrink },
+    { "TabBarBorderSize", ImGuiStyleVar_TabBarBorderSize },
+    { "TabBarOverlineSize", ImGuiStyleVar_TabBarOverlineSize },
+    { "TableAngledHeadersAngle", ImGuiStyleVar_TableAngledHeadersAngle },
+    { "TableAngledHeadersTextAlign", ImGuiStyleVar_TableAngledHeadersTextAlign },
+    { "TreeLinesSize", ImGuiStyleVar_TreeLinesSize },
+    { "TreeLinesRounding", ImGuiStyleVar_TreeLinesRounding },
+    { "ButtonTextAlign", ImGuiStyleVar_ButtonTextAlign },
+    { "SelectableTextAlign", ImGuiStyleVar_SelectableTextAlign },
+    { "SeparatorTextBorderSize", ImGuiStyleVar_SeparatorTextBorderSize },
+    { "SeparatorTextAlign", ImGuiStyleVar_SeparatorTextAlign },
+    { "SeparatorTextPadding", ImGuiStyleVar_SeparatorTextPadding },
+    { "DockingSeparatorSize", ImGuiStyleVar_DockingSeparatorSize },
+};
+
+const std::unordered_map<std::string_view, int> ThemeManager::sm_implotVarStringToCodeTable = {
+    { "PlotLineWeight", ImPlotStyleVar_LineWeight },
+    { "PlotMarker", ImPlotStyleVar_Marker },
+    { "PlotMarkerSize", ImPlotStyleVar_MarkerSize },
+    { "PlotMarkerWeight", ImPlotStyleVar_MarkerWeight },
+    { "PlotFillAlpha", ImPlotStyleVar_FillAlpha },
+    { "PlotErrorBarSize", ImPlotStyleVar_ErrorBarSize },
+    { "PlotErrorBarWeight", ImPlotStyleVar_ErrorBarWeight },
+    { "PlotDigitalBitHeight", ImPlotStyleVar_DigitalBitHeight },
+    { "PlotDigitalBitGap", ImPlotStyleVar_DigitalBitGap },
+    { "PlotBorderSize", ImPlotStyleVar_PlotBorderSize },
+    { "PlotMinorAlpha", ImPlotStyleVar_MinorAlpha },
+    { "PlotMajorTickLen", ImPlotStyleVar_MajorTickLen },
+    { "PlotMinorTickLen", ImPlotStyleVar_MinorTickLen },
+    { "PlotMajorTickSize", ImPlotStyleVar_MajorTickSize },
+    { "PlotMinorTickSize", ImPlotStyleVar_MinorTickSize },
+    { "PlotMajorGridSize", ImPlotStyleVar_MajorGridSize },
+    { "PlotMinorGridSize", ImPlotStyleVar_MinorGridSize },
+    { "PlotPadding", ImPlotStyleVar_PlotPadding },
+    { "PlotLabelPadding", ImPlotStyleVar_LabelPadding },
+    { "PlotLegendPadding", ImPlotStyleVar_LegendPadding },
+    { "PlotLegendInnerPadding", ImPlotStyleVar_LegendInnerPadding },
+    { "PlotLegendSpacing", ImPlotStyleVar_LegendSpacing },
+    { "PlotMousePosPadding", ImPlotStyleVar_MousePosPadding },
+    { "PlotAnnotationPadding", ImPlotStyleVar_AnnotationPadding },
+    { "PlotFitPadding", ImPlotStyleVar_FitPadding },
+    { "PlotDefaultSize", ImPlotStyleVar_PlotDefaultSize },
+    { "PlotMinSize", ImPlotStyleVar_PlotMinSize },
 };
