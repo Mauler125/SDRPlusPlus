@@ -21,6 +21,7 @@ endif ()
 # Configure backend sources
 if (OPT_BACKEND_GLFW)
     file(GLOB_RECURSE BACKEND_SRC "backends/glfw/*.cpp" "backends/glfw/*.c")
+    file(GLOB_RECURSE BACKEND_GLAD_SRC "backends/glad/*.cpp" "backends/glad/*.c")
 endif (OPT_BACKEND_GLFW)
 if (OPT_BACKEND_ANDROID)
     file(GLOB_RECURSE BACKEND_SRC "backends/android/*.cpp" "backends/android/*.c")

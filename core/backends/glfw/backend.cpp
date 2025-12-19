@@ -119,6 +119,11 @@ namespace backend {
 
     #endif
 
+        if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress)) {
+            flog::error("Failed to initialize GLAD");
+            return 1;
+        }
+
         // Load app icon
         if (!std::filesystem::is_regular_file(resDir + "/icons/sdrpp.png")) {
             flog::error("Icon file '{0}' doesn't exist!", resDir + "/icons/sdrpp.png");
