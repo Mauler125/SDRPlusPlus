@@ -176,12 +176,11 @@ bool ThemeManager::applyTheme(const std::string& name) {
         return false;
     }
 
-    ImGui::StyleColorsClassic();
-    ImPlot::StyleColorsClassic();
-    initCoreColors();
-
     auto& imguiStyle = ImGui::GetStyle();
+    imguiStyle = ImGuiStyle();
     auto& implotStyle = ImPlot::GetStyle();
+    implotStyle = ImPlotStyle();
+    initCoreColors();
 
     imguiStyle.WindowPadding = ImVec2(8, 8);
     imguiStyle.FramePadding = ImVec2(4, 3);
