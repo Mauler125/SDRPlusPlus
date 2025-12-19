@@ -29,10 +29,13 @@ namespace sdrpp_credits {
 
     const char* libraries[] = {
         "Dear ImGui (ocornut)",
+        "ImPlot (epezent)",
         "fftw3 (fftw.org)",
+        "volk (gnuradio)",
         "glfw (Camilla Löwy)",
         "json (nlohmann)",
-        "Portable File Dialogs"
+        "Portable File Dialogs",
+        "stb image"
     };
 
     const char* hardwareDonators[] = {
