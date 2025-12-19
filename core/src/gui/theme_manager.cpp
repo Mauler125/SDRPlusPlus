@@ -170,7 +170,7 @@ bool ThemeManager::applyTheme(const std::string& name) {
         return false;
     }
 
-    ImGui::StyleColorsDark();
+    ImGui::StyleColorsClassic();
     ImPlot::StyleColorsClassic();
     initCoreColors();
 
