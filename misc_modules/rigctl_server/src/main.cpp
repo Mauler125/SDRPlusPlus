@@ -109,7 +109,7 @@ private:
         bool listening = (_this->listener && _this->listener->isListening());
 
         if (listening) { style::beginDisabled(); }
-        if (ImGui::InputText(CONCAT("##_rigctl_srv_host_", _this->name), _this->hostname, 1023)) {
+        if (ImGui::InputText(CONCAT("##_rigctl_srv_host_", _this->name), _this->hostname, std::size(_this->hostname))) {
             config.acquire();
             config.conf[_this->name]["host"] = std::string(_this->hostname);
             config.release(true);

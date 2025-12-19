@@ -126,7 +126,7 @@ public:
         bool listening = (listener && listener->isListening()) || (conn && conn->isOpen());
 
         if (listening) { style::beginDisabled(); }
-        if (ImGui::InputText(CONCAT("##_network_sink_host_", _streamName), hostname, 1023)) {
+        if (ImGui::InputText(CONCAT("##_network_sink_host_", _streamName), hostname, std::size(hostname))) {
             config.acquire();
             config.conf[_streamName]["hostname"] = hostname;
             config.release(true);

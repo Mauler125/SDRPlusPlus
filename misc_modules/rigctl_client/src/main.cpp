@@ -113,7 +113,7 @@ private:
         float menuWidth = ImGui::GetContentRegionAvail().x;
 
         if (_this->running) { style::beginDisabled(); }
-        if (ImGui::InputText(CONCAT("##_rigctl_cli_host_", _this->name), _this->host, 1023)) {
+        if (ImGui::InputText(CONCAT("##_rigctl_cli_host_", _this->name), _this->host, std::size(_this->host))) {
             config.acquire();
             config.conf[_this->name]["host"] = std::string(_this->host);
             config.release(true);

@@ -256,7 +256,7 @@ namespace sourcemenu {
         if (ImGui::BeginPopup(id, ImGuiWindowFlags_NoResize)) {
             ImGui::LeftLabel("Name");
             ImGui::FillWidth();
-            ImGui::InputText("##sdrpp_add_offset_name", newOffsetName, 1023);
+            ImGui::InputText("##sdrpp_add_offset_name", newOffsetName, std::size(newOffsetName));
 
             ImGui::LeftLabel("Offset");
             ImGui::FillWidth();

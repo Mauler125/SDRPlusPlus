@@ -259,7 +259,7 @@ private:
 
         ImGui::LeftLabel("Name template");
         ImGui::FillWidth();
-        if (ImGui::InputText(CONCAT("##_recorder_name_template_", _this->name), _this->nameTemplate, 1023)) {
+        if (ImGui::InputText(CONCAT("##_recorder_name_template_", _this->name), _this->nameTemplate, std::size(_this->nameTemplate))) {
             config.acquire();
             config.conf[_this->name]["nameTemplate"] = _this->nameTemplate;
             config.release(true);

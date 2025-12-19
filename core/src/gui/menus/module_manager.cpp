@@ -96,7 +96,7 @@ namespace module_manager_menu {
 
             ImGui::TableSetColumnIndex(0);
             ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x + cellpad.x);
-            ImGui::InputText("##module_mod_name", modName, 1000);
+            ImGui::InputText("##module_mod_name", modName, std::size(modName));
 
             ImGui::TableSetColumnIndex(1);
             ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x + cellpad.x);

@@ -141,7 +141,7 @@ private:
             ImGui::LeftLabel("Name");
             ImGui::TableSetColumnIndex(1);
             ImGui::SetNextItemWidth(200);
-            if (ImGui::InputText(("##freq_manager_edit_name" + name).c_str(), nameBuf, 1023)) {
+            if (ImGui::InputText(("##freq_manager_edit_name" + name).c_str(), nameBuf, std::size(nameBuf))) {
                 editedBookmarkName = nameBuf;
             }
 
@@ -205,7 +205,7 @@ private:
         if (ImGui::BeginPopup(id.c_str(), ImGuiWindowFlags_NoResize)) {
             ImGui::LeftLabel("Name");
             ImGui::FillWidth();
-            if (ImGui::InputText(("##freq_manager_edit_name" + name).c_str(), nameBuf, 1023)) {
+            if (ImGui::InputText(("##freq_manager_edit_name" + name).c_str(), nameBuf, std::size(nameBuf))) {
                 editedListName = nameBuf;
             }
 

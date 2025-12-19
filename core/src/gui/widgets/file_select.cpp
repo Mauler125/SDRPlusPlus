@@ -20,7 +20,7 @@ bool FileSelect::render(const std::string& id) {
         ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.0f, 0.0f, 0.0f, 1.0f));
     }
     ImGui::SetNextItemWidth(menuColumnWidth - buttonWidth);
-    if (ImGui::InputText(id.c_str(), strPath, 2047)) {
+    if (ImGui::InputText(id.c_str(), strPath, std::size(strPath))) {
         path = std::string(strPath);
         std::string expandedPath = expandString(strPath);
         if (!std::filesystem::is_regular_file(expandedPath)) {

@@ -31,7 +31,7 @@ public:
 
     bool showEditMenu(char* name, bool& valid) {
         ImGui::LeftLabel("Name");
-        ImGui::InputText("##scheduler_task_edit_name", name, 1023);
+        ImGui::InputText("##scheduler_task_edit_name", name, 1024);
 
         if (editedAction >= 0) {
             bool valid = false;
