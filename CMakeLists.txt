@@ -92,8 +92,18 @@ else()
     # Normal Flags
     if (MSVC)
         set(SDRPP_COMPILER_FLAGS /O2 /Ob2 /MP /std:c++17 /EHsc)
-        set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} /DEBUG /LTCG /OPT:REF /OPT:ICF")
-        set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} /DEBUG /LTCG /OPT:REF /OPT:ICF")
+        # NOTE: we use WINDOWS_EXPORT_ALL_SYMBOLS, but this is incompatible with
+        # /LTCG (Link-Time Code Generation) and /GL (Whole Program Optimization).
+        # This is because any object file generated with the /GL flag can't have
+        # their symbols dumped for export as per Microsoft's documentation on the
+        # /GL flag: https://learn.microsoft.com/nl-nl/cpp/build/reference/gl-whole-program-optimization?view=msvc-170
+        # To workaround this, you can compile the library without /GL, then go to
+        # Project > Properties > Build Events > Pre-Link Event > Use In Build,
+        # and set this option to No, enable /GL and /LTCG in compiler and linker
+        # options again and recompile it. The exports.def file is deterministic.
+        # so the resulting binary will be correct with the large optimizations.
+        set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} /DEBUG /OPT:REF /OPT:ICF")
+        set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} /DEBUG /OPT:REF /OPT:ICF")
     elseif (CMAKE_CXX_COMPILER_ID MATCHES "Clang")
         set(CMAKE_INTERPROCEDURAL_OPTIMIZATION TRUE)
         set(SDRPP_COMPILER_FLAGS -O3 -std=c++17 -Wno-unused-command-line-argument -undefined dynamic_lookup -flto -ffunction-sections -fdata-sections)
