@@ -201,7 +201,7 @@ bool ThemeManager::applyTheme(const std::string& name) {
     for (const auto& [param, val] : thm.data.items()) {
         if (param == "name") { continue; }
         if (param == "author") {
-            m_themeAuthor = val;
+            if (val.is_string()) { m_themeAuthor = val.get<std::string>(); }
             continue;
         }
 
