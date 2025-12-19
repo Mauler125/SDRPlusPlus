@@ -79,7 +79,13 @@ bool ThemeManager::loadTheme(const std::string& path) {
     // Load JSON
     std::ifstream file(path.c_str());
     json data;
-    file >> data;
+    try {
+        file >> data;
+    }
+    catch (std::exception& e) {
+        flog::error("Failed to parse JSON in theme {0}: {1}", path, e.what());
+        return false;
+    }
     file.close();
 
     // Load theme name
