@@ -314,14 +314,14 @@ namespace backend {
                     const GLFWvidmode* mode = glfwGetVideoMode(glfwGetPrimaryMonitor());
                     glfwSetWindowMonitor(window, monitor, 0, 0, mode->width, mode->height, 0);
                     core::configManager.acquire();
-                    core::configManager.conf["fullscreen"] = true;
+                    core::configManager.conf["fullScreen"] = true;
                     core::configManager.release();
                 }
                 else {
                     flog::info("Fullscreen: OFF");
                     glfwSetWindowMonitor(window, nullptr, fsPosX, fsPosY, fsWidth, fsHeight, 0);
                     core::configManager.acquire();
-                    core::configManager.conf["fullscreen"] = false;
+                    core::configManager.conf["fullScreen"] = false;
                     core::configManager.release();
                 }
             }
