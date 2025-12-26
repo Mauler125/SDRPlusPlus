@@ -360,7 +360,6 @@ namespace ImGui {
         bool fftResizeSelect = false;
         bool freqScaleSelect = false;
         bool vfoBorderSelect = false;
-        bool isMouseDragging = false;
 
         WaterfallVFO* relatedVfo = NULL;
         ImVec2 mouseDownPos;

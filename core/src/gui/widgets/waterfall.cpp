@@ -766,6 +766,7 @@ namespace ImGui {
                                                   ImGuiButtonFlags_MouseButtonLeft | ImGuiButtonFlags_PressedOnClick);
 
         ImVec2 mousePos = ImGui::GetMousePos();
+        bool isMouseDragging = false;
 
         if (mouseClicked) {
             dragStartPos = mousePos;
@@ -809,7 +810,6 @@ namespace ImGui {
             fftResizeSelect = false;
             freqScaleSelect = false;
             vfoBorderSelect = false;
-            isMouseDragging = false;
             lastDrag = 0;
             dragStartPos = ImVec2(0, 0);
             crosshairFlags = ImGuiCrosshairFlags_None;
@@ -1448,6 +1448,17 @@ namespace ImGui {
             if (!ImGui::IsMouseDown(ImGuiMouseButton_Left)) {
                 doCursorWarp = false;
             }
+        }
+        else {
+            mouseInFFTResize = false;
+            mouseInFreq = false;
+            mouseInFFT = false;
+            mouseInWaterfall = false;
+            fftResizeSelect = false;
+            freqScaleSelect = false;
+            vfoBorderSelect = false;
+            lastDrag = 0;
+            dragStartPos = ImVec2(0, 0);
         }
 
         updateAllVFOs(true);
