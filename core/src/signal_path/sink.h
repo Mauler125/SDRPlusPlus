@@ -126,8 +126,8 @@ public:
     Event<const std::string&> onStreamUnregistered;
 
 private:
-    void loadStreamConfig(const std::string& name);
-    void saveStreamConfig(const std::string& name);
+    void loadStreamConfig(const std::string& name, const bool lock = true);
+    void saveStreamConfig(const std::string& name, const bool lock = true);
     void refreshProviders();
 
     std::map<std::string, SinkProvider> providers;

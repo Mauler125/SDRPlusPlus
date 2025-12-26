@@ -300,8 +300,8 @@ void SinkManager::showVolumeSlider(const std::string& name, const std::string& p
     //ImGui::SetCursorPosY(ypos);
 }
 
-void SinkManager::loadStreamConfig(const std::string& name) {
-    core::configManager.acquire();
+void SinkManager::loadStreamConfig(const std::string& name, const bool lock) {
+    if (lock) { core::configManager.acquire(); }
     const json& conf = core::configManager.conf["streams"][name];
     SinkManager::Stream* stream = streams[name];
     std::string provName = conf["sink"];
@@ -321,26 +321,28 @@ void SinkManager::loadStreamConfig(const std::string& name) {
     }
     stream->setVolume(conf["volume"]);
     stream->volumeAjust.setMuted(conf["muted"]);
-    core::configManager.release();
+    if (lock) { core::configManager.release(); }
 }
 
 void SinkManager::saveStreamConfig(const std::string& name) {
     core::configManager.acquire();
+void SinkManager::saveStreamConfig(const std::string& name, const bool lock) {
     SinkManager::Stream* stream = streams[name];
     json conf;
     conf["sink"] = providerNames[stream->providerId];
     conf["volume"] = stream->getVolume();
     conf["muted"] = stream->volumeAjust.getMuted();
     core::configManager.conf["streams"][name] = conf;
-    core::configManager.release(true);
+    if (lock) { core::configManager.release(true); }
 }
 
-// Note: acquire and release config before running this
 void SinkManager::loadSinksFromConfig() {
+    core::configManager.acquire();
     for (auto const& [name, stream] : streams) {
         if (!core::configManager.conf["streams"].contains(name)) { continue; }
-        loadStreamConfig(name);
+        loadStreamConfig(name, false);
     }
+    core::configManager.release();
 }
 
 void SinkManager::showMenu() {
