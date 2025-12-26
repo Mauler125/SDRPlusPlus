@@ -432,8 +432,16 @@ namespace net {
             return NULL;
         }
 
+        const bool reuse =
+#ifdef _WIN32
+            false
+#else
+            true
+#endif // _WIN32
+            ;
+
         // Create a socket
-        const SockHandle_t listenSock = createSocket(SOCK_STREAM, IPPROTO_TCP, !_WIN32);
+        const SockHandle_t listenSock = createSocket(SOCK_STREAM, IPPROTO_TCP, reuse);
 
         if (listenSock < 0) {
             return NULL;
