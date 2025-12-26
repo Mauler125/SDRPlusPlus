@@ -20,13 +20,14 @@ namespace net {
     }
 
     bool shutdownLibrary() {
+#ifdef _WIN32
         if (s_libraryInitialized.exchange(false)) {
             if (WSACleanup()) {
                 throw std::runtime_error("Could not shutdown WinSock2");
                 return false;
             }
         }
-
+#endif
         return true;
     }
 }
