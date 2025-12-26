@@ -101,7 +101,7 @@ private:
     static void menuHandler(void* ctx) {
         WeatherSatDecoderModule* _this = (WeatherSatDecoderModule*)ctx;
 
-        if (!_this->enabled) { style::beginDisabled(); }
+        if (!_this->enabled) { ImGui::BeginDisabled(); }
         float menuWidth = ImGui::GetContentRegionAvail().x;
 
         ImGui::SetNextItemWidth(menuWidth);
@@ -113,7 +113,7 @@ private:
 
         ImGui::Button("Record##testdsdfsds", ImVec2(menuWidth, 0));
 
-        if (!_this->enabled) { style::endDisabled(); }
+        if (!_this->enabled) { ImGui::EndDisabled(); }
     }
 
     std::string name;

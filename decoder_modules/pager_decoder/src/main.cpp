@@ -119,7 +119,7 @@ private:
 
         float menuWidth = ImGui::GetContentRegionAvail().x;
 
-        if (!_this->enabled) { style::beginDisabled(); }
+        if (!_this->enabled) { ImGui::BeginDisabled(); }
 
         ImGui::LeftLabel("Protocol");
         ImGui::FillWidth();
@@ -132,7 +132,7 @@ private:
         ImGui::Button(("Record##pager_decoder_show_" + _this->name).c_str(), ImVec2(menuWidth, 0));
         ImGui::Button(("Show Messages##pager_decoder_show_" + _this->name).c_str(), ImVec2(menuWidth, 0));
 
-        if (!_this->enabled) { style::endDisabled(); }
+        if (!_this->enabled) { ImGui::EndDisabled(); }
     }
 
     std::string name;

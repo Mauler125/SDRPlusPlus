@@ -170,7 +170,7 @@ private:
             ImGui::EndTable();
 
             bool applyDisabled = (strlen(nameBuf) == 0) || (bookmarks.find(editedBookmarkName) != bookmarks.end() && editedBookmarkName != firstEditedBookmarkName);
-            if (applyDisabled) { style::beginDisabled(); }
+            if (applyDisabled) { ImGui::BeginDisabled(); }
             if (ImGui::Button("Apply")) {
                 open = false;
 
@@ -182,7 +182,7 @@ private:
 
                 saveByName(selectedListName);
             }
-            if (applyDisabled) { style::endDisabled(); }
+            if (applyDisabled) { ImGui::EndDisabled(); }
             ImGui::SameLine();
             if (ImGui::Button("Cancel")) {
                 open = false;
@@ -211,7 +211,7 @@ private:
 
             bool alreadyExists = (std::find(listNames.begin(), listNames.end(), editedListName) != listNames.end());
 
-            if (strlen(nameBuf) == 0 || alreadyExists) { style::beginDisabled(); }
+            if (strlen(nameBuf) == 0 || alreadyExists) { ImGui::BeginDisabled(); }
             if (ImGui::Button("Apply")) {
                 open = false;
 
@@ -229,7 +229,7 @@ private:
                 refreshLists();
                 loadByName(editedListName);
             }
-            if (strlen(nameBuf) == 0 || alreadyExists) { style::endDisabled(); }
+            if (strlen(nameBuf) == 0 || alreadyExists) { ImGui::EndDisabled(); }
             ImGui::SameLine();
             if (ImGui::Button("Cancel")) {
                 open = false;
@@ -365,13 +365,13 @@ private:
             config.release(true);
         }
         ImGui::SameLine();
-        if (_this->listNames.size() == 0) { style::beginDisabled(); }
+        if (_this->listNames.size() == 0) { ImGui::BeginDisabled(); }
         if (ImGui::Button(("Rename##_freq_mgr_ren_lst_" + _this->name).c_str(), ImVec2(btnSize, 0))) {
             _this->firstEditedListName = _this->listNames[_this->selectedListId];
             _this->editedListName = _this->firstEditedListName;
             _this->renameListOpen = true;
         }
-        if (_this->listNames.size() == 0) { style::endDisabled(); }
+        if (_this->listNames.size() == 0) { ImGui::EndDisabled(); }
         ImGui::SameLine();
         if (ImGui::Button(("+##_freq_mgr_add_lst_" + _this->name).c_str(), ImVec2(lineHeight, 0))) {
             // Find new unique default name
@@ -389,11 +389,11 @@ private:
             _this->newListOpen = true;
         }
         ImGui::SameLine();
-        if (_this->selectedListName == "") { style::beginDisabled(); }
+        if (_this->selectedListName == "") { ImGui::BeginDisabled(); }
         if (ImGui::Button(("-##_freq_mgr_del_lst_" + _this->name).c_str(), ImVec2(lineHeight, 0))) {
             _this->deleteListOpen = true;
         }
-        if (_this->selectedListName == "") { style::endDisabled(); }
+        if (_this->selectedListName == "") { ImGui::EndDisabled(); }
 
         // List delete confirmation
         if (ImGui::GenericDialog(("freq_manager_del_list_confirm" + _this->name).c_str(), _this->deleteListOpen, GENERIC_DIALOG_BUTTONS_YES_NO, [_this]() {
@@ -413,7 +413,7 @@ private:
             }
         }
 
-        if (_this->selectedListName == "") { style::beginDisabled(); }
+        if (_this->selectedListName == "") { ImGui::BeginDisabled(); }
         //Draw buttons on top of the list
         ImGui::BeginTable(("freq_manager_btn_table" + _this->name).c_str(), 3);
         ImGui::TableNextRow();
@@ -456,20 +456,20 @@ private:
         }
 
         ImGui::TableSetColumnIndex(1);
-        if (selectedNames.size() == 0 && _this->selectedListName != "") { style::beginDisabled(); }
+        if (selectedNames.size() == 0 && _this->selectedListName != "") { ImGui::BeginDisabled(); }
         if (ImGui::Button(("Remove##_freq_mgr_rem_" + _this->name).c_str(), ImVec2(menuWidth, 0))) {
             _this->deleteBookmarksOpen = true;
         }
-        if (selectedNames.size() == 0 && _this->selectedListName != "") { style::endDisabled(); }
+        if (selectedNames.size() == 0 && _this->selectedListName != "") { ImGui::EndDisabled(); }
         ImGui::TableSetColumnIndex(2);
-        if (selectedNames.size() != 1 && _this->selectedListName != "") { style::beginDisabled(); }
+        if (selectedNames.size() != 1 && _this->selectedListName != "") { ImGui::BeginDisabled(); }
         if (ImGui::Button(("Edit##_freq_mgr_edt_" + _this->name).c_str(), ImVec2(menuWidth, 0))) {
             _this->editOpen = true;
             _this->editedBookmark = _this->bookmarks[selectedNames[0]];
             _this->editedBookmarkName = selectedNames[0];
             _this->firstEditedBookmarkName = selectedNames[0];
         }
-        if (selectedNames.size() != 1 && _this->selectedListName != "") { style::endDisabled(); }
+        if (selectedNames.size() != 1 && _this->selectedListName != "") { ImGui::EndDisabled(); }
 
         ImGui::EndTable();
 
@@ -514,13 +514,13 @@ private:
         }
 
 
-        if (selectedNames.size() != 1 && _this->selectedListName != "") { style::beginDisabled(); }
+        if (selectedNames.size() != 1 && _this->selectedListName != "") { ImGui::BeginDisabled(); }
         if (ImGui::Button(("Apply##_freq_mgr_apply_" + _this->name).c_str(), ImVec2(menuWidth, 0))) {
             FrequencyBookmark& bm = _this->bookmarks[selectedNames[0]];
             applyBookmark(bm, gui::waterfall.selectedVFO);
             bm.selected = false;
         }
-        if (selectedNames.size() != 1 && _this->selectedListName != "") { style::endDisabled(); }
+        if (selectedNames.size() != 1 && _this->selectedListName != "") { ImGui::EndDisabled(); }
 
         //Draw import and export buttons
         ImGui::BeginTable(("freq_manager_bottom_btn_table" + _this->name).c_str(), 2);
@@ -533,7 +533,7 @@ private:
         }
 
         ImGui::TableSetColumnIndex(1);
-        if (selectedNames.size() == 0 && _this->selectedListName != "") { style::beginDisabled(); }
+        if (selectedNames.size() == 0 && _this->selectedListName != "") { ImGui::BeginDisabled(); }
         if (ImGui::Button(("Export##_freq_mgr_exp_" + _this->name).c_str(), ImVec2(menuWidth, 0)) && !_this->exportOpen) {
             _this->exportedBookmarks = json::object();
             config.acquire();
@@ -544,7 +544,7 @@ private:
             _this->exportOpen = true;
             _this->exportDialog = new pfd::save_file("Export bookmarks", "", { "JSON Files (*.json)", "*.json", "All Files", "*" });
         }
-        if (selectedNames.size() == 0 && _this->selectedListName != "") { style::endDisabled(); }
+        if (selectedNames.size() == 0 && _this->selectedListName != "") { ImGui::EndDisabled(); }
         ImGui::EndTable();
 
         if (ImGui::Button(("Select displayed lists##_freq_mgr_exp_" + _this->name).c_str(), ImVec2(menuWidth, 0))) {
@@ -559,7 +559,7 @@ private:
             config.release(true);
         }
 
-        if (_this->selectedListName == "") { style::endDisabled(); }
+        if (_this->selectedListName == "") { ImGui::EndDisabled(); }
 
         if (_this->createOpen) {
             _this->createOpen = _this->bookmarkEditDialog();

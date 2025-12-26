@@ -94,12 +94,12 @@ private:
 
         float menuWidth = ImGui::GetContentRegionAvail().x;
 
-        if (!_this->enabled) { style::beginDisabled(); }
+        if (!_this->enabled) { ImGui::BeginDisabled(); }
 
         ImGui::SetNextItemWidth(menuWidth);
         _this->constDiagram.draw();
 
-        if (!_this->enabled) { style::endDisabled(); }
+        if (!_this->enabled) { ImGui::EndDisabled(); }
     }
 
     static void symSinkHandler(dsp::complex_t* data, int count, void* ctx) {

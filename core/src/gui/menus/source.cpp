@@ -280,12 +280,12 @@ namespace sourcemenu {
                 ImGui::TextColored(ImVec4(1.0f, 0.0f, 0.0f, 1.0f), "The given name is reserved.");
             }
 
-            if (denyApply) { style::beginDisabled(); }
+            if (denyApply) { ImGui::BeginDisabled(); }
             if (ImGui::Button("Apply")) {
                 addOffset(newOffsetName, newOffset);
                 open = false;
             }
-            if (denyApply) { style::endDisabled(); }
+            if (denyApply) { ImGui::EndDisabled(); }
             ImGui::SameLine();
             if (ImGui::Button("Cancel")) {
                 open = false;
@@ -301,7 +301,7 @@ namespace sourcemenu {
         float spacing = lineHeight - ImGui::GetTextLineHeight();
         bool running = gui::mainWindow.sdrIsRunning();
 
-        if (running) { style::beginDisabled(); }
+        if (running) { ImGui::BeginDisabled(); }
 
         ImGui::SetNextItemWidth(itemWidth);
         if (ImGui::Combo("##source", &sourceId, sources.txt)) {
@@ -312,7 +312,7 @@ namespace sourcemenu {
             core::configManager.release(true);
         }
 
-        if (running) { style::endDisabled(); }
+        if (running) { ImGui::EndDisabled(); }
 
         sigpath::sourceManager.showSelectedMenu();
 
@@ -386,12 +386,12 @@ namespace sourcemenu {
             }
         }
         else {
-            style::beginDisabled();
+            ImGui::BeginDisabled();
             ImGui::InputDouble("##freq_offset", &effectiveOffset, 1.0, 100.0);
-            style::endDisabled();
+            ImGui::EndDisabled();
         }
 
-        if (running) { style::beginDisabled(); }
+        if (running) { ImGui::BeginDisabled(); }
         ImGui::LeftLabel("Decimation");
         ImGui::FillWidth();
         if (ImGui::Combo("##source_decim", &decimId, decimations.txt)) {
@@ -400,6 +400,6 @@ namespace sourcemenu {
             core::configManager.conf["decimation"] = decimations.key(decimId);
             core::configManager.release(true);
         }
-        if (running) { style::endDisabled(); }
+        if (running) { ImGui::EndDisabled(); }
     }
 }

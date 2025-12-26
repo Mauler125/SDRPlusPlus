@@ -133,7 +133,7 @@ private:
 
         float menuWidth = ImGui::GetContentRegionAvail().x;
 
-        if (!_this->enabled) { style::beginDisabled(); }
+        if (!_this->enabled) { ImGui::BeginDisabled(); }
 
         ImGui::SetNextItemWidth(menuWidth);
         _this->diag.draw();
@@ -236,7 +236,7 @@ private:
             ImGui::TextUnformatted("Idle");
         }
 
-        if (!_this->enabled) { style::endDisabled(); }
+        if (!_this->enabled) { ImGui::EndDisabled(); }
     }
 
     static void _diagHandler(float* data, int count, void* ctx) {

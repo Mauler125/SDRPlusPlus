@@ -229,7 +229,7 @@ private:
         float menuWidth = ImGui::GetContentRegionAvail().x;
 
         // Recording mode
-        if (_this->recording) { style::beginDisabled(); }
+        if (_this->recording) { ImGui::BeginDisabled(); }
         ImGui::BeginGroup();
         ImGui::Columns(2, CONCAT("RecorderModeColumns##_", _this->name), false);
         if (ImGui::RadioButton(CONCAT("Baseband##_recorder_mode_", _this->name), _this->recMode == RECORDER_MODE_BASEBAND)) {
@@ -281,11 +281,11 @@ private:
             config.release(true);
         }
 
-        if (_this->recording) { style::endDisabled(); }
+        if (_this->recording) { ImGui::EndDisabled(); }
 
         // Show additional audio options
         if (_this->recMode == RECORDER_MODE_AUDIO) {
-            if (_this->recording) { style::beginDisabled(); }
+            if (_this->recording) { ImGui::BeginDisabled(); }
             ImGui::LeftLabel("Stream");
             ImGui::FillWidth();
             if (ImGui::Combo(CONCAT("##_recorder_stream_", _this->name), &_this->streamId, _this->audioStreams.txt)) {
@@ -294,7 +294,7 @@ private:
                 config.conf[_this->name]["audioStream"] = _this->audioStreams.key(_this->streamId);
                 config.release(true);
             }
-            if (_this->recording) { style::endDisabled(); }
+            if (_this->recording) { ImGui::EndDisabled(); }
 
             _this->updateAudioMeter(_this->audioLvl);
             ImGui::FillWidth();
@@ -310,13 +310,13 @@ private:
                 config.release(true);
             }
 
-            if (_this->recording) { style::beginDisabled(); }
+            if (_this->recording) { ImGui::BeginDisabled(); }
             if (ImGui::Checkbox(CONCAT("Stereo##_recorder_stereo_", _this->name), &_this->stereo)) {
                 config.acquire();
                 config.conf[_this->name]["stereo"] = _this->stereo;
                 config.release(true);
             }
-            if (_this->recording) { style::endDisabled(); }
+            if (_this->recording) { ImGui::EndDisabled(); }
 
             if (ImGui::Checkbox(CONCAT("Ignore silence##_recorder_ignore_silence_", _this->name), &_this->ignoreSilence)) {
                 config.acquire();

@@ -10,8 +10,6 @@ namespace style {
     SDRPP_EXPORT float uiScale;
 
     bool loadFonts(const std::string& resDir);
-    void beginDisabled();
-    void endDisabled();
 }
 
 namespace ImGui {

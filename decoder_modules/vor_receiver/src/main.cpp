@@ -82,12 +82,12 @@ private:
 
         float menuWidth = ImGui::GetContentRegionAvail().x;
 
-        if (!_this->enabled) { style::beginDisabled(); }
+        if (!_this->enabled) { ImGui::BeginDisabled(); }
 
         ImGui::Text("Bearing: %f°", _this->bearing);
         ImGui::Text("Quality: %0.1f%%", _this->quality);
 
-        if (!_this->enabled) { style::endDisabled(); }
+        if (!_this->enabled) { ImGui::EndDisabled(); }
     }
 
     void onBearing(float nbearing, float nquality) {

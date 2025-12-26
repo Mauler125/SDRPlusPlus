@@ -986,10 +986,10 @@ private:
             }
         }
         else {
-            style::beginDisabled();
+            ImGui::BeginDisabled();
             bool dummy = false;
             SmGui::Checkbox(CONCAT("MW/FM Notch##sdrplay_rsp2_fmmwnotch", name), &dummy);
-            style::endDisabled();
+            ImGui::EndDisabled();
         }
         
         if (SmGui::Checkbox(CONCAT("Bias-T##sdrplay_rsp2_biast", name), &rsp2_biasT)) {

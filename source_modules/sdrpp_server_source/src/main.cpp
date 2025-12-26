@@ -210,7 +210,7 @@ private:
             ImGui::TextUnformatted("This server is already in use.");
         });
 
-        if (connected) { style::beginDisabled(); }
+        if (connected) { ImGui::BeginDisabled(); }
         if (ImGui::InputText(CONCAT("##sdrpp_srv_srv_host_", _this->name), _this->hostname, std::size(_this->hostname))) {
             config.acquire();
             config.conf["hostname"] = _this->hostname;
@@ -231,9 +231,9 @@ private:
         }
         ImGui::SameLine();
         ImGui::Text("Cipher Key");
-        if (connected) { style::endDisabled(); }
+        if (connected) { ImGui::EndDisabled(); }
 
-        if (_this->running) { style::beginDisabled(); }
+        if (_this->running) { ImGui::BeginDisabled(); }
 
         float menuWidth = ImGui::GetContentRegionAvail().x;
 
@@ -243,7 +243,7 @@ private:
         else if (connected && ImGui::Button("Disconnect##sdrpp_srv_source", ImVec2(menuWidth, 0))) {
             _this->client->close();
         }
-        if (_this->running) { style::endDisabled(); }
+        if (_this->running) { ImGui::EndDisabled(); }
 
 
         if (connected) {
@@ -268,9 +268,9 @@ private:
             }
 
             bool dummy = true;
-            style::beginDisabled();
+            ImGui::BeginDisabled();
             ImGui::Checkbox("Full IQ", &dummy);
-            style::endDisabled();
+            ImGui::EndDisabled();
 
             // Calculate datarate
             _this->frametimeCounter += ImGui::GetIO().DeltaTime;

@@ -259,13 +259,13 @@ void SinkManager::showVolumeSlider(const std::string& name, const std::string& p
 
     if (name.empty() || streams.find(name) == streams.end()) {
         float dummy = 0.0f;
-        style::beginDisabled();
+        ImGui::BeginDisabled();
         ImGui::ImageButton("sdrpp_unmute_btn_", icons::MUTED, ImVec2(height, height), ImVec2(0, 0), ImVec2(1, 1), ImVec4(0, 0, 0, 0), ImGui::GetStyleColorVec4(ImGuiCol_Text));
         ImGui::SameLine();
         ImGui::SetNextItemWidth(width - height - sliderOffset);
         ImGui::SetCursorPosY(ypos + ((height - sliderHeight) / 2.0f) + btnBorder);
         ImGui::SliderFloat((prefix + name).c_str(), &dummy, 0.0f, 1.0f, "");
-        style::endDisabled();
+        ImGui::EndDisabled();
         if (sameLine) { ImGui::SetCursorPosY(ypos); }
         ImGui::PopStyleVar();
         return;
@@ -324,9 +324,8 @@ void SinkManager::loadStreamConfig(const std::string& name, const bool lock) {
     if (lock) { core::configManager.release(); }
 }
 
-void SinkManager::saveStreamConfig(const std::string& name) {
-    core::configManager.acquire();
 void SinkManager::saveStreamConfig(const std::string& name, const bool lock) {
+    if (lock) { core::configManager.acquire(); }
     SinkManager::Stream* stream = streams[name];
     json conf;
     conf["sink"] = providerNames[stream->providerId];

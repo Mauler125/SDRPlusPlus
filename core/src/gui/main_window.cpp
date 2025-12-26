@@ -373,7 +373,7 @@ void MainWindow::draw() {
     ImGui::SameLine();
 
     bool tmpPlaySate = playing;
-    if (playButtonLocked && !tmpPlaySate) { style::beginDisabled(); }
+    if (playButtonLocked && !tmpPlaySate) { ImGui::BeginDisabled(); }
     if (playing) {
         if (ImGui::ImageButton("sdrpp_stop_btn", icons::STOP, btnSize, ImVec2(0, 0), ImVec2(1, 1), ImVec4(0, 0, 0, 0), textCol) || (processKeyboardInputs && ImGui::IsKeyPressed(ImGuiKey_End, false))) {
             setPlayState(false);
@@ -385,7 +385,7 @@ void MainWindow::draw() {
         }
     }
 
-    if (playButtonLocked && !tmpPlaySate) { style::endDisabled(); }
+    if (playButtonLocked && !tmpPlaySate) { ImGui::EndDisabled(); }
     ImGui::PopStyleVar();
 
     // Handle auto-start

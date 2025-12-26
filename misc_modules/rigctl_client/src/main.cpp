@@ -112,7 +112,7 @@ private:
         RigctlClientModule* _this = (RigctlClientModule*)ctx;
         float menuWidth = ImGui::GetContentRegionAvail().x;
 
-        if (_this->running) { style::beginDisabled(); }
+        if (_this->running) { ImGui::BeginDisabled(); }
         if (ImGui::InputText(CONCAT("##_rigctl_cli_host_", _this->name), _this->host, std::size(_this->host))) {
             config.acquire();
             config.conf[_this->name]["host"] = std::string(_this->host);
@@ -125,7 +125,7 @@ private:
             config.conf[_this->name]["port"] = _this->port;
             config.release(true);
         }
-        if (_this->running) { style::endDisabled(); }
+        if (_this->running) { ImGui::EndDisabled(); }
 
         ImGui::LeftLabel("IF Frequency");
         ImGui::FillWidth();

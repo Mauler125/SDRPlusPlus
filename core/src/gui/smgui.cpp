@@ -479,12 +479,12 @@ namespace SmGui {
     }
 
     void BeginDisabled() {
-        if (!serverMode) { style::beginDisabled(); return; }
+        if (!serverMode) { ImGui::BeginDisabled(); return; }
         if (rdl) { rdl->pushStep(DRAW_STEP_BEGIN_DISABLED, false); }
     }
 
     void EndDisabled() {
-        if (!serverMode) { style::endDisabled(); return; }
+        if (!serverMode) { ImGui::EndDisabled(); return; }
         if (rdl) { rdl->pushStep(DRAW_STEP_END_DISABLED, false); }
     }
 

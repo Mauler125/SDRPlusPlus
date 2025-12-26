@@ -108,7 +108,7 @@ private:
         SigctlServerModule* _this = (SigctlServerModule*)ctx;
         bool listening = (_this->listener && _this->listener->isListening());
 
-        if (listening) { style::beginDisabled(); }
+        if (listening) { ImGui::BeginDisabled(); }
         if (ImGui::InputText(CONCAT("##_rigctl_srv_host_", _this->name), _this->hostname, std::size(_this->hostname))) {
             config.acquire();
             config.conf[_this->name]["host"] = std::string(_this->hostname);
@@ -121,7 +121,7 @@ private:
             config.conf[_this->name]["port"] = _this->port;
             config.release(true);
         }
-        if (listening) { style::endDisabled(); }
+        if (listening) { ImGui::EndDisabled(); }
 
         ImGui::LeftLabel("Controlled VFO");
         ImGui::FillWidth();

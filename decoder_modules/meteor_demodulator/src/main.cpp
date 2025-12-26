@@ -135,7 +135,7 @@ private:
 
         float menuWidth = ImGui::GetContentRegionAvail().x;
 
-        if (!_this->enabled) { style::beginDisabled(); }
+        if (!_this->enabled) { ImGui::BeginDisabled(); }
 
         ImGui::SetNextItemWidth(menuWidth);
         _this->constDiagram.draw();
@@ -162,7 +162,7 @@ private:
             config.release(true);
         }
 
-        if (!_this->folderSelect.pathIsValid() && _this->enabled) { style::beginDisabled(); }
+        if (!_this->folderSelect.pathIsValid() && _this->enabled) { ImGui::BeginDisabled(); }
 
         if (_this->recording) {
             if (ImGui::Button(CONCAT("Stop##meteor_rec_", _this->name), ImVec2(menuWidth, 0))) {
@@ -177,9 +177,9 @@ private:
             ImGui::TextUnformatted("Idle --.--MB");
         }
 
-        if (!_this->folderSelect.pathIsValid() && _this->enabled) { style::endDisabled(); }
+        if (!_this->folderSelect.pathIsValid() && _this->enabled) { ImGui::EndDisabled(); }
 
-        if (!_this->enabled) { style::endDisabled(); }
+        if (!_this->enabled) { ImGui::EndDisabled(); }
     }
 
     static void symSinkHandler(dsp::complex_t* data, int count, void* ctx) {

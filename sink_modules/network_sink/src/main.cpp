@@ -125,7 +125,7 @@ public:
     void menuHandler() {
         bool listening = (listener && listener->isListening()) || (conn && conn->isOpen());
 
-        if (listening) { style::beginDisabled(); }
+        if (listening) { ImGui::BeginDisabled(); }
         if (ImGui::InputText(CONCAT("##_network_sink_host_", _streamName), hostname, std::size(hostname))) {
             config.acquire();
             config.conf[_streamName]["hostname"] = hostname;
@@ -147,7 +147,7 @@ public:
             config.release(true);
         }
 
-        if (listening) { style::endDisabled(); }
+        if (listening) { ImGui::EndDisabled(); }
 
         ImGui::LeftLabel("Samplerate");
         ImGui::FillWidth();

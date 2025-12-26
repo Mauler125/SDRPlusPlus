@@ -51,14 +51,6 @@ namespace style {
 
         return true;
     }
-
-    void beginDisabled() {
-        ImGui::BeginDisabled();
-    }
-
-    void endDisabled() {
-        ImGui::EndDisabled();
-    }
 }
 
 namespace ImGui {

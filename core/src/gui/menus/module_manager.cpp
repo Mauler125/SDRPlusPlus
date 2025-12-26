@@ -103,7 +103,7 @@ namespace module_manager_menu {
             ImGui::Combo("##module_mgr_type", &modTypeId, modTypesTxt.c_str());
 
             ImGui::TableSetColumnIndex(2);
-            if (strlen(modName) == 0) { style::beginDisabled(); }
+            if (strlen(modName) == 0) { ImGui::BeginDisabled(); }
             if (ImGui::Button("+##module_mgr_add_btn", ImVec2(btnSize.x, 0))) {
                 if (!core::moduleManager.createInstance(modName, modTypes[modTypeId])) {
                     core::moduleManager.postInit(modName);
@@ -114,7 +114,7 @@ namespace module_manager_menu {
                     errorOpen = true;
                 }
             }
-            if (strlen(modName) == 0) { style::endDisabled(); }
+            if (strlen(modName) == 0) { ImGui::EndDisabled(); }
             ImGui::EndTable();
         }
 

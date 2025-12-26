@@ -91,7 +91,7 @@ class ATVDecoderModule : public ModuleManager::Instance {
         ATVDecoderModule *_this = (ATVDecoderModule *)ctx;
 
         if (!_this->enabled) {
-            style::beginDisabled();
+            ImGui::BeginDisabled();
         }
 
         ImGui::FillWidth();
@@ -119,7 +119,7 @@ class ATVDecoderModule : public ModuleManager::Instance {
         ImGui::Checkbox("Color Mode", &_this->colorMode);
 
         if (!_this->enabled) {
-            style::endDisabled();
+            ImGui::EndDisabled();
         }
 
         if (ImGui::Button("Close Debug")) {

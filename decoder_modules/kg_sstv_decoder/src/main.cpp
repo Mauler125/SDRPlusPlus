@@ -123,7 +123,7 @@ private:
     static void menuHandler(void* ctx) {
         M17DecoderModule* _this = (M17DecoderModule*)ctx;
 
-        if (!_this->enabled) { style::beginDisabled(); }
+        if (!_this->enabled) { ImGui::BeginDisabled(); }
 
         ImGui::FillWidth();
         _this->diag.draw();
@@ -143,7 +143,7 @@ private:
             config.release(true);
         }
 
-        if (!_this->enabled) { style::endDisabled(); }
+        if (!_this->enabled) { ImGui::EndDisabled(); }
     }
 
     static void _diagHandler(float* data, int count, void* ctx) {

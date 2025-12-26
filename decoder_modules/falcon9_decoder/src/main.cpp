@@ -132,7 +132,7 @@ private:
 
         float menuWidth = ImGui::GetContentRegionAvail().x;
 
-        if (!_this->enabled) { style::beginDisabled(); }
+        if (!_this->enabled) { ImGui::BeginDisabled(); }
 
         ImGui::SetNextItemWidth(menuWidth);
         _this->symDiag.draw();
@@ -178,7 +178,7 @@ private:
             ImGui::End();
         }
 
-        if (!_this->enabled) { style::endDisabled(); }
+        if (!_this->enabled) { ImGui::EndDisabled(); }
     }
 
     static void sinkHandler(uint8_t* data, int count, void* ctx) {

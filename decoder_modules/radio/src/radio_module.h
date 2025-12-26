@@ -167,7 +167,7 @@ private:
     static void menuHandler(void* ctx) {
         RadioModule* _this = (RadioModule*)ctx;
 
-        if (!_this->enabled) { style::beginDisabled(); }
+        if (!_this->enabled) { ImGui::BeginDisabled(); }
         ImGui::BeginGroup();
 
         ImGui::Columns(4, CONCAT("RadioModeColumns##_", _this->name), false);
@@ -236,13 +236,13 @@ private:
             if (ImGui::Checkbox(("Noise blanker (W.I.P.)##_radio_nb_ena_" + _this->name).c_str(), &_this->nbEnabled)) {
                 _this->setNBEnabled(_this->nbEnabled);
             }
-            if (!_this->nbEnabled && _this->enabled) { style::beginDisabled(); }
+            if (!_this->nbEnabled && _this->enabled) { ImGui::BeginDisabled(); }
             ImGui::SameLine();
             ImGui::FillWidth();
             if (ImGui::SliderFloat(("##_radio_nb_lvl_" + _this->name).c_str(), &_this->nbLevel, _this->MIN_NB, _this->MAX_NB, "%.3fdB")) {
                 _this->setNBLevel(_this->nbLevel);
             }
-            if (!_this->nbEnabled && _this->enabled) { style::endDisabled(); }
+            if (!_this->nbEnabled && _this->enabled) { ImGui::EndDisabled(); }
         }
         
 
@@ -250,13 +250,13 @@ private:
         if (ImGui::Checkbox(("Squelch##_radio_sqelch_ena_" + _this->name).c_str(), &_this->squelchEnabled)) {
             _this->setSquelchEnabled(_this->squelchEnabled);
         }
-        if (!_this->squelchEnabled && _this->enabled) { style::beginDisabled(); }
+        if (!_this->squelchEnabled && _this->enabled) { ImGui::BeginDisabled(); }
         ImGui::SameLine();
         ImGui::FillWidth();
         if (ImGui::SliderFloat(("##_radio_sqelch_lvl_" + _this->name).c_str(), &_this->squelchLevel, _this->MIN_SQUELCH, _this->MAX_SQUELCH, "%.3fdB")) {
             _this->setSquelchLevel(_this->squelchLevel);
         }
-        if (!_this->squelchEnabled && _this->enabled) { style::endDisabled(); }
+        if (!_this->squelchEnabled && _this->enabled) { ImGui::EndDisabled(); }
 
         // FM IF Noise Reduction
         if (_this->FMIFNRAllowed) {
@@ -264,20 +264,20 @@ private:
                 _this->setFMIFNREnabled(_this->FMIFNREnabled);
             }
             if (_this->selectedDemodID == RADIO_DEMOD_NFM) {
-                if (!_this->FMIFNREnabled && _this->enabled) { style::beginDisabled(); }
+                if (!_this->FMIFNREnabled && _this->enabled) { ImGui::BeginDisabled(); }
                 ImGui::SameLine();
                 ImGui::FillWidth();
                 if (ImGui::Combo(("##_radio_fmifnr_ena_" + _this->name).c_str(), &_this->fmIFPresetId, _this->ifnrPresets.txt)) {
                     _this->setIFNRPreset(_this->ifnrPresets[_this->fmIFPresetId]);
                 }
-                if (!_this->FMIFNREnabled && _this->enabled) { style::endDisabled(); }
+                if (!_this->FMIFNREnabled && _this->enabled) { ImGui::EndDisabled(); }
             }
         }
 
         // Demodulator specific menu
         _this->selectedDemod->showMenu();
 
-        if (!_this->enabled) { style::endDisabled(); }
+        if (!_this->enabled) { ImGui::EndDisabled(); }
     }
 
     demod::Demodulator* instantiateDemod(DemodID id) {
