@@ -34,5 +34,5 @@ private:
     ImVec2 digitBottomMaxs[12];
     ImVec2 digitTopMaxs[12];
 
-    char buf[100];
+    char buf[128];
 };
