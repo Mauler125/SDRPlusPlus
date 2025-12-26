@@ -15,12 +15,12 @@ namespace thememenu {
         std::string selectedThemeName = core::configManager.conf["theme"];
         core::configManager.release();
 
-        // Select theme by name, if not available, apply Dark theme
+        // Select theme by name, if not available, apply Classic theme
         themeNames = gui::themeManager.getThemeNames();
         auto it = std::find(themeNames.begin(), themeNames.end(), selectedThemeName);
         if (it == themeNames.end()) {
-            it = std::find(themeNames.begin(), themeNames.end(), "Dark");
-            selectedThemeName = "Dark";
+            it = std::find(themeNames.begin(), themeNames.end(), "Classic");
+            selectedThemeName = "Classic";
         }
         themeId = std::distance(themeNames.begin(), it);
         applyTheme();

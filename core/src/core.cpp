@@ -14,6 +14,7 @@
 #include <core.h>
 #include <filesystem>
 #include <gui/menus/theme.h>
+#include <gui/menus/display.h>
 #include <backend.h>
 
 #define STB_IMAGE_RESIZE_IMPLEMENTATION
@@ -169,7 +170,7 @@ namespace core {
 
 
         // Themes
-        defConfig["theme"] = "Dark";
+        defConfig["theme"] = "Classic";
 #ifdef __ANDROID__
         defConfig["uiScale"] = 3.0f;
 #else
