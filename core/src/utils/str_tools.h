@@ -105,6 +105,58 @@ namespace utils {
         return strToNum<V>(str.c_str(), str.length(), num);
     }
 
+    template <class V>
+    inline bool numToStr(char* const out,
+                           const size_t outLen,
+                           const V num,
+                           size_t& written,
+                           int base = 10,
+                           bool prefix = true) {
+        char* ptr = out;
+        char* const end = out + outLen;
+
+        if constexpr (std::is_integral_v<V>) {
+            if (prefix) {
+                if (base == 16) {
+                    if (end - ptr < 2) return false;
+                    *ptr++ = '0';
+                    *ptr++ = 'x';
+                }
+                else if (base == 2) {
+                    if (end - ptr < 2) return false;
+                    *ptr++ = '0';
+                    *ptr++ = 'b';
+                }
+                else if (base == 8) {
+                    if (end - ptr < 1) return false;
+                    *ptr++ = '0';
+                }
+            }
+
+            auto result = std::to_chars(ptr, end, num, base);
+
+            if (result.ec != std::errc()) {
+                return false;
+            }
+
+            written = static_cast<size_t>(result.ptr - out);
+            return true;
+        }
+        else if constexpr (std::is_floating_point_v<V>) {
+            auto result = std::to_chars(ptr, end, num, std::chars_format::general);
+
+            if (result.ec != std::errc()) {
+                return false;
+            }
+
+            written = static_cast<size_t>(result.ptr - out);
+            return true;
+        }
+        else {
+            static_assert(std::is_same_v<V, void>, "Cannot classify numeric type; unsupported.");
+        }
+    }
+
     bool isValidBase64(const std::string& input, std::string* const output);
     bool encodeBase64(const std::string_view& input, std::string& output);
     bool decodeBase64(const std::string_view& input, std::string& output);
