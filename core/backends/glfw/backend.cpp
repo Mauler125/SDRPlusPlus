@@ -1,4 +1,5 @@
 #include <backend.h>
+#include <../backends/glad/glad.h>
 #include "imgui.h"
 #include "imgui_impl_glfw.h"
 #include "backends/imgui_impl_opengl3.h"
@@ -15,27 +16,23 @@
 
 namespace backend {
     const char* OPENGL_VERSIONS_GLSL[] = {
-        "#version 120",
-        "#version 300 es",
-        "#version 120"
+        "#version 130",
+        "#version 300 es"
     };
 
     const int OPENGL_VERSIONS_MAJOR[] = {
         3,
-        3,
-        2
+        3
     };
 
     const int OPENGL_VERSIONS_MINOR[] = {
         0,
-        1,
-        1
+        0
     };
 
     const bool OPENGL_VERSIONS_IS_ES[] = {
         false,
-        true,
-        false
+        true
     };
 
     #define OPENGL_VERSION_COUNT (sizeof(OPENGL_VERSIONS_GLSL) / sizeof(char*))
@@ -94,7 +91,7 @@ namespace backend {
             return 1;
         glfwMakeContextCurrent(window);
     #else
-        const char* glsl_version = "#version 120";
+        const char* glsl_version;
         monitor = NULL;
         for (int i = 0; i < OPENGL_VERSION_COUNT; i++) {
             glsl_version = OPENGL_VERSIONS_GLSL[i];
@@ -204,9 +201,8 @@ namespace backend {
         }
 
         if (!ImGui_ImplOpenGL3_Init(glsl_version)) {
-            // If init fail, try to fall back on GLSL 1.2
-
-            const char* const fallbackVersion = "#version 120";
+            // If init fail, try to fall back on GLSL 1.3
+            const char* const fallbackVersion = "#version 130";
             flog::warn("Failed to initialize Dear ImGui renderer backend on OpenGL with GLSL version {0}, falling back to GLSL version {1}", glsl_version, fallbackVersion);
             if (!ImGui_ImplOpenGL3_Init(fallbackVersion)) {
                 flog::error("Failed to initialize Dear ImGui renderer backend on OpenGL with fallback GLSL version {0}", fallbackVersion);
