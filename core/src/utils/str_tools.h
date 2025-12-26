@@ -2,6 +2,7 @@
 #include <charconv>
 #include <string>
 #include <string_view>
+#include <stdint.h>
 
 namespace utils {
     // this is locale-unaware and therefore faster version of standard isdigit()
