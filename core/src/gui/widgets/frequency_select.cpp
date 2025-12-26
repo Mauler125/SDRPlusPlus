@@ -4,6 +4,7 @@
 #include <gui/gui.h>
 #include <backend.h>
 #include <utils/hrfreq.h>
+#include <utils/str_tools.h>
 
 bool isInArea(ImVec2 val, ImVec2 min, ImVec2 max) {
     return val.x >= min.x && val.x < max.x && val.y >= min.y && val.y < max.y;
@@ -115,7 +116,10 @@ void FrequencySelect::draw() {
         if (digits[i] != 0) {
             zeros = false;
         }
-        sprintf(buf, "%d", digits[i]);
+
+        size_t len = 0;
+        utils::numToStr<int>(buf, std::size(buf), digits[i], len);
+
         window->DrawList->AddText(ImVec2(widgetPos.x + (i * digitWidth) + commaOffset, widgetPos.y),
                                   zeros ? disabledColor : textColor, buf);
         if ((i + 1) % 3 == 0 && i < 11) {

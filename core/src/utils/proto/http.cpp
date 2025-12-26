@@ -1,5 +1,6 @@
 #include "http.h"
 #include <inttypes.h>
+#include <utils/str_tools.h>
 
 namespace net::http {
     std::string MessageHeader::serialize() {
@@ -214,8 +215,14 @@ namespace net::http {
 
     std::string ChunkHeader::serialize() {
         char buf[64];
-        sprintf(buf, "%" PRIX64 "\r\n", length);
-        return buf;
+        size_t len = 0;
+
+        utils::numToStr<uint64_t>(buf, std::size(buf), length, len, 16, false);
+
+        buf[len++] = '\r';
+        buf[len++] = '\n';
+
+        return std::string(buf, len);
     }
 
     void ChunkHeader::deserialize(const std::string& data) {
