@@ -280,7 +280,6 @@ void SinkManager::showVolumeSlider(const std::string& name, const std::string& p
         }
     }
     else {
-        ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(btnBorder, btnBorder));
         if (ImGui::ImageButton("sdrpp_mute_btn_", icons::UNMUTED, ImVec2(height, height), ImVec2(0, 0), ImVec2(1, 1), ImVec4(0, 0, 0, 0), ImGui::GetStyleColorVec4(ImGuiCol_Text))) {
             stream->volumeAjust.setMuted(true);
             saveStreamConfig(name);
