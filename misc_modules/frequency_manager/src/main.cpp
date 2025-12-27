@@ -242,7 +242,7 @@ private:
     bool selectListsDialog() {
         gui::mainWindow.muteInputThisFrame(true);
 
-        float menuWidth = menuWidth;
+        float menuWidth = ImGui::GetContentRegionAvail().x;
 
         std::string id = "Select lists##freq_manager_sel_popup_" + name;
         ImGui::OpenPopup(id.c_str());
