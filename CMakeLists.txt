@@ -258,10 +258,6 @@ if (OPT_BUILD_USRP_SOURCE)
 add_subdirectory("source_modules/usrp_source")
 endif (OPT_BUILD_USRP_SOURCE)
 
-if (WIN32) # TODO: other platforms
-    set(CMAKE_SHARED_LIBRARY_SUFFIX "${_OLD_SHARED_LIB_SUFFIX}")
-endif (WIN32)
-
 
 # Sink modules
 if (OPT_BUILD_ANDROID_AUDIO_SINK)
@@ -363,6 +359,10 @@ endif (OPT_BUILD_SCANNER)
 if (OPT_BUILD_SCHEDULER)
 add_subdirectory("misc_modules/scheduler")
 endif (OPT_BUILD_SCHEDULER)
+
+if (WIN32) # TODO: other platforms
+    set(CMAKE_SHARED_LIBRARY_SUFFIX "${_OLD_SHARED_LIB_SUFFIX}")
+endif (WIN32)
 
 if (MSVC)
     add_executable(sdrpp "src/main.cpp" "win32/resources.rc")

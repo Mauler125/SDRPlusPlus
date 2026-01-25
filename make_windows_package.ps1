@@ -70,37 +70,37 @@ cp $build_dir/source_modules/spyserver_source/Release/spyserver_source.i64 sdrpp
 
 
 # Copy sink modules
-cp $build_dir/sink_modules/audio_sink/Release/audio_sink.dll sdrpp_windows_x64/modules/
+cp $build_dir/sink_modules/audio_sink/Release/audio_sink.i64 sdrpp_windows_x64/modules/
 cp "C:/Program Files (x86)/RtAudio/bin/rtaudio.dll" sdrpp_windows_x64/modules/
 
-cp $build_dir/sink_modules/network_sink/Release/network_sink.dll sdrpp_windows_x64/modules/
+cp $build_dir/sink_modules/network_sink/Release/network_sink.i64 sdrpp_windows_x64/modules/
 
 
 # Copy decoder modules
-cp $build_dir/decoder_modules/atv_decoder/Release/atv_decoder.dll sdrpp_windows_x64/modules/
+cp $build_dir/decoder_modules/atv_decoder/Release/atv_decoder.i64 sdrpp_windows_x64/modules/
 
-cp $build_dir/decoder_modules/m17_decoder/Release/m17_decoder.dll sdrpp_windows_x64/modules/
+cp $build_dir/decoder_modules/m17_decoder/Release/m17_decoder.i64 sdrpp_windows_x64/modules/
 cp "C:/Program Files/codec2/lib/libcodec2.dll" sdrpp_windows_x64/modules/
 
-cp $build_dir/decoder_modules/meteor_demodulator/Release/meteor_demodulator.dll sdrpp_windows_x64/modules/
+cp $build_dir/decoder_modules/meteor_demodulator/Release/meteor_demodulator.i64 sdrpp_windows_x64/modules/
 
-cp $build_dir/decoder_modules/radio/Release/radio.dll sdrpp_windows_x64/modules/
+cp $build_dir/decoder_modules/radio/Release/radio.i64 sdrpp_windows_x64/modules/
 
 
 # Copy misc modules
-cp $build_dir/misc_modules/discord_integration/Release/discord_integration.dll sdrpp_windows_x64/modules/
+cp $build_dir/misc_modules/discord_integration/Release/discord_integration.i64 sdrpp_windows_x64/modules/
 
-cp $build_dir/misc_modules/frequency_manager/Release/frequency_manager.dll sdrpp_windows_x64/modules/
+cp $build_dir/misc_modules/frequency_manager/Release/frequency_manager.i64 sdrpp_windows_x64/modules/
 
-cp $build_dir/misc_modules/iq_exporter/Release/iq_exporter.dll sdrpp_windows_x64/modules/
+cp $build_dir/misc_modules/iq_exporter/Release/iq_exporter.i64 sdrpp_windows_x64/modules/
 
-cp $build_dir/misc_modules/recorder/Release/recorder.dll sdrpp_windows_x64/modules/
+cp $build_dir/misc_modules/recorder/Release/recorder.i64 sdrpp_windows_x64/modules/
 
-cp $build_dir/misc_modules/rigctl_client/Release/rigctl_client.dll sdrpp_windows_x64/modules/
+cp $build_dir/misc_modules/rigctl_client/Release/rigctl_client.i64 sdrpp_windows_x64/modules/
 
-cp $build_dir/misc_modules/rigctl_server/Release/rigctl_server.dll sdrpp_windows_x64/modules/
+cp $build_dir/misc_modules/rigctl_server/Release/rigctl_server.i64 sdrpp_windows_x64/modules/
 
-cp $build_dir/misc_modules/scanner/Release/scanner.dll sdrpp_windows_x64/modules/
+cp $build_dir/misc_modules/scanner/Release/scanner.i64 sdrpp_windows_x64/modules/
 
 
 # Copy supporting libs
