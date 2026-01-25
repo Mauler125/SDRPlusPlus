@@ -19,7 +19,7 @@ ModuleManager::Module_t ModuleManager::loadModule(const std::string& path) {
     }
 #endif
 #ifdef _WIN32
-    mod.handle = LoadLibraryA(path.c_str());
+    mod.handle = LoadLibraryExA(path.c_str(), NULL, LOAD_LIBRARY_SEARCH_DEFAULT_DIRS | LOAD_LIBRARY_SEARCH_USER_DIRS);
     if (mod.handle == NULL) {
         flog::error("Couldn't load {0}. Error code: {1}", path, (int)GetLastError());
         mod.handle = NULL;

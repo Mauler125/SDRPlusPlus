@@ -38,8 +38,10 @@ void MainWindow::init() {
     std::string resourcesDir = core::configManager.conf["resourcesDirectory"];
     core::configManager.release();
 
+    const std::filesystem::path modulesPath = std::filesystem::absolute(modulesDir);
+
     // Assert that directories are absolute
-    modulesDir = std::filesystem::absolute(modulesDir).string();
+    modulesDir = modulesPath.string();
     resourcesDir = std::filesystem::absolute(resourcesDir).string();
 
     gui::waterfall.init(resourcesDir);
@@ -98,9 +100,14 @@ void MainWindow::init() {
 
     flog::info("Loading modules");
 
+#ifdef _WIN32
+    SetDefaultDllDirectories(LOAD_LIBRARY_SEARCH_DEFAULT_DIRS);
+    DLL_DIRECTORY_COOKIE dc = AddDllDirectory(modulesPath.c_str());
+#endif
+
     // Load modules from /module directory
-    if (std::filesystem::is_directory(modulesDir)) {
-        for (const auto& file : std::filesystem::directory_iterator(modulesDir)) {
+    if (std::filesystem::is_directory(modulesPath)) {
+        for (const auto& file : std::filesystem::directory_iterator(modulesPath)) {
             std::string path = file.path().generic_string();
             if (file.path().extension().generic_string() != SDRPP_MOD_EXTENTSION) {
                 continue;
@@ -132,6 +139,13 @@ void MainWindow::init() {
         core::moduleManager.loadModule(path);
 #endif
     }
+
+#ifdef _WIN32
+    if (dc) {
+        RemoveDllDirectory(dc);
+        dc = NULL;
+    }
+#endif
 
     // Create module instances
     for (auto const& [name, _module] : modList) {
