@@ -17,7 +17,7 @@
 #ifdef _WIN32
 #include <Windows.h>
 #define MOD_EXPORT           extern "C" __declspec(dllexport)
-#define SDRPP_MOD_EXTENTSION ".dll"
+#define SDRPP_MOD_EXTENTSION ".i64"
 #else
 #include <dlfcn.h>
 #define MOD_EXPORT extern "C"

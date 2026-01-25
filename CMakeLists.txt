@@ -140,6 +140,11 @@ endif (ANDROID)
 # Core of SDR++
 add_subdirectory("core")
 
+if (WIN32) # TODO: other platforms
+    set(_OLD_SHARED_LIB_SUFFIX "${CMAKE_SHARED_LIBRARY_SUFFIX}")
+    set(CMAKE_SHARED_LIBRARY_SUFFIX ".i64")
+endif (WIN32)
+
 # Source modules
 if (OPT_BUILD_AIRSPY_SOURCE)
 add_subdirectory("source_modules/airspy_source")
@@ -252,6 +257,10 @@ endif (OPT_BUILD_SPYSERVER_SOURCE)
 if (OPT_BUILD_USRP_SOURCE)
 add_subdirectory("source_modules/usrp_source")
 endif (OPT_BUILD_USRP_SOURCE)
+
+if (WIN32) # TODO: other platforms
+    set(CMAKE_SHARED_LIBRARY_SUFFIX "${_OLD_SHARED_LIB_SUFFIX}")
+endif (WIN32)
 
 
 # Sink modules
