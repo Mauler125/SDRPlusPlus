@@ -1247,6 +1247,7 @@ namespace ImGui {
         // performed as well in order to keep the waterfall display
         // in view during position changed!
         updateWidgetPositions();
+        updateAllVFOs(false);
     }
 
     void WaterFall::onResize() {
