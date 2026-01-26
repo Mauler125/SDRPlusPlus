@@ -708,7 +708,7 @@ namespace ImGui {
 
         ImVec2 mPos = ImGui::GetMousePos();
 
-        if (!gui::mainWindow.processMouseInputs && !inputHandled && IS_IN_AREA(mPos, wfAreaMin, wfAreaMax)) {
+        if (gui::mainWindow.processMouseInputs && !inputHandled && IS_IN_AREA(mPos, wfAreaMin, wfAreaMax)) {
             for (auto const& [name, vfo] : vfos) {
                 window->DrawList->AddRectFilled(vfo->wfRectMin, vfo->wfRectMax, vfo->color);
                 if (!vfo->lineVisible) { continue; }
