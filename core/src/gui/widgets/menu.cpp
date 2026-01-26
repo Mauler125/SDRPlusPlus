@@ -28,7 +28,10 @@ bool Menu::draw(bool updateStates) {
     bool changed = false;
     float menuWidth = ImGui::GetContentRegionAvail().x;
     ImGuiWindow* window = ImGui::GetCurrentWindow();
-    ImVec2 checkboxOffset = ImVec2(menuWidth - ImGui::GetTextLineHeight() - (6.0f * style::uiScale), - ImGui::GetTextLineHeight() - (10.0f * style::uiScale));
+    const ImGuiStyle& style = ImGui::GetStyle();
+
+    float frameHeight = ImGui::GetFrameHeight();
+    float horizontalGap = style.ItemSpacing.x;
 
     int displayedCount = 0;
     int rawId = 0;
@@ -53,20 +56,28 @@ bool Menu::draw(bool updateStates) {
             if (displayedCount == insertBefore && !draggedMenuName.empty()) {
                 if (updateStates) { ImGui::SetNextItemOpen(false); }
                 ImVec2 posMin = ImGui::GetCursorScreenPos();
-                ImVec2 posMax = ImVec2(posMin.x + menuWidth, posMin.y + ImGui::GetFrameHeight());
-                ImGui::BeginDisabled();
-                ImRect orignalRect = window->WorkRect;
-                ImGui::CollapsingHeader((draggedMenuName + "##sdrpp_main_menu_dragging").c_str());
+                ImRect originalRect = window->WorkRect;
+
+                float rightBoundary = window->Pos.x + ImGui::GetWindowContentRegionMax().x + (style.WindowPadding.x * 0.5f);
+
                 if (items[draggedOpt.name].inst != NULL) {
-                    window->WorkRect = orignalRect;
-                    ImVec2 pos = ImGui::GetCursorPos();
-                    ImGui::SetCursorPosX(pos.x + checkboxOffset.x);
-                    ImGui::SetCursorPosY(pos.y + checkboxOffset.y);
+                    window->WorkRect.Max.x = rightBoundary - (frameHeight + horizontalGap);
+                }
+
+                ImGui::BeginDisabled();
+                ImGui::CollapsingHeader((draggedMenuName + "##sdrpp_main_menu_dragging").c_str());
+                ImVec2 nextPos = ImGui::GetCursorScreenPos();
+                window->WorkRect = originalRect;
+
+                if (items[draggedOpt.name].inst != NULL) {
+                    ImGui::SetCursorScreenPos(ImVec2(rightBoundary - frameHeight, posMin.y));
                     bool enabled = items[draggedOpt.name].inst->isEnabled();
                     ImGui::Checkbox(("##_menu_checkbox_" + draggedOpt.name).c_str(), &enabled);
-                    ImGui::SetCursorPos(pos);
+                    ImGui::SetCursorScreenPos(nextPos);
                 }
                 ImGui::EndDisabled();
+
+                ImVec2 posMax = ImVec2(posMin.x + menuWidth, posMin.y + frameHeight);
                 window->DrawList->AddRect(posMin, posMax, textColor, 0.0f, 0, style::uiScale);
             }
         }
@@ -74,18 +85,11 @@ bool Menu::draw(bool updateStates) {
         displayedCount++;
         MenuItem_t& item = items[opt.name];
 
-        ImRect orginalRect = window->WorkRect;
-        if (item.inst != NULL) {
-            window->WorkRect = ImRect(orginalRect.Min, ImVec2(orginalRect.Max.x - ImGui::GetTextLineHeight() - (6.0f * style::uiScale), orginalRect.Max.y));
-        }
-
         ImVec2 posMin = ImGui::GetCursorScreenPos();
-        ImVec2 posMax = ImVec2(posMin.x + menuWidth, posMin.y + ImGui::GetFrameHeight());
-
         headerTops[displayedCount - 1] = posMin.y;
         optionIDs[displayedCount - 1] = rawId - 1;
 
-        if (ImGui::IsMouseClicked(ImGuiMouseButton_Left) && ImGui::IsMouseHoveringRect(posMin, posMax)) {
+        if (ImGui::IsMouseClicked(ImGuiMouseButton_Left) && ImGui::IsMouseHoveringRect(posMin, ImVec2(posMin.x + menuWidth, posMin.y + frameHeight))) {
             menuClicked = true;
             clickedMenuName = opt.name;
         }
@@ -103,51 +107,45 @@ bool Menu::draw(bool updateStates) {
             }
         }
 
-        // Draw menu header and menu content. There is a lot of boilerplate because the checkbox has to be drawn before the menu, TODO: fix
+        // Draw menu header and checkbox
         if (updateStates) { ImGui::SetNextItemOpen(opt.open); }
-        if (ImGui::CollapsingHeader((opt.name + "##sdrpp_main_menu").c_str())) {
-            if (item.inst != NULL) {
-                window->WorkRect = orginalRect;
-                ImVec2 pos = ImGui::GetCursorPos();
-                ImGui::SetCursorPosX(pos.x + checkboxOffset.x);
-                ImGui::SetCursorPosY(pos.y + checkboxOffset.y);
-                bool enabled = item.inst->isEnabled();
-                if (ImGui::Checkbox(("##_menu_checkbox_" + opt.name).c_str(), &enabled)) {
-                    enabled ? item.inst->enable() : item.inst->disable();
-                    changed = true;
-                }
-                ImGui::SetCursorPos(pos);
-            }
 
-            // Check if the state changed
-            if (!opt.open && !updateStates) {
-                opt.open = true;
-                changed = true;
-            }
+        const ImRect originalRect = window->WorkRect;
+        const float rightBoundary = window->Pos.x + ImGui::GetWindowContentRegionMax().x + (style.WindowPadding.x * 0.5f);
 
-            item.drawHandler(item.ctx);
-            ImGui::Spacing();
+        if (item.inst != NULL) {
+            window->WorkRect.Max.x = rightBoundary - (frameHeight + horizontalGap);
         }
-        else if (item.inst != NULL) {
-            window->WorkRect = orginalRect;
-            ImVec2 pos = ImGui::GetCursorPos();
-            ImGui::SetCursorPosX(pos.x + checkboxOffset.x);
-            ImGui::SetCursorPosY(pos.y + checkboxOffset.y);
+
+        const bool isHeaderOpen = ImGui::CollapsingHeader((opt.name + "##sdrpp_main_menu").c_str());
+        const ImVec2 nextItemPos = ImGui::GetCursorScreenPos();
+
+        window->WorkRect = originalRect;
+
+        if (item.inst != NULL) {
+            ImGui::SetCursorScreenPos(ImVec2(rightBoundary - frameHeight, posMin.y));
             bool enabled = item.inst->isEnabled();
             if (ImGui::Checkbox(("##_menu_checkbox_" + opt.name).c_str(), &enabled)) {
                 enabled ? item.inst->enable() : item.inst->disable();
                 changed = true;
             }
-            ImGui::SetCursorPos(pos);
+            // Restore cursor
+            ImGui::SetCursorScreenPos(nextItemPos);
+        }
 
+        if (isHeaderOpen) {
+            if (!opt.open && !updateStates) {
+                opt.open = true;
+                changed = true;
+            }
+            item.drawHandler(item.ctx);
+            ImGui::Spacing();
+        }
+        else {
             if (opt.open && !updateStates) {
                 opt.open = false;
                 changed = true;
             }
-        }
-        else if (opt.open && !updateStates) {
-            opt.open = false;
-            changed = true;
         }
     }
 
@@ -183,21 +181,26 @@ bool Menu::draw(bool updateStates) {
     if (insertBefore == displayedCount && !draggedMenuName.empty()) {
         if (updateStates) { ImGui::SetNextItemOpen(false); }
         ImVec2 posMin = ImGui::GetCursorScreenPos();
-        ImVec2 posMax = ImVec2(posMin.x + menuWidth, posMin.y + ImGui::GetFrameHeight());
-        ImGui::BeginDisabled();
-        ImRect orignalRect = window->WorkRect;
-        ImGui::CollapsingHeader((draggedMenuName + "##sdrpp_main_menu_dragging").c_str());
+        ImRect originalRect = window->WorkRect;
+        float rightBoundary = window->Pos.x + ImGui::GetWindowContentRegionMax().x + (style.WindowPadding.x * 0.5f);
+
         if (items[draggedOpt.name].inst != NULL) {
-            window->WorkRect = orignalRect;
-            ImVec2 pos = ImGui::GetCursorPos();
-            ImGui::SetCursorPosX(pos.x + checkboxOffset.x);
-            ImGui::SetCursorPosY(pos.y + checkboxOffset.y);
+            window->WorkRect.Max.x = rightBoundary - (frameHeight + horizontalGap);
+        }
+
+        ImGui::BeginDisabled();
+        ImGui::CollapsingHeader((draggedMenuName + "##sdrpp_main_menu_dragging").c_str());
+        ImVec2 nextPos = ImGui::GetCursorScreenPos();
+        window->WorkRect = originalRect;
+
+        if (items[draggedOpt.name].inst != NULL) {
+            ImGui::SetCursorScreenPos(ImVec2(rightBoundary - frameHeight, posMin.y));
             bool enabled = items[draggedOpt.name].inst->isEnabled();
             ImGui::Checkbox(("##_menu_checkbox_" + draggedOpt.name).c_str(), &enabled);
-            ImGui::SetCursorPos(pos);
+            ImGui::SetCursorScreenPos(nextPos);
         }
         ImGui::EndDisabled();
-        window->DrawList->AddRect(posMin, posMax, textColor, 0.0f, 0, style::uiScale);
+        window->DrawList->AddRect(posMin, ImVec2(posMin.x + menuWidth, posMin.y + frameHeight), textColor, 0.0f, 0, style::uiScale);
     }
 
     if (!draggedMenuName.empty()) {
