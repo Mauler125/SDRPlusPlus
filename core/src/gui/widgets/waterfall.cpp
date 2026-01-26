@@ -991,7 +991,7 @@ namespace ImGui {
         }
 
         // Finally, if nothing else was selected, just move the VFO
-        if ((VFOMoveSingleClick ? ImGui::IsMouseClicked(ImGuiMouseButton_Left) : mouseLeftDown) && (mouseInFFT || mouseInWaterfall) && (mouseMoved || hoveredVFOName)) {
+        if ((VFOMoveSingleClick ? ImGui::IsMouseClicked(ImGuiMouseButton_Left) : mouseLeftDown) && (mouseInFFT || mouseInWaterfall) && (mouseMoved || !hoveredVFOName)) {
             if (selVfo != NULL) {
                 int refCenter = mousePos.x - fftAreaMin.x;
                 if (refCenter >= 0 && refCenter < dataWidth) {
