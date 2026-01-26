@@ -161,8 +161,8 @@ bool Menu::draw(bool updateStates) {
                 order.push_back(draggedOpt);
             }
             else if (!insertBeforeName.empty()) {
-                int beforeId = 0;
-                for (int i = 0; i < order.size(); i++) {
+                size_t beforeId = 0;
+                for (size_t i = 0; i < order.size(); i++) {
                     if (order[i].name == insertBeforeName) {
                         beforeId = i;
                         break;
