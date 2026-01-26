@@ -1450,17 +1450,6 @@ namespace ImGui {
                 doCursorWarp = false;
             }
         }
-        else {
-            mouseInFFTResize = false;
-            mouseInFreq = false;
-            mouseInFFT = false;
-            mouseInWaterfall = false;
-            fftResizeSelect = false;
-            freqScaleSelect = false;
-            vfoBorderSelect = false;
-            lastDrag = 0;
-            dragStartPos = ImVec2(0, 0);
-        }
 
         updateAllVFOs(true);
 
