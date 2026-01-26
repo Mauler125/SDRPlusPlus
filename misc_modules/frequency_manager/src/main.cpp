@@ -346,7 +346,7 @@ private:
 
     static void menuHandler(void* ctx) {
         FrequencyManagerModule* _this = (FrequencyManagerModule*)ctx;
-        float menuWidth = menuWidth;
+        float menuWidth = ImGui::GetContentRegionAvail().x;
 
         // TODO: Replace with something that won't iterate every frame
         std::vector<std::string> selectedNames;
